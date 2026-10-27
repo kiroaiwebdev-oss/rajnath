@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel | Acharya Dr. Rajnath Jha</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
+:root{--indigo:#1e1b4b;--indigo2:#312e81;--gold:#d4af37;--gold2:#eab308;--bg:#f1f5f9;--card:#fff;--txt:#1f2937;--muted:#6b7280;--border:#e5e7eb}
+body{background:var(--bg);color:var(--txt)}
+/* LOGIN */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a1a3e,#2d1b4e)}
+.login-card{background:#fff;border-radius:20px;padding:2.5rem;width:380px;box-shadow:0 25px 60px rgba(0,0,0,.4)}
+.login-card h1{color:var(--indigo);font-size:1.4rem;margin-bottom:.25rem}
+.login-card p{color:var(--muted);font-size:.85rem;margin-bottom:1.5rem}
+.login-card input{width:100%;padding:.85rem 1rem;border:1px solid var(--border);border-radius:.6rem;margin-bottom:1rem;font-size:.95rem}
+.login-card input:focus{outline:none;border-color:var(--gold2);box-shadow:0 0 0 3px #fef08a}
+.login-card button{width:100%;padding:.9rem;border:none;border-radius:.6rem;background:linear-gradient(90deg,#eab308,#ca8a04);color:#fff;font-weight:700;font-size:1rem;cursor:pointer}
+.login-card .hint{margin-top:1rem;font-size:.75rem;color:var(--muted);text-align:center}
+.login-err{color:#dc2626;font-size:.8rem;margin-bottom:.8rem;display:none}
+/* LAYOUT */
+#app{display:none;min-height:100vh}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:250px;background:var(--indigo);color:#fff;padding:1.5rem 0;overflow-y:auto;z-index:50;transition:transform .3s}
+.sidebar .brand{padding:0 1.5rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar .brand h2{font-size:1rem;color:var(--gold)}
+.sidebar .brand p{font-size:.7rem;color:#a5b4fc;margin-top:.2rem}
+.sidebar a{display:flex;align-items:center;gap:.7rem;padding:.8rem 1.5rem;color:#c7d2fe;text-decoration:none;font-size:.9rem;transition:.2s}
+.sidebar a:hover,.sidebar a.active{background:rgba(212,175,55,.15);color:#fff;border-right:3px solid var(--gold)}
+.main{margin-left:250px;padding:2rem;min-height:100vh}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem}
+.topbar h1{font-size:1.5rem;color:var(--indigo)}
+.btn{padding:.6rem 1.2rem;border:none;border-radius:.6rem;font-weight:600;cursor:pointer;font-size:.85rem;transition:.2s}
+.btn-gold{background:linear-gradient(90deg,#eab308,#ca8a04);color:#fff}
+.btn-dark{background:var(--indigo);color:#fff}
+.btn-red{background:#fee2e2;color:#dc2626}
+.btn-gray{background:#e5e7eb;color:#374151}
+.btn-sm{padding:.35rem .8rem;font-size:.75rem}
+.card{background:var(--card);border-radius:1rem;padding:1.5rem;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:1.5rem}
+.card h3{color:var(--indigo);margin-bottom:1rem;font-size:1.05rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem}
+.stat{background:#fff;border-radius:1rem;padding:1.4rem;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:4px solid var(--gold)}
+.stat .num{font-size:1.8rem;font-weight:800;color:var(--indigo)}
+.stat .lbl{font-size:.78rem;color:var(--muted);margin-top:.2rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;padding:.7rem;background:#f8fafc;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+td{padding:.7rem;border-top:1px solid var(--border);vertical-align:top}
+.badge{display:inline-block;padding:.2rem .7rem;border-radius:999px;font-size:.7rem;font-weight:700}
+.badge-New{background:#dbeafe;color:#1d4ed8}.badge-Contacted{background:#fef3c7;color:#b45309}.badge-Closed{background:#d1fae5;color:#047857}
+input[type=text],input[type=email],input[type=tel],input[type=password],input[type=date],input[type=number],textarea,select{width:100%;padding:.7rem .9rem;border:1px solid var(--border);border-radius:.6rem;font-size:.9rem;font-family:inherit}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold2);box-shadow:0 0 0 3px #fef08a}
+label{display:block;font-size:.8rem;font-weight:600;color:#374151;margin:.9rem 0 .35rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.list-item{border:1px solid var(--border);border-radius:.8rem;padding:1rem;margin-bottom:.8rem;background:#fafafa}
+.list-item h4{color:var(--indigo);font-size:.95rem}
+.list-item p{color:var(--muted);font-size:.82rem;margin-top:.3rem;white-space:pre-wrap}
+.row-actions{display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap}
+.page{display:none}.page.active{display:block}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--indigo);color:#fff;padding:.9rem 1.4rem;border-radius:.7rem;font-size:.85rem;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;transition:.3s;z-index:999;transform:translateY(10px)}
+.toast.show{opacity:1;transform:translateY(0)}
+.hamburger{display:none;position:fixed;top:1rem;left:1rem;z-index:60;background:var(--indigo);color:#fff;border:none;border-radius:.5rem;padding:.6rem .8rem;cursor:pointer}
+.empty{color:var(--muted);text-align:center;padding:2rem;font-size:.9rem}
+@media(max-width:900px){.sidebar{transform:translateX(-260px)}.sidebar.open{transform:none}.main{margin-left:0;padding:4.5rem 1rem 1rem}.hamburger{display:block}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>🕉️ Admin Panel</h1>
+    <p>Acharya Dr. Rajnath Jha — Website Management</p>
+    <div class="login-err" id="loginErr">❌ Galat username ya password. Dobara try karein.</div>
+    <input type="text" id="loginUser" placeholder="Username" autocomplete="off">
+    <input type="password" id="loginPass" placeholder="Password">
+    <button onclick="doLogin()">Login →</button>
+    <p class="hint">Default: <b>admin</b> / <b>rajnath123</b> (Settings se badal lein)</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+<button class="hamburger" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+<nav class="sidebar">
+  <div class="brand"><h2>🕉️ AD Admin Panel</h2><p>acharyarajnathjha.com</p></div>
+  <a href="#" class="active" data-page="dashboard" onclick="showPage('dashboard',this)">📊 Dashboard</a>
+  <a href="#" data-page="enquiries" onclick="showPage('enquiries',this)">📩 Enquiries <span id="enqBadge"></span></a>
+  <a href="#" data-page="content" onclick="showPage('content',this)">📝 Site Content</a>
+  <a href="#" data-page="testimonials" onclick="showPage('testimonials',this)">💬 Testimonials</a>
+  <a href="#" data-page="gallery" onclick="showPage('gallery',this)">🖼️ Gallery</a>
+  <a href="#" data-page="blog" onclick="showPage('blog',this)">📰 Blog Posts</a>
+  <a href="#" data-page="horoscope" onclick="showPage('horoscope',this)">♈ Weekly Horoscope</a>
+  <a href="#" data-page="faq" onclick="showPage('faq',this)">❓ FAQ</a>
+  <a href="#" data-page="settings" onclick="showPage('settings',this)">⚙️ Settings</a>
+  <a href="index.html" target="_blank">🌐 View Website</a>
+  <a href="#" onclick="doLogout()">🚪 Logout</a>
+</nav>
+
+<div class="main">
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="topbar"><h1>📊 Dashboard</h1><a class="btn btn-gold" href="index.html" target="_blank">View Website ↗</a></div>
+    <div class="stats">
+      <div class="stat"><div class="num" id="stTotal">0</div><div class="lbl">Total Enquiries</div></div>
+      <div class="stat"><div class="num" id="stNew">0</div><div class="lbl">New Enquiries</div></div>
+      <div class="stat"><div class="num" id="stToday">0</div><div class="lbl">Today</div></div>
+      <div class="stat"><div class="num" id="stTesti">0</div><div class="lbl">Testimonials</div></div>
+      <div class="stat"><div class="num" id="stGal">0</div><div class="lbl">Gallery Images</div></div>
+    </div>
+    <div class="card"><h3>🕐 Latest Enquiries</h3><div id="recentEnq"></div></div>
+  </div>
+
+  <!-- ENQUIRIES -->
+  <div class="page" id="page-enquiries">
+    <div class="topbar"><h1>📩 Enquiries &amp; Bookings</h1><button class="btn btn-dark" onclick="exportCSV()">⬇ Export CSV</button></div>
+    <div class="card"><div id="enqTable"></div></div>
+  </div>
+
+  <!-- SITE CONTENT -->
+  <div class="page" id="page-content">
+    <div class="topbar"><h1>📝 Site Content</h1><button class="btn btn-gold" onclick="saveContent()">💾 Save Changes</button></div>
+    <div class="card"><h3>📞 Contact Information</h3>
+      <div class="grid2">
+        <div><label>Phone 1 (Primary)</label><input type="text" data-f="phone1"></div>
+        <div><label>Phone 2</label><input type="text" data-f="phone2"></div>
+        <div><label>WhatsApp Number (with country code, no +)</label><input type="text" data-f="whatsapp"></div>
+        <div><label>Email</label><input type="email" data-f="email"></div>
+      </div>
+      <label>Office Address (use &lt;br&gt; for new line)</label><textarea data-f="address" rows="3"></textarea>
+      <label>Office Timings</label><textarea data-f="timings" rows="3"></textarea>
+    </div>
+    <div class="card"><h3>🌟 Homepage Hero Section</h3>
+      <label>Welcome Line</label><input type="text" data-f="hero_welcome">
+      <label>Main Heading (HTML allowed)</label><input type="text" data-f="hero_title">
+      <label>Name Line</label><input type="text" data-f="hero_name">
+      <label>Description</label><textarea data-f="hero_desc" rows="3"></textarea>
+    </div>
+    <div class="card"><h3>🔢 Homepage Stats</h3>
+      <div class="grid2">
+        <div><label>Stat 1 Number</label><input type="text" data-f="stat1_num"></div>
+        <div><label>Stat 1 Label</label><input type="text" data-f="stat1_label"></div>
+        <div><label>Stat 2 Number</label><input type="text" data-f="stat2_num"></div>
+        <div><label>Stat 2 Label</label><input type="text" data-f="stat2_label"></div>
+        <div><label>Stat 3 Number</label><input type="text" data-f="stat3_num"></div>
+        <div><label>Stat 3 Label</label><input type="text" data-f="stat3_label"></div>
+      </div>
+      <label>Footer About Text</label><textarea data-f="footer_about" rows="3"></textarea>
+    </div>
+  </div>
+
+  <!-- TESTIMONIALS -->
+  <div class="page" id="page-testimonials">
+    <div class="topbar"><h1>💬 Testimonials</h1><button class="btn btn-gold" onclick="editTesti(-1)">+ Add New</button></div>
+    <div class="card" id="testiFormCard" style="display:none"><h3 id="testiFormTitle">Add Testimonial</h3>
+      <div class="grid2">
+        <div><label>Client Name</label><input type="text" id="tName"></div>
+        <div><label>Role / City</label><input type="text" id="tRole" placeholder="Business Owner, Patna"></div>
+      </div>
+      <label>Stars (1-5)</label><input type="number" id="tStars" min="1" max="5" value="5">
+      <label>Review Text</label><textarea id="tText" rows="3"></textarea>
+      <div class="row-actions"><button class="btn btn-gold" onclick="saveTesti()">💾 Save</button><button class="btn btn-gray" onclick="document.getElementById('testiFormCard').style.display='none'">Cancel</button></div>
+    </div>
+    <div id="testiList"></div>
+  </div>
+
+  <!-- GALLERY -->
+  <div class="page" id="page-gallery">
+    <div class="topbar"><h1>🖼️ Gallery Manager</h1></div>
+    <div class="card"><h3>Add Image URL</h3>
+      <label>Image URL (assets/img/xxx.jpg ya koi bhi direct image link)</label>
+      <input type="text" id="galUrl" placeholder="assets/img/new-photo.jpg">
+      <div class="row-actions"><button class="btn btn-gold" onclick="addGallery()">+ Add Image</button></div>
+      <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Tip: Nayi photo hosting ke assets/img/ folder mein upload karein, phir yahan uska path likhein.</p>
+    </div>
+    <div id="galList"></div>
+  </div>
+
+  <!-- BLOG -->
+  <div class="page" id="page-blog">
+    <div class="topbar"><h1>📰 Blog Posts</h1><button class="btn btn-gold" onclick="editBlog(-1)">+ New Post</button></div>
+    <div class="card" id="blogFormCard" style="display:none"><h3 id="blogFormTitle">New Blog Post</h3>
+      <label>Title</label><input type="text" id="bTitle">
+      <div class="grid2">
+        <div><label>Date / Category Label</label><input type="text" id="bDate" placeholder="Vedic Astrology"></div>
+        <div><label>Image URL (optional)</label><input type="text" id="bImage"></div>
+      </div>
+      <label>Excerpt / Content</label><textarea id="bExcerpt" rows="4"></textarea>
+      <div class="row-actions"><button class="btn btn-gold" onclick="saveBlog()">💾 Publish</button><button class="btn btn-gray" onclick="document.getElementById('blogFormCard').style.display='none'">Cancel</button></div>
+    </div>
+    <div id="blogList"></div>
+  </div>
+
+  <!-- HOROSCOPE -->
+  <div class="page" id="page-horoscope">
+    <div class="topbar"><h1>♈ Weekly Horoscope</h1><button class="btn btn-gold" onclick="saveHoro()">💾 Save All</button></div>
+    <div class="card"><h3>12 Rashis — is hafte ki predictions</h3><div id="horoList"></div></div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="page" id="page-faq">
+    <div class="topbar"><h1>❓ FAQ Manager</h1><button class="btn btn-gold" onclick="editFaq(-1)">+ Add FAQ</button></div>
+    <div class="card" id="faqFormCard" style="display:none"><h3 id="faqFormTitle">Add FAQ</h3>
+      <label>Question</label><input type="text" id="fQ">
+      <label>Answer</label><textarea id="fA" rows="3"></textarea>
+      <div class="row-actions"><button class="btn btn-gold" onclick="saveFaq()">💾 Save</button><button class="btn btn-gray" onclick="document.getElementById('faqFormCard').style.display='none'">Cancel</button></div>
+    </div>
+    <div id="faqList"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="topbar"><h1>⚙️ Settings</h1></div>
+    <div class="card"><h3>🔐 Change Admin Password</h3>
+      <div class="grid2">
+        <div><label>New Username</label><input type="text" id="sUser"></div>
+        <div><label>New Password</label><input type="password" id="sPass"></div>
+      </div>
+      <div class="row-actions"><button class="btn btn-gold" onclick="changeCreds()">Update Credentials</button></div>
+    </div>
+    <div class="card"><h3>💾 Backup &amp; Restore</h3>
+      <div class="row-actions">
+        <button class="btn btn-dark" onclick="exportAll()">⬇ Export Full Backup (JSON)</button>
+        <button class="btn btn-gray" onclick="document.getElementById('importFile').click()">⬆ Import Backup</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAll(event)">
+      </div>
+    </div>
+    <div class="card"><h3>⚠️ Danger Zone</h3>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.8rem">Saara admin data (enquiries, content changes, testimonials etc.) permanently delete ho jayega aur website default content par wapas aa jayegi.</p>
+      <button class="btn btn-red" onclick="resetAll()">🗑 Reset Everything</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= AUTH ================= */
+var CREDS_KEY='arj_admin_creds';
+function getCreds(){try{return JSON.parse(localStorage.getItem(CREDS_KEY))||{u:'admin',p:'rajnath123'}}catch(e){return{u:'admin',p:'rajnath123'}}}
+function doLogin(){
+  var u=document.getElementById('loginUser').value.trim(), p=document.getElementById('loginPass').value;
+  var c=getCreds();
+  if(u===c.u && p===c.p){sessionStorage.setItem('arj_admin_auth','1');boot();}
+  else{document.getElementById('loginErr').style.display='block';}
+}
+function doLogout(){sessionStorage.removeItem('arj_admin_auth');location.reload();}
+document.getElementById('loginPass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+
+/* ================= HELPERS ================= */
+function LS(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v===null||v===undefined?d:v}catch(e){return d}}
+function LSset(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500);}
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.sidebar a[data-page]').forEach(function(a){a.classList.remove('active')});
+  if(el)el.classList.add('active');
+  document.querySelector('.sidebar').classList.remove('open');
+  renderPage(id);
+}
+
+/* ================= DASHBOARD ================= */
+function renderDashboard(){
+  var enq=LS('arj_enquiries',[]), testi=LS('arj_testimonials',[]), gal=LS('arj_gallery',[]);
+  document.getElementById('stTotal').textContent=enq.length;
+  document.getElementById('stNew').textContent=enq.filter(function(e){return e.status==='New'}).length;
+  var today=new Date().toDateString();
+  document.getElementById('stToday').textContent=enq.filter(function(e){return new Date(e.date).toDateString()===today}).length;
+  document.getElementById('stTesti').textContent=testi.length||'3 (default)';
+  document.getElementById('stGal').textContent=gal.length||'5 (default)';
+  var newCount=enq.filter(function(e){return e.status==='New'}).length;
+  document.getElementById('enqBadge').innerHTML=newCount?(' <span class="badge badge-New">'+newCount+'</span>'):'';
+  var r=document.getElementById('recentEnq');
+  if(!enq.length){r.innerHTML='<div class="empty">Abhi tak koi enquiry nahi aayi. Website ka form submit hote hi yahan dikhega.</div>';return;}
+  r.innerHTML='<table><tr><th>Date</th><th>Name</th><th>Mobile</th><th>Service</th><th>Status</th></tr>'+
+    enq.slice(0,5).map(function(e){return '<tr><td>'+new Date(e.date).toLocaleString('en-IN')+'</td><td>'+esc(e.name)+'</td><td>'+esc(e.mobile)+'</td><td>'+esc(e.service||'-')+'</td><td><span class="badge badge-'+e.status+'">'+e.status+'</span></td></tr>'}).join('')+'</table>';
+}
+
+/* ================= ENQUIRIES ================= */
+function renderEnquiries(){
+  var enq=LS('arj_enquiries',[]);
+  var c=document.getElementById('enqTable');
+  if(!enq.length){c.innerHTML='<div class="empty">Koi enquiry nahi mili abhi tak.</div>';return;}
+  c.innerHTML='<table><tr><th>Date</th><th>Name / Contact</th><th>Details</th><th>Source</th><th>Status</th><th>Actions</th></tr>'+
+    enq.map(function(e,i){
+      var details=[e.service?('Service: '+e.service):'',e.mode?('Mode: '+e.mode):'',e.appointment?('Appt: '+e.appointment):'',e.dob?('DOB: '+e.dob):'',e.tob?('TOB: '+e.tob):'',e.pob?('POB: '+e.pob):'',e.message?('Msg: '+e.message):''].filter(Boolean).join('<br>');
+      var wa=(e.mobile||'').replace(/\D/g,'');
+      return '<tr><td>'+new Date(e.date).toLocaleString('en-IN')+'</td>'+
+        '<td><b>'+esc(e.name)+'</b><br>'+esc(e.mobile||'')+(e.email?('<br>'+esc(e.email)):'')+'</td>'+
+        '<td style="font-size:.78rem;color:var(--muted)">'+details+'</td>'+
+        '<td style="font-size:.78rem">'+esc(e.source||'-')+'</td>'+
+        '<td><select onchange="setEnqStatus('+i+',this.value)"><option'+(e.status==='New'?' selected':'')+'>New</option><option'+(e.status==='Contacted'?' selected':'')+'>Contacted</option><option'+(e.status==='Closed'?' selected':'')+'>Closed</option></select></td>'+
+        '<td>'+(wa?'<a class="btn btn-sm btn-gold" target="_blank" href="https://wa.me/'+wa+'">WhatsApp</a> ':'')+'<button class="btn btn-sm btn-red" onclick="delEnq('+i+')">Delete</button></td></tr>';
+    }).join('')+'</table>';
+}
+function setEnqStatus(i,s){var l=LS('arj_enquiries',[]);l[i].status=s;LSset('arj_enquiries',l);toast('Status updated: '+s);renderDashboard();}
+function delEnq(i){if(!confirm('Yeh enquiry delete karein?'))return;var l=LS('arj_enquiries',[]);l.splice(i,1);LSset('arj_enquiries',l);renderEnquiries();renderDashboard();toast('Enquiry deleted');}
+function exportCSV(){
+  var enq=LS('arj_enquiries',[]);
+  if(!enq.length){toast('Export karne ke liye koi enquiry nahi');return;}
+  var rows=[['Date','Name','Mobile','Email','Service','Mode','Appointment','DOB','TOB','POB','Message','Source','Status']];
+  enq.forEach(function(e){rows.push([e.date,e.name,e.mobile,e.email||'',e.service||'',e.mode||'',e.appointment||'',e.dob||'',e.tob||'',e.pob||'',e.message||'',e.source||'',e.status]);});
+  var csv=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"'}).join(',')}).join('\n');
+  var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='enquiries.csv';a.click();toast('CSV downloaded');
+}
+
+/* ================= SITE CONTENT ================= */
+var CONTENT_DEFAULTS={
+  phone1:'+91-9835258203',phone2:'+91-9835882652',whatsapp:'919835258203',email:'acharyarajnathjha@gmail.com',
+  address:'B-Block, 1st Floor, Chanakya Plaza,<br>Near Chandan Automobile,<br>Kankarbagh Main Road, Kankarbagh,<br>Patna, Bihar 800020',
+  timings:'Mon - Wed: 08:00 AM - 12:00 PM / 03:00 PM - 07:00 PM<br>Thu: Closed<br>Fri - Sun: 08:00 AM - 12:00 PM / 03:00 PM - 07:00 PM',
+  hero_welcome:'Welcome to Divine Guidance',hero_title:'Guiding You Through the <span class="text-yellow-400">Stars</span>',
+  hero_name:'Acharya Dr. Rajnath Jha',
+  hero_desc:'With over 20 years of experience in Vedic astrology, Vastu Shastra, and spiritual guidance, discover clarity, purpose, and peace through ancient wisdom.',
+  stat1_num:'30+',stat1_label:'Years Experience',stat2_num:'100000+',stat2_label:'Happy Clients',stat3_num:'30+',stat3_label:'Services',
+  footer_about:'Guiding you through the stars with 30+ years of expertise in Vedic astrology, Vastu Shastra, and spiritual sciences.'};
+function renderContent(){
+  var data=LS('arj_content',{});
+  document.querySelectorAll('[data-f]').forEach(function(el){
+    var k=el.getAttribute('data-f');
+    el.value=(data[k]!==undefined&&data[k]!=='')?data[k]:(CONTENT_DEFAULTS[k]||'');
+  });
+}
+function saveContent(){
+  var data={};
+  document.querySelectorAll('[data-f]').forEach(function(el){data[el.getAttribute('data-f')]=el.value;});
+  LSset('arj_content',data);toast('✅ Site content saved! Website par ab ye dikhega.');
+}
+
+/* ================= TESTIMONIALS ================= */
+var editTIdx=-1;
+var DEFAULT_TESTI=[{name:'Rajesh Kumar',role:'Business Owner, Patna',stars:5,text:"Dr. Rajnath Jha's guidance changed my life completely. His accurate predictions and remedies helped me overcome business challenges I thought were impossible."},{name:'Priya Sharma',role:'Homemaker, Bihar',stars:5,text:'The Vastu consultation for our new home brought immediate positive changes. We feel more peaceful and prosperous. Highly recommend!'},{name:'Amit Singh',role:'IT Professional, Patna',stars:5,text:'His kundali reading was incredibly detailed and accurate. The remedies suggested have brought remarkable positive changes in my career path.'}];
+function getTesti(){var t=LS('arj_testimonials',null);return t||DEFAULT_TESTI.slice();}
+function renderTesti(){
+  var l=getTesti();
+  document.getElementById('testiList').innerHTML=l.map(function(t,i){
+    return '<div class="list-item"><h4>'+esc(t.name)+' <span style="color:#eab308">'+'★'.repeat(t.stars||5)+'</span></h4><p><i>'+esc(t.role)+'</i> — '+esc(t.text)+'</p><div class="row-actions"><button class="btn btn-sm btn-dark" onclick="editTesti('+i+')">✏️ Edit</button><button class="btn btn-sm btn-red" onclick="delTesti('+i+')">Delete</button></div></div>';
+  }).join('')||'<div class="empty">Koi testimonial nahi.</div>';
+}
+function editTesti(i){
+  editTIdx=i;var c=document.getElementById('testiFormCard');c.style.display='block';
+  document.getElementById('testiFormTitle').textContent=i<0?'Add Testimonial':'Edit Testimonial';
+  var t=i<0?{name:'',role:'',stars:5,text:''}:getTesti()[i];
+  document.getElementById('tName').value=t.name;document.getElementById('tRole').value=t.role;
+  document.getElementById('tStars').value=t.stars||5;document.getElementById('tText').value=t.text;
+}
+function saveTesti(){
+  var l=getTesti();
+  var t={name:document.getElementById('tName').value,role:document.getElementById('tRole').value,stars:parseInt(document.getElementById('tStars').value)||5,text:document.getElementById('tText').value};
+  if(!t.name||!t.text){toast('Naam aur review zaroori hai');return;}
+  if(editTIdx<0)l.push(t);else l[editTIdx]=t;
+  LSset('arj_testimonials',l);document.getElementById('testiFormCard').style.display='none';renderTesti();toast('✅ Testimonial saved');
+}
+function delTesti(i){if(!confirm('Delete karein?'))return;var l=getTesti();l.splice(i,1);LSset('arj_testimonials',l);renderTesti();toast('Deleted');}
+
+/* ================= GALLERY ================= */
+var DEFAULT_GAL=['assets/img/about-2.jpg','assets/img/gallery-wide.jpg','assets/img/award-malaysia.jpg','assets/img/hero.jpg','assets/img/about-1.jpg'];
+function getGal(){return LS('arj_gallery',null)||DEFAULT_GAL.slice();}
+function renderGal(){
+  var l=getGal();
+  document.getElementById('galList').innerHTML=l.map(function(g,i){
+    return '<div class="list-item" style="display:flex;gap:1rem;align-items:center"><img src="'+esc(g)+'" style="width:90px;height:60px;object-fit:cover;border-radius:.5rem" onerror="this.style.opacity=.3"><div style="flex:1;font-size:.8rem;color:var(--muted);word-break:break-all">'+esc(g)+'</div><button class="btn btn-sm btn-red" onclick="delGal('+i+')">Delete</button></div>';
+  }).join('')||'<div class="empty">Gallery khaali hai.</div>';
+}
+function addGallery(){var u=document.getElementById('galUrl').value.trim();if(!u)return;var l=getGal();l.push(u);LSset('arj_gallery',l);document.getElementById('galUrl').value='';renderGal();toast('✅ Image added');}
+function delGal(i){if(!confirm('Image hatayein?'))return;var l=getGal();l.splice(i,1);LSset('arj_gallery',l);renderGal();toast('Deleted');}
+
+/* ================= BLOG ================= */
+var editBIdx=-1;
+var DEFAULT_BLOG=[{title:'What is Kurma Chakra? The Ancient Map of Directions',date:'Vedic Astrology',image:'',excerpt:'Discover the Kurma Chakra from the Vishnu Purana — the tortoise-shaped cosmic map that helps understand directions, natural phenomena and their connection with human life.'},{title:'5 Simple Saturday Remedies to Please Shani Dev',date:'Remedies',image:'',excerpt:"Sade Sati or Shani dasha troubling you? These five authentic, affordable Saturday upay can gradually ease Saturn's challenging influence."},{title:'Main Door Direction: What Your Entrance Says About Your Fortune',date:'Vastu Shastra',image:'',excerpt:'The entrance is the mouth of energy for your home. Learn which directions invite prosperity and simple corrections for inauspicious entrances.'}];
+function getBlog(){return LS('arj_blog',null)||DEFAULT_BLOG.slice();}
+function renderBlog(){
+  document.getElementById('blogList').innerHTML=getBlog().map(function(b,i){
+    return '<div class="list-item"><h4>'+esc(b.title)+'</h4><p><i>'+esc(b.date)+'</i> — '+esc(b.excerpt).slice(0,140)+'...</p><div class="row-actions"><button class="btn btn-sm btn-dark" onclick="editBlog('+i+')">✏️ Edit</button><button class="btn btn-sm btn-red" onclick="delBlog('+i+')">Delete</button></div></div>';
+  }).join('')||'<div class="empty">Koi post nahi.</div>';
+}
+function editBlog(i){
+  editBIdx=i;document.getElementById('blogFormCard').style.display='block';
+  document.getElementById('blogFormTitle').textContent=i<0?'New Blog Post':'Edit Blog Post';
+  var b=i<0?{title:'',date:'',image:'',excerpt:''}:getBlog()[i];
+  document.getElementById('bTitle').value=b.title;document.getElementById('bDate').value=b.date;
+  document.getElementById('bImage').value=b.image||'';document.getElementById('bExcerpt').value=b.excerpt;
+}
+function saveBlog(){
+  var l=getBlog();
+  var b={title:document.getElementById('bTitle').value,date:document.getElementById('bDate').value,image:document.getElementById('bImage').value,excerpt:document.getElementById('bExcerpt').value};
+  if(!b.title){toast('Title zaroori hai');return;}
+  if(editBIdx<0)l.push(b);else l[editBIdx]=b;
+  LSset('arj_blog',l);document.getElementById('blogFormCard').style.display='none';renderBlog();toast('✅ Blog post saved');
+}
+function delBlog(i){if(!confirm('Post delete karein?'))return;var l=getBlog();l.splice(i,1);LSset('arj_blog',l);renderBlog();toast('Deleted');}
+
+/* ================= HOROSCOPE ================= */
+var SIGNS=[['♈','Mesh (Aries)'],['♉','Vrishabh (Taurus)'],['♊','Mithun (Gemini)'],['♋','Karka (Cancer)'],['♌','Simha (Leo)'],['♍','Kanya (Virgo)'],['♎','Tula (Libra)'],['♏','Vrishchik (Scorpio)'],['♐','Dhanu (Sagittarius)'],['♑','Makar (Capricorn)'],['♒','Kumbh (Aquarius)'],['♓','Meen (Pisces)']];
+function renderHoro(){
+  var saved=LS('arj_horoscope',null)||[];
+  document.getElementById('horoList').innerHTML=SIGNS.map(function(s,i){
+    var cur=saved.find?saved.find(function(h){return h.sign===s[1]}):null;
+    return '<label>'+s[0]+' '+s[1]+'</label><textarea rows="2" data-sign="'+s[1]+'" data-icon="'+s[0]+'">'+(cur?esc(cur.text):'')+'</textarea>';
+  }).join('')+'<p style="font-size:.75rem;color:var(--muted);margin-top:.8rem">Note: Sirf woh rashi website par update hogi jisme text likha gaya hai. Save karne ke baad weekly-horoscope.html par naye predictions dikhenge.</p>';
+}
+function saveHoro(){
+  var out=[];
+  document.querySelectorAll('[data-sign]').forEach(function(t){
+    if(t.value.trim())out.push({sign:t.getAttribute('data-sign'),icon:t.getAttribute('data-icon'),text:t.value.trim()});
+  });
+  if(!out.length){toast('Kam se kam ek rashi ka prediction likhein');return;}
+  LSset('arj_horoscope',out);toast('✅ Weekly horoscope published!');
+}
+
+/* ================= FAQ ================= */
+var editFIdx=-1;
+var DEFAULT_FAQ=[{q:'How can I book a consultation?',a:'Through the enquiry form on this website, by calling +91-9835258203, or via WhatsApp. Consultations are available in person at Kankarbagh, Patna, and online.'},{q:'What details do I need for a kundali reading?',a:'Date of birth, exact time of birth, and place of birth. Without exact birth time, guidance is possible through palmistry and Prashna Kundali.'},{q:'Which languages are available?',a:'Hindi (all dialects), Maithili, Sanskrit and English.'},{q:'Are remedies expensive?',a:'No. Acharya Ji prescribes simple, affordable and authentic remedies as per your chart and budget.'}];
+function getFaq(){return LS('arj_faq',null)||DEFAULT_FAQ.slice();}
+function renderFaq(){
+  document.getElementById('faqList').innerHTML=getFaq().map(function(f,i){
+    return '<div class="list-item"><h4>Q: '+esc(f.q)+'</h4><p>A: '+esc(f.a)+'</p><div class="row-actions"><button class="btn btn-sm btn-dark" onclick="editFaq('+i+')">✏️ Edit</button><button class="btn btn-sm btn-red" onclick="delFaq('+i+')">Delete</button></div></div>';
+  }).join('')||'<div class="empty">Koi FAQ nahi.</div>';
+}
+function editFaq(i){
+  editFIdx=i;document.getElementById('faqFormCard').style.display='block';
+  document.getElementById('faqFormTitle').textContent=i<0?'Add FAQ':'Edit FAQ';
+  var f=i<0?{q:'',a:''}:getFaq()[i];
+  document.getElementById('fQ').value=f.q;document.getElementById('fA').value=f.a;
+}
+function saveFaq(){
+  var l=getFaq();
+  var f={q:document.getElementById('fQ').value,a:document.getElementById('fA').value};
+  if(!f.q||!f.a){toast('Question aur answer dono zaroori hain');return;}
+  if(editFIdx<0)l.push(f);else l[editFIdx]=f;
+  LSset('arj_faq',l);document.getElementById('faqFormCard').style.display='none';renderFaq();toast('✅ FAQ saved');
+}
+function delFaq(i){if(!confirm('FAQ delete karein?'))return;var l=getFaq();l.splice(i,1);LSset('arj_faq',l);renderFaq();toast('Deleted');}
+
+/* ================= SETTINGS ================= */
+function changeCreds(){
+  var u=document.getElementById('sUser').value.trim(),p=document.getElementById('sPass').value;
+  if(!u||p.length<6){toast('Username zaroori hai aur password kam se kam 6 characters ka ho');return;}
+  LSset(CREDS_KEY,{u:u,p:p});document.getElementById('sUser').value='';document.getElementById('sPass').value='';toast('✅ Credentials updated!');
+}
+function exportAll(){
+  var keys=['arj_content','arj_enquiries','arj_testimonials','arj_gallery','arj_blog','arj_horoscope','arj_faq'];
+  var dump={};keys.forEach(function(k){var v=localStorage.getItem(k);if(v!==null)dump[k]=JSON.parse(v);});
+  var a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(dump,null,2));a.download='arj-website-backup.json';a.click();toast('Backup downloaded');
+}
+function importAll(ev){
+  var f=ev.target.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{var dump=JSON.parse(r.result);
+      Object.keys(dump).forEach(function(k){localStorage.setItem(k,JSON.stringify(dump[k]));});
+      toast('✅ Backup restored!');renderPage('dashboard');
+    }catch(e){toast('❌ Invalid backup file');}
+  };
+  r.readAsText(f);
+}
+function resetAll(){
+  if(!confirm('Pakka? Saara admin data delete ho jayega!'))return;
+  ['arj_content','arj_enquiries','arj_testimonials','arj_gallery','arj_blog','arj_horoscope','arj_faq'].forEach(function(k){localStorage.removeItem(k);});
+  toast('Reset complete');renderPage('dashboard');
+}
+
+/* ================= BOOT ================= */
+function renderPage(id){
+  if(id==='dashboard')renderDashboard();
+  if(id==='enquiries')renderEnquiries();
+  if(id==='content')renderContent();
+  if(id==='testimonials')renderTesti();
+  if(id==='gallery')renderGal();
+  if(id==='blog')renderBlog();
+  if(id==='horoscope')renderHoro();
+  if(id==='faq')renderFaq();
+}
+function boot(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  renderDashboard();
+}
+if(sessionStorage.getItem('arj_admin_auth')==='1')boot();
+</script>
+</body>
+</html>
