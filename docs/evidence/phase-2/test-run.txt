@@ -1,0 +1,33 @@
+  ✓ audit chain verifies and detects tampering                           1.04s  
+  ✓ audit detects deleted row                                            0.02s  
+  ✓ audit context is redacted                                            0.01s  
+  ✓ secret settings are encrypted and masked                             0.01s  
+  ✓ redactor masks nested values                                         0.01s  
+  ✓ parallel writers produce one unbroken chain                          2.11s  
+  ✓ default deny matrix                                                  1.83s  
+  ✓ admin navigation only shows permitted sections                       0.23s  
+  ✓ sensitive change requires fresh step up                              0.27s  
+  ✓ step up rejects wrong password                                       0.22s  
+  ✓ only owner can grant owner and last owner is protected               0.26s  
+  ✓ suspension revokes sessions and tokens                               0.24s  
+  ✓ invited staff get exactly the invited roles                          0.30s  
+  ✓ user route keys are ulids not sequential ids                         0.22s  
+  ✓ no users or credentials exist after migration and rbac sync          0.23s  
+  ✓ owner sets password and mfa via one time link                        0.47s  
+  ✓ invalid totp or weak password is rejected                            0.26s  
+  ✓ second bootstrap is refused once owner exists                        0.33s  
+  ✓ expired invitation is rejected                                       0.34s  
+  ✓ home renders with brand and confirmed biography                      0.02s  
+  ✓ security headers are set                                             0.01s  
+  ✓ staff pages are not cached                                           0.01s  
+  ✓ health endpoints                                                     0.02s  
+  ✓ api meta                                                             0.01s  
+  ✓ design system page renders                                           0.01s  
+  ✓ guest is redirected from admin                                       0.24s  
+  ✓ password alone does not grant access                                 0.25s  
+  ✓ totp code cannot be replayed                                         0.25s  
+  ✓ wrong password suspended and roleless users are rejected identicall… 0.24s  
+  ✓ login is rate limited                                                0.23s  
+  ✓ suspended user with live session is logged out                       0.25s  
+  ✓ customer cannot enter admin even when signed in                      0.22s  
+  Tests:    32 passed (166 assertions)

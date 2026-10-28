@@ -12,7 +12,7 @@ Astrology and spiritual-services platform for **astrorajnathjha.com**.
 | `legacy-static-site/` | Previous static site, kept only as content reference. Do not deploy. |
 
 ## Status
-Phase 1 of 12 (setup + planning) complete. See `docs/04-traceability-matrix.md` for the live status.
+Phases 1–2 of 12 complete (setup, planning, foundation). See `docs/04-traceability-matrix.md` for the live status.
 
 ## Development
 ```

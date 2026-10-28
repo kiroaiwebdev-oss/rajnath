@@ -8,7 +8,7 @@ evidence linked in `docs/evidence/`.
 |---|---|---|---|---|
 | Toolchain & planning | — | 1 | implemented | `docs/evidence/phase-1.md` |
 | Architecture & data model docs | — | 1 | implemented | `02-architecture.md`, `03-data-model.md` |
-| Foundation: roles, audit, settings, design system (§6, §18) | ID-07..09, AD-15..16 | 2 | not started | |
+| Foundation: roles, audit, settings, design system (§6, §18) | ID-07..09, AD-15..16 | 2 | implemented | `docs/evidence/phase-2.md` |
 | Accounts & OTP (§7) | ID-01..06 | 3 | not started | |
 | Catalogue & public website/PWA (§3, §6) | AD-01..05, ED-06 | 4 | not started | |
 | Wallet, payments, ledger (§9) | FI-01..08, FI-13 | 5 | not started | |
@@ -40,4 +40,4 @@ expert translation review. These rows stay `not started` until evidence is suppl
 | Supplier/temple authorizations | not started |
 | Independent security review | not started |
 | Translation review (10 languages) | not started |
-| Content claims confirmed by owner (biography, awards, counts) | not started |
+| Content claims confirmed by owner (biography, awards, counts) | verified — owner confirmation in chat, 28 Oct 2026 |
