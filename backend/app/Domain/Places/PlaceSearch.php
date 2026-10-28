@@ -3,6 +3,7 @@
 namespace App\Domain\Places;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /** Prefix search over GeoNames cities (pop. ≥ 15,000). Data © GeoNames, CC BY 4.0. */
 class PlaceSearch
@@ -18,7 +19,7 @@ class PlaceSearch
         if (str_contains($q, ',')) {
             [$name, $hint] = array_map('trim', explode(',', $q, 2));
         }
-        $like = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], \Illuminate\Support\Str::ascii($name)).'%';
+        $like = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], Str::ascii($name)).'%';
         $rows = DB::table('places')->where('ascii_name', 'like', $like)
             ->when($hint, fn ($w) => $w->where(fn ($x) => $x->where('admin1', 'like', $hint.'%')->orWhere('country', 'like', $hint.'%')))
             ->orderByRaw("country_code = 'IN' desc")->orderByDesc('population')->limit($limit)->get();

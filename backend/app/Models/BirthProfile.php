@@ -9,7 +9,9 @@ use Illuminate\Support\Str;
 class BirthProfile extends Model
 {
     public const LABELS = ['self' => 'Myself', 'spouse' => 'Spouse / partner', 'child' => 'Child', 'parent' => 'Parent', 'sibling' => 'Sibling', 'other' => 'Other'];
+
     public const ACCURACY = ['exact' => 'Exact (from birth certificate / records)', 'approximate' => 'Approximate (within about an hour)', 'unknown' => 'Unknown'];
+
     public const MAX_PER_USER = 20;
 
     protected $fillable = ['label', 'name', 'gender', 'birth_date', 'birth_time', 'time_accuracy', 'place_id', 'place_label', 'lat', 'lng', 'tz_name', 'is_primary'];

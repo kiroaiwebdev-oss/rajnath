@@ -21,10 +21,15 @@ use Throwable;
 class OtpService
 {
     public const TTL_MINUTES = 10;
+
     public const MAX_ATTEMPTS = 5;
+
     public const RESEND_SECONDS = 30;
+
     public const MAX_SENDS = 5;
+
     public const PER_DESTINATION_HOUR = 5;
+
     public const PER_IP_HOUR = 30;
 
     public function __construct(private SmsManager $sms, private DeliveryLog $log) {}

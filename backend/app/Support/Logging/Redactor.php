@@ -8,6 +8,7 @@ namespace App\Support\Logging;
 class Redactor
 {
     private const SECRET_KEYS = '/(pass(word)?|secret|token|api[_-]?key|otp|code|authorization|cookie|signature|private|mfa|recovery)/i';
+
     private const PII_KEYS = '/(email|phone|mobile|dob|birth|address|gotra|lat|lng|ip)/i';
 
     public static function redact(mixed $value, ?string $key = null): mixed

@@ -1,6 +1,6 @@
 @props(['title'])
 @php
-    $tabs = [['Overview', 'account.dashboard'], ['Birth profiles', 'account.birth-profiles.index'], ['Profile & contact', 'account.profile'], ['Devices', 'account.devices']];
+    $tabs = [['Overview', 'account.dashboard'], ['Wallet', 'account.wallet'], ['Birth profiles', 'account.birth-profiles.index'], ['Profile & contact', 'account.profile'], ['Devices', 'account.devices']];
 @endphp
 <x-layouts.public :title="$title">
     <div class="container-page py-8">

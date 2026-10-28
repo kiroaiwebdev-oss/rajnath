@@ -3,6 +3,7 @@
 namespace App\Support\Audit;
 
 use App\Support\Logging\Redactor;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -60,7 +61,7 @@ class AuditLogger
         $checked = 0;
         foreach (DB::table('audit_logs')->orderBy('id')->cursor() as $r) {
             $row = (array) $r;
-            $created = \Illuminate\Support\Carbon::parse($row['created_at'])->format('Y-m-d H:i:s.u');
+            $created = Carbon::parse($row['created_at'])->format('Y-m-d H:i:s.u');
             $row['created_at'] = $created;
             if ($row['prev_hash'] !== $prev || self::hashRow($row) !== $row['hash']) {
                 return ['ok' => false, 'checked' => $checked, 'broken_at' => $row['id']];

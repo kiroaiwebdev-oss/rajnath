@@ -6,6 +6,7 @@ use App\Domain\Identity\Otp\OtpException;
 use App\Domain\Identity\Otp\OtpService;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -62,7 +63,7 @@ class CustomerAuth
         // box does not burn their OTP.
         $peek = DB::table('otp_challenges')->where('ref', $ref)->first();
         if ($peek) {
-            $dest = \Illuminate\Support\Facades\Crypt::decryptString($peek->destination);
+            $dest = Crypt::decryptString($peek->destination);
             $exists = $this->findByContact($peek->channel, $dest);
             if (! $exists && ! $acceptedTerms) {
                 throw ValidationException::withMessages(['terms' => 'Please accept the Terms and Privacy Policy to create your account.']);

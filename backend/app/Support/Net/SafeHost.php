@@ -70,7 +70,7 @@ class SafeHost
         }
         $mask = chr(0xFF << (8 - $rem) & 0xFF);
 
-        return (($a[$bytes] & $mask) === ($b[$bytes] & $mask));
+        return ($a[$bytes] & $mask) === ($b[$bytes] & $mask);
     }
 
     private static function resolve(string $host): array

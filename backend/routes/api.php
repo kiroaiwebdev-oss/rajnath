@@ -34,5 +34,16 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('birth-profiles/{ref}', [V1\BirthProfileController::class, 'show']);
         Route::put('birth-profiles/{ref}', [V1\BirthProfileController::class, 'update']);
         Route::delete('birth-profiles/{ref}', [V1\BirthProfileController::class, 'destroy']);
+        Route::get('wallet', [V1\WalletController::class, 'show']);
+        Route::get('wallet/packages', [V1\WalletController::class, 'packages']);
+        Route::get('wallet/transactions', [V1\WalletController::class, 'transactions']);
+        Route::post('wallet/recharges', [V1\WalletController::class, 'recharge'])->middleware('throttle:payments');
+        Route::get('payments', [V1\WalletController::class, 'index']);
+        Route::get('payments/{ref}', [V1\WalletController::class, 'showPayment']);
+        Route::post('payments/{ref}/confirm', [V1\WalletController::class, 'confirm'])->middleware('throttle:payments');
+        Route::post('payments/{ref}/refresh', [V1\WalletController::class, 'refresh'])->middleware('throttle:payment-refresh');
     });
 });
+
+// Razorpay webhooks: signature-verified, no session/CSRF. Configure in Razorpay Dashboard.
+Route::post('webhooks/razorpay', \App\Http\Controllers\RazorpayWebhookController::class)->middleware('throttle:webhooks')->name('webhooks.razorpay');

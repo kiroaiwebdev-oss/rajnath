@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Domain\Messaging\MailConfigurator;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
 use App\Support\Settings\SettingsRepository;
@@ -54,7 +55,11 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('provider-test', fn (Request $r) => Limit::perMinute(5)->by('u:'.$r->user()?->id));
 
         // Apply SMTP settings saved in admin (falls back to .env MAIL_* when none are saved).
-        $this->app->booted(fn () => rescue(fn () => app(\App\Domain\Messaging\MailConfigurator::class)->apply(), null, false));
+        $this->app->booted(fn () => rescue(fn () => app(MailConfigurator::class)->apply(), null, false));
+
+        RateLimiter::for('payments', fn (Request $r) => Limit::perMinute(10)->by('pay:'.($r->user()?->id ?: $r->ip())));
+        RateLimiter::for('payment-refresh', fn (Request $r) => Limit::perMinute(6)->by('payr:'.($r->user()?->id ?: $r->ip())));
+        RateLimiter::for('webhooks', fn (Request $r) => Limit::perMinute(600)->by('wh:'.$r->ip()));
 
         RateLimiter::for('api', fn (Request $r) => Limit::perMinute(120)->by($r->user()?->id ?: $r->ip()));
 

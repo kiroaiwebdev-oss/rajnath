@@ -1,0 +1,166 @@
+
+   PASS  Tests\Feature\Accounts\ApiV1Test
+  ✓ full mobile sign in flow                                             6.10s  
+  ✓ wrong code and errors use stable shape                               0.02s  
+  ✓ revoking device and suspension invalidate tokens                     0.04s  
+  ✓ cannot revoke someone elses device                                   0.03s  
+  ✓ token without customer ability and staff tokens are refused          0.02s  
+  ✓ expired token rejected                                               0.02s  
+  ✓ birth profile crud via api                                           0.05s  
+  ✓ public catalogue hides drafts                                        0.20s  
+
+   PASS  Tests\Feature\Accounts\BirthProfileAndTimeTest
+  ✓ historical timezones and dst                                         0.02s  
+  ✓ invalid input rejected                                               0.01s  
+  ✓ create profile via website resolves utc and flags dst                0.03s  
+  ✓ unknown time and validation                                          0.02s  
+  ✓ profiles are private to their owner                                  0.04s  
+  ✓ primary switches and delete reassigns                                0.03s  
+  ✓ place search prefers india and supports region hint                  0.02s  
+
+   PASS  Tests\Feature\Accounts\CustomerOtpTest
+  ✓ new customer registers with email otp on website                     0.04s  
+  ✓ code is single use and wrong codes lock after five                   0.02s  
+  ✓ correct code works once and expires                                  0.02s  
+  ✓ purpose mismatch is rejected                                         0.01s  
+  ✓ per destination hourly limit and resend cooldown                     0.02s  
+  ✓ mobile otp via configured sms provider                               0.05s  
+  ✓ sms failure gives clear message                                      0.02s  
+  ✓ identifier parsing                                                   0.01s  
+  ✓ existing customer signs in without terms and staff cannot use custo… 0.03s  
+  ✓ suspended customer cannot sign in                                    0.02s  
+
+   PASS  Tests\Feature\Finance\FinanceApiAndAdminTest
+  ✓ api wallet recharge confirm and history                              0.07s  
+  ✓ api reports payments unavailable                                     0.02s  
+  ✓ order snapshot wallet payment cancel and complete                    0.19s  
+  ✓ direct order payment is credited then reserved                       0.21s  
+  ✓ admin finance permissions packages and live mode                     0.34s  
+
+   PASS  Tests\Feature\Finance\LedgerWalletTest
+  ✓ unbalanced float and negative amounts are rejected                   0.01s  
+  ✓ non integer amounts are rejected                                     0.01s  
+  ✓ posting is idempotent and verifiable                                 0.02s  
+  ✓ verify detects tampered cached balance                               0.02s  
+  ✓ reserve uses bonus first consume and release keep exact split        0.04s  
+  ✓ release returns bonus when nothing consumed                          0.03s  
+  ✓ insufficient funds and over consumption                              0.02s  
+  ✓ statement shows customer entries only                                0.02s  
+
+   PASS  Tests\Feature\Finance\PaymentFlowTest
+  ✓ wallet page without configuration says payments unavailable          0.03s  
+  ✓ full web recharge with verified checkout                             0.09s  
+  ✓ forged checkout signature is rejected and not credited               0.03s  
+  ✓ amount mismatch marks payment ambiguous with critical finding        0.03s  
+  ✓ authorized payment is captured server side                           0.04s  
+  ✓ razorpay outage after valid signature is finished by reconciler      0.05s  
+  ✓ lost callback is recovered by reconciler and abandoned orders expir… 0.05s  
+  ✓ failed payment then late capture is credited with finding            0.04s  
+  ✓ live mode requires owner settings and enforces limit                 0.04s  
+  ✓ customers cannot see each others payments                            0.04s  
+
+   PASS  Tests\Feature\Finance\RefundDisputeTest
+  ✓ maker checker refund processed by razorpay                           0.30s  
+  ✓ requester cannot approve own refund unless owner                     0.27s  
+  ✓ rejected and failed refunds return money                             0.27s  
+  ✓ transient refund error is retried without double refund              0.28s  
+  ✓ spent money cannot be refunded                                       0.25s  
+  ✓ dispute holds then lost and won                                      0.28s  
+
+   PASS  Tests\Feature\Finance\WalletConcurrencyTest
+  ✓ parallel reservations never overspend                                7.45s  
+
+   PASS  Tests\Feature\Finance\WebhookTest
+  ✓ bad or missing signature is rejected                                 4.51s  
+  ✓ replayed event is acknowledged once                                  0.04s  
+  ✓ webhook claiming capture is verified against api                     0.03s  
+  ✓ out of order failed after captured does not undo capture             0.04s  
+  ✓ unknown payment raises finding                                       0.02s  
+  ✓ processing error lets razorpay retry                                 0.03s  
+
+   PASS  Tests\Feature\Foundation\AuditAndSettingsTest
+  ✓ audit chain verifies and detects tampering                           0.02s  
+  ✓ audit detects deleted row                                            0.01s  
+  ✓ audit context is redacted                                            0.01s  
+  ✓ secret settings are encrypted and masked                             0.01s  
+  ✓ redactor masks nested values                                         0.02s  
+
+   PASS  Tests\Feature\Foundation\AuditConcurrencyTest
+  ✓ parallel writers produce one unbroken chain                          6.46s  
+
+   PASS  Tests\Feature\Foundation\AuthorizationTest
+  ✓ default deny matrix                                                  4.77s  
+  ✓ admin navigation only shows permitted sections                       0.23s  
+  ✓ sensitive change requires fresh step up                              0.24s  
+  ✓ step up rejects wrong password                                       0.21s  
+  ✓ only owner can grant owner and last owner is protected               0.25s  
+  ✓ suspension revokes sessions and tokens                               0.23s  
+  ✓ invited staff get exactly the invited roles                          0.28s  
+  ✓ user route keys are ulids not sequential ids                         0.20s  
+
+   PASS  Tests\Feature\Foundation\OwnerBootstrapTest
+  ✓ no users or credentials exist after migration and rbac sync          0.20s  
+  ✓ owner sets password and mfa via one time link                        0.45s  
+  ✓ invalid totp or weak password is rejected                            0.26s  
+  ✓ second bootstrap is refused once owner exists                        0.32s  
+  ✓ expired invitation is rejected                                       0.39s  
+
+   PASS  Tests\Feature\Foundation\PlatformTest
+  ✓ home renders with brand and confirmed biography                      0.02s  
+  ✓ security headers are set                                             0.02s  
+  ✓ staff pages are not cached                                           0.02s  
+  ✓ health endpoints                                                     0.02s  
+  ✓ api meta                                                             0.01s  
+  ✓ design system page renders                                           0.01s  
+
+   PASS  Tests\Feature\Foundation\StaffAuthTest
+  ✓ guest is redirected from admin                                       0.21s  
+  ✓ password alone does not grant access                                 0.25s  
+  ✓ totp code cannot be replayed                                         0.24s  
+  ✓ wrong password suspended and roleless users are rejected identicall… 0.24s  
+  ✓ login is rate limited                                                0.23s  
+  ✓ suspended user with live session is logged out                       0.23s  
+  ✓ customer cannot enter admin even when signed in                      0.20s  
+
+   PASS  Tests\Feature\Messaging\ProvidersAdminTest
+  ✓ only owner level staff can open provider settings                    0.27s  
+  ✓ saving requires step up                                              0.21s  
+  ✓ mail settings saved encrypted and password kept when blank           0.27s  
+  ✓ mail validation and ssrf guard                                       0.25s  
+  ✓ safe host rules                                                      0.21s  
+  ✓ sms settings switching keeps both providers                          0.27s  
+  ✓ sms validation                                                       0.23s  
+  ✓ send test sms through admin                                          0.33s  
+  ✓ send test email reports failure clearly                              0.25s  
+
+   PASS  Tests\Feature\Messaging\SmsProvidersTest
+  ✓ twilio request format and success                                    0.02s  
+  ✓ twilio messaging service takes precedence and errors are reported    0.02s  
+  ✓ fast2sms dlt request format                                          0.03s  
+  ✓ fast2sms otp route and error message                                 0.02s  
+  ✓ fast2sms refuses foreign numbers unless twilio fallback configured   0.02s  
+  ✓ incomplete or missing configuration fails without network            0.02s  
+  ✓ network failure is reported not thrown                               0.02s  
+
+   PASS  Tests\Feature\Messaging\SmtpDeliveryTest
+  ✓ admin test email is delivered over smtp with auth                    0.70s  
+  ✓ tls mode refuses plain server                                        0.43s  
+
+   PASS  Tests\Feature\Website\WebsiteAndCatalogueTest
+  ✓ public pages render                                                  0.44s  
+  ✓ drafts are hidden and search filters                                 0.41s  
+  ✓ enquiry submission and admin follow up                               0.41s  
+  ✓ enquiry validation honeypot and csv injection                        0.37s  
+  ✓ enquiry rate limit                                                   0.85s  
+  ✓ admin price change requires permission and step up                   0.41s  
+  ✓ puja requiring supplier cannot be activated and activation rules     0.40s  
+  ✓ admin can edit service text and slug uniqueness                      0.40s  
+  ✓ admin customer suspension and faq management                         0.39s  
+  ✓ customer devices page and sign out others                            0.38s  
+  ✓ contact change requires otp to new address                           0.38s  
+  ✓ money formatting and parsing                                         0.38s  
+  ✓ guest redirects go to the right sign in                              0.36s  
+
+  Tests:    124 passed (874 assertions)
+  Duration: 47.65s
+

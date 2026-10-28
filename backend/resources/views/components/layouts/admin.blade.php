@@ -6,10 +6,12 @@
         ['Enquiries', 'admin.enquiries.index', 'bookings.view'],
         ['Customers', 'admin.customers.index', 'customers.view'],
         ['Catalogue', 'admin.catalogue.index', 'catalogue.view'],
+        ['Finance', 'admin.finance.overview', 'finance.view'],
         ['FAQs', 'admin.faqs.index', 'content.author'],
         ['Team', 'admin.team.index', 'team.view'],
         ['Settings', 'admin.settings.edit', 'settings.view'],
         ['Email & SMS', 'admin.providers.edit', 'providers.manage'],
+        ['Payments setup', 'admin.payments-setup.edit', 'providers.manage'],
         ['Audit log', 'admin.audit.index', 'audit.view'],
     ], fn ($i) => $i[2] === null || $u->can($i[2]));
 @endphp
@@ -28,8 +30,8 @@
                         <li>
                             <a href="{{ route($route) }}" @class([
                                 'flex min-h-11 items-center rounded-xl px-3 text-sm font-medium no-underline',
-                                'bg-ivory-100 text-ink-900' => request()->routeIs(str_replace('.index', '', $route).'*'),
-                                'text-ink-700 hover:bg-ivory-50' => ! request()->routeIs(str_replace('.index', '', $route).'*'),
+                                'bg-ivory-100 text-ink-900' => request()->routeIs(preg_replace('/\.(index|overview|edit)$/', '', $route).'*'),
+                                'text-ink-700 hover:bg-ivory-50' => ! request()->routeIs(preg_replace('/\.(index|overview|edit)$/', '', $route).'*'),
                             ]) @if (request()->routeIs($route)) aria-current="page" @endif>{{ $label }}</a>
                         </li>
                     @endforeach

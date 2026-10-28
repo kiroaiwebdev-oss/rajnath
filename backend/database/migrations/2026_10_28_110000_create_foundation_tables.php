@@ -1,7 +1,9 @@
 <?php
 
+use App\Support\Audit\AuditLogger;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -31,8 +33,8 @@ return new class extends Migration
             $table->char('last_hash', 64);
             $table->unsignedBigInteger('last_id')->default(0);
         });
-        \Illuminate\Support\Facades\DB::table('audit_chain_heads')->insert([
-            'id' => 1, 'last_hash' => \App\Support\Audit\AuditLogger::GENESIS, 'last_id' => 0,
+        DB::table('audit_chain_heads')->insert([
+            'id' => 1, 'last_hash' => AuditLogger::GENESIS, 'last_id' => 0,
         ]);
 
         Schema::create('settings', function (Blueprint $table) {

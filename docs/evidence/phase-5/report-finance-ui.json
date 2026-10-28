@@ -1,0 +1,204 @@
+[
+  {
+    "viewport": "desktop",
+    "page": "account-dashboard",
+    "url": "/account",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "wallet",
+    "url": "/account/wallet",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "payment-detail",
+    "url": "/account/payments/01M616J54PZTQ31731KG20Q2Y9",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "receipt",
+    "url": "/account/payments/01M616J54PZTQ31731KG20Q2Y9/receipt",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "check": "checkout-script-blocked-message",
+    "ok": true
+  },
+  {
+    "viewport": "desktop",
+    "page": "checkout-load-failure",
+    "url": "/account/payments/01M616J55VS314RX47CQ7W2H6E/checkout",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-finance",
+    "url": "/admin/finance",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-payments",
+    "url": "/admin/finance/payments",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-refunds",
+    "url": "/admin/finance/refunds",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-disputes",
+    "url": "/admin/finance/disputes",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-packages",
+    "url": "/admin/finance/packages",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-razorpay-setup",
+    "url": "/admin/payments-setup",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-payment-detail",
+    "url": "/admin/finance/payments/01M616J54PZTQ31731KG20Q2Y9",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "account-dashboard",
+    "url": "/account",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "wallet",
+    "url": "/account/wallet",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "payment-detail",
+    "url": "/account/payments/01M616JMEMXSF4WFM6HJ0DWEN0",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "receipt",
+    "url": "/account/payments/01M616JMEMXSF4WFM6HJ0DWEN0/receipt",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "check": "checkout-script-blocked-message",
+    "ok": true
+  },
+  {
+    "viewport": "phone",
+    "page": "checkout-load-failure",
+    "url": "/account/payments/01M616JMFY40T7K9EV4BVYQ25B/checkout",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-finance",
+    "url": "/admin/finance",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-payments",
+    "url": "/admin/finance/payments",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-refunds",
+    "url": "/admin/finance/refunds",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-disputes",
+    "url": "/admin/finance/disputes",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-packages",
+    "url": "/admin/finance/packages",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-razorpay-setup",
+    "url": "/admin/payments-setup",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-payment-detail",
+    "url": "/admin/finance/payments/01M616JMEMXSF4WFM6HJ0DWEN0",
+    "horizontalOverflowPx": 0,
+    "consoleErrors": [],
+    "axeViolations": []
+  }
+]

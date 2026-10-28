@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Domain\Identity\CustomerAuth;
 use App\Domain\Identity\Otp\OtpException;
 use App\Domain\Identity\Otp\OtpService;
+use App\Domain\Ledger\Wallet;
 use App\Http\Controllers\Controller;
 use App\Models\BirthProfile;
 use App\Models\Enquiry;
@@ -35,6 +36,7 @@ class AccountController extends Controller
         return view('account.dashboard', [
             'profiles' => BirthProfile::where('user_id', $u->id)->orderByDesc('is_primary')->orderBy('name')->get(),
             'enquiries' => Enquiry::with('offering.translations')->where('user_id', $u->id)->latest()->limit(5)->get(),
+            'wallet' => app(Wallet::class)->balances($u),
         ]);
     }
 

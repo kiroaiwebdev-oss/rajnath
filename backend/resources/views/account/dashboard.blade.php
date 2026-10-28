@@ -14,7 +14,16 @@
             @empty
                 <p class="mt-4 rounded-xl bg-ivory-100 p-6 text-center text-sm text-ink-600">No requests yet. Choose a service to send your first request.</p>
             @endforelse
-            <p class="mt-4 text-xs text-ink-600">Bookings, payments, wallet and reports will appear here as those features open.</p>
+            <p class="mt-4 text-xs text-ink-600">Online bookings and reports will appear here as those features open.</p>
+        </section>
+        <div class="space-y-6">
+        <section class="card p-5" aria-labelledby="wl-h">
+            <div class="flex items-center justify-between gap-3">
+                <h2 id="wl-h" class="text-lg">Wallet</h2>
+                <a href="{{ route('account.wallet') }}" class="btn-ghost px-3">Open</a>
+            </div>
+            <p class="mt-2 text-2xl font-semibold tabular-nums">{{ \App\Support\Money::format($wallet['available']) }}</p>
+            <p class="text-xs text-ink-600">Available balance</p>
         </section>
         <section class="card p-5" aria-labelledby="bp-h">
             <div class="flex items-center justify-between gap-3">
@@ -31,5 +40,6 @@
                 <a href="{{ route('account.birth-profiles.create') }}" class="btn-primary mt-4 w-full">Add birth details</a>
             @endforelse
         </section>
+    </div>
     </div>
 </x-layouts.account>

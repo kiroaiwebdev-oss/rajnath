@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\BirthProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class BirthProfileController extends Controller

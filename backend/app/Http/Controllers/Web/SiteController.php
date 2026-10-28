@@ -6,6 +6,7 @@ use App\Domain\Places\PlaceSearch;
 use App\Http\Controllers\Controller;
 use App\Models\Enquiry;
 use App\Models\Offering;
+use App\Models\OfferingVariant;
 use App\Models\ServiceFamily;
 use App\Support\Audit\AuditLogger;
 use Illuminate\Http\JsonResponse;
@@ -66,7 +67,7 @@ class SiteController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'phone' => ['required', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:190'],
-            'mode' => ['nullable', Rule::in(array_keys(\App\Models\OfferingVariant::MODES))],
+            'mode' => ['nullable', Rule::in(array_keys(OfferingVariant::MODES))],
             'language' => ['nullable', Rule::in(['Hindi', 'Maithili', 'Sanskrit', 'English'])],
             'preferred_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today'],
             'birth_date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],

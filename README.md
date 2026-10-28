@@ -12,7 +12,7 @@ Astrology and spiritual-services platform for **astrorajnathjha.com**.
 | `legacy-static-site/` | Previous static site, kept only as content reference. Do not deploy. |
 
 ## Status
-Phases 1–4 of 12 implemented (setup, foundation, customer accounts with OTP, catalogue and public website). See docs/evidence. See `docs/04-traceability-matrix.md` for the live status.
+Phases 1–5 of 12 implemented (setup, foundation, customer accounts with OTP, catalogue and public website, ledger/wallet/Razorpay payments/refunds/disputes). Phases 6–12 (consultations and calling, astro engine and Panchang, reports, puja, content, support, AI, payouts, privacy, Android app, deployment, signed builds) are not built yet. See docs/evidence. See `docs/04-traceability-matrix.md` for the live status.
 
 ## Development
 ```

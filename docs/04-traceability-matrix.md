@@ -12,7 +12,7 @@ evidence linked in `docs/evidence/`.
 | Accounts & OTP (§7) | ID-01..06 | 3 | implemented (web + API); real provider send not yet verified; export/deletion in phase 10 | `docs/evidence/phase-3-4.md` |
 | Email/SMS provider configuration (§16, §17) | AD-17 (SMTP, OTP part), NO-01 (email, SMS send) | 3 | implemented — real-account send not yet verified | `docs/evidence/messaging.md` |
 | Catalogue & public website/PWA (§3, §6) | AD-01..05, ED-06 | 4 | implemented (English); Hindi + media library pending | `docs/evidence/phase-3-4.md` |
-| Wallet, payments, ledger (§9) | FI-01..08, FI-13 | 5 | not started | |
+| Wallet, payments, ledger (§9) | FI-01..08, FI-13 | 5 | implemented: FI-01..07, FI-08 receipts + statements (web + API, fake-Razorpay tests). Not yet: real Razorpay sandbox run, settlement import, GST invoices, FI-13 coupons | `docs/evidence/phase-5.md` |
 | Consultations & calling (§8) | CO-01..14, PR-01..07 | 6 | not started | |
 | Astro engine, calculators, Panchang (§11, §12) | CA-01..24, PA-01..07 | 7 | not started | |
 | Reports & bundles (§10) | RP-01..25 | 8 | not started | |

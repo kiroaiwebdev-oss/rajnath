@@ -10,6 +10,7 @@ use App\Support\Audit\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -47,7 +48,7 @@ class CustomerAuthController extends Controller
             return redirect()->route('account.sign-in');
         }
         $c = DB::table('otp_challenges')->where('ref', $ref)->first();
-        $dest = \Illuminate\Support\Facades\Crypt::decryptString($c->destination);
+        $dest = Crypt::decryptString($c->destination);
 
         return view('account.auth.verify', [
             'masked' => $masked, 'channel' => $c->channel,

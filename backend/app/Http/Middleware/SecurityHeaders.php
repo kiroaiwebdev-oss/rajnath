@@ -31,7 +31,7 @@ class SecurityHeaders
             "img-src 'self' data: blob:",
             "font-src 'self'",
             "connect-src 'self' https://api.razorpay.com wss:$dev",
-            "frame-src https://api.razorpay.com https://checkout.razorpay.com",
+            'frame-src https://api.razorpay.com https://checkout.razorpay.com',
             "frame-ancestors 'none'",
             "base-uri 'self'",
             "form-action 'self'",

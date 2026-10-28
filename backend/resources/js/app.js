@@ -76,6 +76,47 @@ Alpine.data('countdown', () => ({
     get label() { return this.left > 0 ? 'Resend code in ' + this.left + 's' : 'Resend code'; },
 }));
 
+// Razorpay Checkout. Options come from a JSON <script> block (no secrets). The result is posted
+// to the server, which verifies the signature and re-checks the payment with Razorpay.
+Alpine.data('rzpCheckout', () => ({
+    message: '', busy: false, opts: null,
+    init() {
+        this.opts = JSON.parse(document.getElementById('rzp-options').textContent);
+        if (this.$el.dataset.autoopen === '1') this.$nextTick(() => this.pay());
+    },
+    load() {
+        return new Promise((resolve, reject) => {
+            if (window.Razorpay) return resolve();
+            const s = document.createElement('script');
+            s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            s.onload = resolve; s.onerror = () => reject(new Error('load'));
+            document.head.appendChild(s);
+        });
+    },
+    async pay() {
+        this.busy = true; this.message = 'Opening secure payment window…';
+        try { await this.load(); } catch (e) {
+            this.busy = false; this.message = 'The payment window could not load. Check your connection and try again.'; return;
+        }
+        const form = this.$refs.form;
+        const rzp = new window.Razorpay(Object.assign({}, this.opts, {
+            handler: (r) => {
+                this.message = 'Payment received. Confirming…';
+                form.querySelector('[name=razorpay_payment_id]').value = r.razorpay_payment_id;
+                form.querySelector('[name=razorpay_order_id]').value = r.razorpay_order_id;
+                form.querySelector('[name=razorpay_signature]').value = r.razorpay_signature;
+                form.submit();
+            },
+            modal: { ondismiss: () => { this.busy = false; this.message = 'Payment window closed. No money was taken unless you completed the payment.'; }, confirm_close: true },
+        }));
+        rzp.on('payment.failed', (r) => {
+            this.busy = false;
+            this.message = 'Payment failed: ' + ((r && r.error && r.error.description) || 'please try again or use another method') + '.';
+        });
+        rzp.open();
+    },
+}));
+
 window.Alpine = Alpine;
 Alpine.start();
 

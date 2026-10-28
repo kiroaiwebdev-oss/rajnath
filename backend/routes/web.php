@@ -42,6 +42,14 @@ Route::prefix('account')->name('account.')->group(function () {
         Route::delete('devices/sessions/{id}', [Web\AccountController::class, 'revokeSession'])->name('devices.session.revoke');
         Route::delete('devices/tokens/{id}', [Web\AccountController::class, 'revokeToken'])->whereNumber('id')->name('devices.token.revoke');
         Route::post('devices/sign-out-others', [Web\AccountController::class, 'revokeAllOthers'])->name('devices.others');
+        Route::get('wallet', [Web\WalletController::class, 'show'])->name('wallet');
+        Route::post('wallet/recharge', [Web\WalletController::class, 'recharge'])->middleware('throttle:payments')->name('wallet.recharge');
+        Route::get('wallet/statement.csv', [Web\WalletController::class, 'statementCsv'])->name('wallet.statement');
+        Route::get('payments/{payment}', [Web\WalletController::class, 'status'])->name('payments.show');
+        Route::get('payments/{payment}/checkout', [Web\WalletController::class, 'checkout'])->name('payments.checkout');
+        Route::post('payments/{payment}/confirm', [Web\WalletController::class, 'confirm'])->middleware('throttle:payments')->name('payments.confirm');
+        Route::post('payments/{payment}/refresh', [Web\WalletController::class, 'refresh'])->middleware('throttle:payment-refresh')->name('payments.refresh');
+        Route::get('payments/{payment}/receipt', [Web\WalletController::class, 'receipt'])->name('payments.receipt');
         Route::resource('birth-profiles', Web\BirthProfileController::class)->except('show')->parameters(['birth-profiles' => 'profile']);
     });
 });
@@ -91,6 +99,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::post('faqs', [Admin\FaqController::class, 'save'])->name('faqs.save');
     Route::delete('faqs/{id}', [Admin\FaqController::class, 'destroy'])->whereNumber('id')->name('faqs.destroy');
 
+    Route::prefix('finance')->name('finance.')->controller(Admin\FinanceController::class)->group(function () {
+        Route::get('/', 'overview')->name('overview');
+        Route::post('verify', 'verify')->name('verify');
+        Route::post('findings/{id}/resolve', 'resolveFinding')->whereNumber('id')->name('findings.resolve');
+        Route::get('payments', 'payments')->name('payments');
+        Route::get('payments/{payment}', 'payment')->name('payment');
+        Route::post('payments/{payment}/recheck', 'recheck')->middleware('throttle:payment-refresh')->name('payment.recheck');
+        Route::post('payments/{payment}/refund', 'requestRefund')->name('payment.refund');
+        Route::get('refunds', 'refunds')->name('refunds');
+        Route::get('disputes', 'disputes')->name('disputes');
+        Route::get('packages', 'packages')->name('packages');
+    });
+    Route::get('payments-setup', [Admin\PaymentSetupController::class, 'edit'])->name('payments-setup.edit');
+
     // Sensitive changes: fresh password + TOTP confirmation required.
     Route::middleware('step.up')->group(function () {
         Route::post('team/invitations', [Admin\TeamController::class, 'invite'])->name('team.invite');
@@ -102,6 +124,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
         Route::put('providers/sms', [Admin\ProvidersController::class, 'updateSms'])->name('providers.sms');
         Route::post('providers/mail/test', [Admin\ProvidersController::class, 'testMail'])->middleware('throttle:provider-test')->name('providers.mail.test');
         Route::post('providers/sms/test', [Admin\ProvidersController::class, 'testSms'])->middleware('throttle:provider-test')->name('providers.sms.test');
+        Route::post('finance/refunds/{refund}/decide', [Admin\FinanceController::class, 'decideRefund'])->name('finance.refund.decide');
+        Route::post('finance/packages', [Admin\FinanceController::class, 'savePackage'])->name('finance.packages.save');
+        Route::put('payments-setup', [Admin\PaymentSetupController::class, 'update'])->name('payments-setup.update');
+        Route::put('payments-setup/mode', [Admin\PaymentSetupController::class, 'updateMode'])->name('payments-setup.mode');
+        Route::post('payments-setup/test', [Admin\PaymentSetupController::class, 'test'])->middleware('throttle:provider-test')->name('payments-setup.test');
         Route::post('catalogue/{ref}/variants', [Admin\CatalogueController::class, 'saveVariant'])->name('catalogue.variant');
     });
 });
