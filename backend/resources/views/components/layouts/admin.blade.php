@@ -5,6 +5,7 @@
         ['Dashboard', 'admin.dashboard', null],
         ['Team', 'admin.team.index', 'team.view'],
         ['Settings', 'admin.settings.edit', 'settings.view'],
+        ['Email & SMS', 'admin.providers.edit', 'providers.manage'],
         ['Audit log', 'admin.audit.index', 'audit.view'],
     ], fn ($i) => $i[2] === null || $u->can($i[2]));
 @endphp

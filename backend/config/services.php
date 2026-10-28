@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // Allow admin-entered provider hosts (e.g. SMTP) on private networks. Keep false unless the
+    // mail relay runs on the same VPS/LAN.
+    'providers' => [
+        'allow_private_hosts' => (bool) env('ARJ_ALLOW_PRIVATE_PROVIDER_HOSTS', false),
+    ],
+
 ];

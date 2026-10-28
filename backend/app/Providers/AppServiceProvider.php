@@ -44,6 +44,11 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by('email:'.strtolower((string) $r->input('email'))),
         ]);
         RateLimiter::for('staff-mfa', fn (Request $r) => Limit::perMinute(6)->by('sess:'.$r->session()->getId()));
+        RateLimiter::for('provider-test', fn (Request $r) => Limit::perMinute(5)->by('u:'.$r->user()?->id));
+
+        // Apply SMTP settings saved in admin (falls back to .env MAIL_* when none are saved).
+        $this->app->booted(fn () => rescue(fn () => app(\App\Domain\Messaging\MailConfigurator::class)->apply(), null, false));
+
         RateLimiter::for('api', fn (Request $r) => Limit::perMinute(120)->by($r->user()?->id ?: $r->ip()));
 
         View::composer('*', function ($view) {

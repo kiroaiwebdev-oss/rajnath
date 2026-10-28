@@ -23,7 +23,7 @@ function totp(sec, offset = 0) {
 
 const pages = [
   ['home', '/'], ['design-system', '/design-system'], ['staff-login', '/staff/login'],
-  ['admin-dashboard', '/admin'], ['admin-team', '/admin/team'], ['admin-settings', '/admin/settings'], ['admin-audit', '/admin/audit'],
+  ['admin-dashboard', '/admin'], ['admin-team', '/admin/team'], ['admin-settings', '/admin/settings'], ['admin-audit', '/admin/audit'], ['admin-providers', '/admin/providers'],
 ];
 const viewports = { desktop: { width: 1440, height: 900 }, phone: { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 } };
 const report = [];

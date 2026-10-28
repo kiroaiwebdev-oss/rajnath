@@ -35,6 +35,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
         Route::put('team/{user}/roles', [Admin\TeamController::class, 'updateRoles'])->name('team.roles');
         Route::put('team/{user}/status', [Admin\TeamController::class, 'setStatus'])->name('team.status');
         Route::put('settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
+
+        Route::get('providers', [Admin\ProvidersController::class, 'edit'])->name('providers.edit');
+        Route::put('providers/mail', [Admin\ProvidersController::class, 'updateMail'])->name('providers.mail');
+        Route::put('providers/sms', [Admin\ProvidersController::class, 'updateSms'])->name('providers.sms');
+        Route::post('providers/mail/test', [Admin\ProvidersController::class, 'testMail'])->middleware('throttle:provider-test')->name('providers.mail.test');
+        Route::post('providers/sms/test', [Admin\ProvidersController::class, 'testSms'])->middleware('throttle:provider-test')->name('providers.sms.test');
     });
 
     Route::get('settings', [Admin\SettingsController::class, 'edit'])->name('settings.edit');

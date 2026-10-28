@@ -1,0 +1,51 @@
+  ✓ audit chain verifies and detects tampering                           1.83s  
+  ✓ audit detects deleted row                                            0.01s  
+  ✓ audit context is redacted                                            0.01s  
+  ✓ secret settings are encrypted and masked                             0.01s  
+  ✓ redactor masks nested values                                         0.01s  
+  ✓ parallel writers produce one unbroken chain                          2.95s  
+  ✓ default deny matrix                                                  1.86s  
+  ✓ admin navigation only shows permitted sections                       0.21s  
+  ✓ sensitive change requires fresh step up                              0.27s  
+  ✓ step up rejects wrong password                                       0.23s  
+  ✓ only owner can grant owner and last owner is protected               0.25s  
+  ✓ suspension revokes sessions and tokens                               0.24s  
+  ✓ invited staff get exactly the invited roles                          0.30s  
+  ✓ user route keys are ulids not sequential ids                         0.22s  
+  ✓ no users or credentials exist after migration and rbac sync          0.21s  
+  ✓ owner sets password and mfa via one time link                        0.48s  
+  ✓ invalid totp or weak password is rejected                            0.25s  
+  ✓ second bootstrap is refused once owner exists                        0.31s  
+  ✓ expired invitation is rejected                                       0.37s  
+  ✓ home renders with brand and confirmed biography                      0.02s  
+  ✓ security headers are set                                             0.01s  
+  ✓ staff pages are not cached                                           0.01s  
+  ✓ health endpoints                                                     0.02s  
+  ✓ api meta                                                             0.01s  
+  ✓ design system page renders                                           0.02s  
+  ✓ guest is redirected from admin                                       0.22s  
+  ✓ password alone does not grant access                                 0.26s  
+  ✓ totp code cannot be replayed                                         0.23s  
+  ✓ wrong password suspended and roleless users are rejected identicall… 0.23s  
+  ✓ login is rate limited                                                0.23s  
+  ✓ suspended user with live session is logged out                       0.24s  
+  ✓ customer cannot enter admin even when signed in                      0.22s  
+  ✓ only owner level staff can open provider settings                    0.28s  
+  ✓ saving requires step up                                              0.23s  
+  ✓ mail settings saved encrypted and password kept when blank           0.26s  
+  ✓ mail validation and ssrf guard                                       0.26s  
+  ✓ safe host rules                                                      0.21s  
+  ✓ sms settings switching keeps both providers                          0.27s  
+  ✓ sms validation                                                       0.24s  
+  ✓ send test sms through admin                                          0.28s  
+  ✓ send test email reports failure clearly                              0.26s  
+  ✓ twilio request format and success                                    0.02s  
+  ✓ twilio messaging service takes precedence and errors are reported    0.02s  
+  ✓ fast2sms dlt request format                                          0.02s  
+  ✓ fast2sms otp route and error message                                 0.02s  
+  ✓ fast2sms refuses foreign numbers unless twilio fallback configured   0.03s  
+  ✓ incomplete or missing configuration fails without network            0.02s  
+  ✓ network failure is reported not thrown                               0.02s  
+  ✓ admin test email is delivered over smtp with auth                    0.71s  
+  ✓ tls mode refuses plain server                                        0.43s  
+  Tests:    50 passed (279 assertions)

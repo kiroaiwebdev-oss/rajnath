@@ -10,6 +10,7 @@ evidence linked in `docs/evidence/`.
 | Architecture & data model docs | — | 1 | implemented | `02-architecture.md`, `03-data-model.md` |
 | Foundation: roles, audit, settings, design system (§6, §18) | ID-07..09, AD-15..16 | 2 | implemented | `docs/evidence/phase-2.md` |
 | Accounts & OTP (§7) | ID-01..06 | 3 | not started | |
+| Email/SMS provider configuration (§16, §17) | AD-17 (SMTP, OTP part), NO-01 (email, SMS send) | 3 | implemented — real-account send not yet verified | `docs/evidence/messaging.md` |
 | Catalogue & public website/PWA (§3, §6) | AD-01..05, ED-06 | 4 | not started | |
 | Wallet, payments, ledger (§9) | FI-01..08, FI-13 | 5 | not started | |
 | Consultations & calling (§8) | CO-01..14, PR-01..07 | 6 | not started | |
