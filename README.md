@@ -18,7 +18,9 @@ Astrology and spiritual-services platform for **astrorajnathjha.com**: Laravel 1
 - Email/SMS provider setup
 - 26 calculators and daily Panchang
 - Razorpay checkout, wallet, ledger, refunds and reconciliation
+- gemstone store (stock, shipping, dispatch) and paid palmistry report from palm photos
 - Android app (core screens) with a release-signed APK and AAB
+- internal security review (`docs/security/security-review.md`)
 
 **Not yet built:**
 - consultation booking and audio/video calling (LiveKit)

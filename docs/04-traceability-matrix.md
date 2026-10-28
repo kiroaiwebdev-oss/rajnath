@@ -17,6 +17,9 @@ evidence linked in `docs/evidence/`.
 | Astro engine, calculators, Panchang (§11, §12) | CA-01..24, PA-01, PA-02, PA-04 (partial) | 7 | implemented; PA-03 lunar months, PA-05 event muhurats, PA-06 festival calendars, Choghadiya/Hora not started | `docs/astro/methods.md` |
 | Reports & bundles (§10) | RP-01..25 | 8 | not started | |
 | Puja/Chadhava (§14) | PJ-01..10 | 9 | not started | |
+| Gemstone store (owner request 28 Oct) | products, stock, shipping, dispatch | — | implemented (online payment via Razorpay; courier API not integrated, AWB entered manually) | `docs/evidence/final/` |
+| Palmistry photo report (owner request 28 Oct) | paid order → photo upload → expert report | — | implemented (expert-written; no automated palm analysis; PDF via browser print) | `backend/tests/Feature/Store/StoreAndPalmTest.php` |
+| Internal security review | ASVS L2 selected controls, route audit, secret scan | — | done internally; independent review pending | `docs/security/security-review.md` |
 | Horoscope/transit publishing (§13) | ED-01..05 | 9 | not started | |
 | Support & notifications (§16) | SU-01..03, NO-01..02 | 9 | not started | |
 | AI assistant (§15) | AI-01..03 | 9 | not started | |
