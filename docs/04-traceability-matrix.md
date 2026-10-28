@@ -12,9 +12,9 @@ evidence linked in `docs/evidence/`.
 | Accounts & OTP (§7) | ID-01..06 | 3 | implemented (web + API); real provider send not yet verified; export/deletion in phase 10 | `docs/evidence/phase-3-4.md` |
 | Email/SMS provider configuration (§16, §17) | AD-17 (SMTP, OTP part), NO-01 (email, SMS send) | 3 | implemented — real-account send not yet verified | `docs/evidence/messaging.md` |
 | Catalogue & public website/PWA (§3, §6) | AD-01..05, ED-06 | 4 | implemented (English); Hindi + media library pending | `docs/evidence/phase-3-4.md` |
-| Wallet, payments, ledger (§9) | FI-01..08, FI-13 | 5 | not started | |
+| Wallet, payments, ledger (§9) | FI-01..08 | 5 | implemented (Razorpay sandbox via fakes; live not verified; coupons FI-13 not started; GST invoice not started) | `docs/evidence/phase-5-7-11-12.md` |
 | Consultations & calling (§8) | CO-01..14, PR-01..07 | 6 | not started | |
-| Astro engine, calculators, Panchang (§11, §12) | CA-01..24, PA-01..07 | 7 | not started | |
+| Astro engine, calculators, Panchang (§11, §12) | CA-01..24, PA-01, PA-02, PA-04 (partial) | 7 | implemented; PA-03 lunar months, PA-05 event muhurats, PA-06 festival calendars, Choghadiya/Hora not started | `docs/astro/methods.md` |
 | Reports & bundles (§10) | RP-01..25 | 8 | not started | |
 | Puja/Chadhava (§14) | PJ-01..10 | 9 | not started | |
 | Horoscope/transit publishing (§13) | ED-01..05 | 9 | not started | |
@@ -23,9 +23,9 @@ evidence linked in `docs/evidence/`.
 | Admin control centre (§17) | AD-06..14, AD-17..18 | 10 | not started | |
 | Payouts, commission, reconciliation (§9) | FI-09..12, PR-08..09 | 10 | not started | |
 | Privacy & deletion (§16) | PV-01..04 | 10 | not started | |
-| Android app (§19) | AN-01..13 | 11 | not started | |
-| Deployment & operations (§20) | OP-01..10 | 12 | not started | |
-| Signing & handover (§22, §23) | AN-13 | 12 | not started | |
+| Android app (§19) | AN-01..04, AN-06 (partial), AN-08..09 (partial), AN-11, AN-13 | 11 | partial: signed APK/AAB built; payments, calls (AN-07), push (AN-10) not started; physical devices not tested | `docs/release/signing.md` |
+| Deployment & operations (§20) | OP-01..03, OP-05, OP-07 (scripts), OP-10 | 12 | files written; not executed (no Docker here); load test, monitoring, restore rehearsal pending on VPS | `docs/ops/vps-deployment.md` |
+| Signing & handover (§22, §23) | AN-13 | 12 | release-signed APK + AAB verified; keystore handed over in workspace (not in Git) | `docs/release/signing.md` |
 
 ## External acceptance (owner-provided, per agreement of 27 Oct 2026)
 

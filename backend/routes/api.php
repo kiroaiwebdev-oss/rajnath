@@ -22,6 +22,7 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
     Route::get('catalogue/offerings', [V1\CatalogueController::class, 'offerings']);
     Route::get('catalogue/offerings/{slug}', [V1\CatalogueController::class, 'offering']);
     Route::get('places', [V1\CatalogueController::class, 'places'])->middleware('throttle:places');
+    Route::post('enquiries', [V1\EnquiryApiController::class, 'store'])->middleware('throttle:enquiry');
     Route::get('tools', fn () => response()->json(['data' => collect(\App\Domain\Astro\Tools::TOOLS)->map(fn ($t, $k) => ['slug' => $k, 'title' => $t[0], 'input' => $t[1], 'kind' => $t[2], 'description' => $t[3]])->values()]));
     Route::post('tools/{slug}', [V1\ToolApiController::class, 'compute'])->middleware('throttle:tools');
     Route::get('panchang', [V1\ToolApiController::class, 'panchang'])->middleware('throttle:tools');
