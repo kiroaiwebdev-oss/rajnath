@@ -1,0 +1,158 @@
+<?php
+
+use App\Http\Controllers\Admin;
+use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Staff\StaffAuthController;
+use App\Http\Controllers\Web;
+use Illuminate\Support\Facades\Route;
+
+// ---- Public website ----
+Route::get('/', [Web\SiteController::class, 'home'])->name('home');
+Route::get('/services', [Web\SiteController::class, 'services'])->name('services.index');
+Route::get('/services/{slug}', [Web\SiteController::class, 'service'])->name('services.show');
+Route::post('/enquiries', [Web\SiteController::class, 'enquire'])->middleware('throttle:enquiry')->name('enquiries.store');
+Route::get('/enquiries/{ref}/received', [Web\SiteController::class, 'thanks'])->name('enquiry.thanks');
+Route::get('/faq', [Web\SiteController::class, 'faq'])->name('faq');
+Route::get('/gems', [Web\StoreController::class, 'index'])->name('store.index');
+Route::get('/gems/{slug}', [Web\StoreController::class, 'show'])->name('store.show');
+Route::post('/gems/buy', [Web\StoreController::class, 'buy'])->middleware(['customer', 'throttle:checkout'])->name('store.buy');
+Route::get('/tools', [Web\ToolController::class, 'index'])->name('tools.index');
+Route::get('/tools/{slug}', [Web\ToolController::class, 'show'])->name('tools.show');
+Route::post('/tools/{slug}', [Web\ToolController::class, 'compute'])->middleware('throttle:tools')->name('tools.compute');
+Route::get('/panchang', [Web\ToolController::class, 'panchang'])->middleware('throttle:tools')->name('panchang');
+Route::view('/about', 'public.about')->name('about');
+Route::view('/contact', 'public.contact')->name('contact');
+Route::view('/privacy', 'public.privacy')->name('privacy');
+Route::view('/terms', 'public.terms')->name('terms');
+Route::view('/offline', 'public.offline')->name('offline');
+Route::view('/design-system', 'public.design-system')->name('design-system');
+Route::get('/manifest.webmanifest', [Web\SiteController::class, 'manifest'])->name('manifest');
+Route::get('/places/search', [Web\SiteController::class, 'places'])->middleware('throttle:places')->name('places.search');
+Route::get('/ready', [HealthController::class, 'ready'])->name('ready');
+
+// ---- Customer sign-in (email / mobile OTP) and account ----
+Route::prefix('account')->name('account.')->group(function () {
+    Route::get('sign-in', [Web\CustomerAuthController::class, 'show'])->name('sign-in');
+    Route::post('sign-in', [Web\CustomerAuthController::class, 'start'])->middleware('throttle:otp');
+    Route::get('verify', [Web\CustomerAuthController::class, 'showVerify'])->name('verify');
+    Route::post('verify', [Web\CustomerAuthController::class, 'verify'])->middleware('throttle:otp');
+    Route::post('verify/resend', [Web\CustomerAuthController::class, 'resend'])->middleware('throttle:otp')->name('verify.resend');
+
+    Route::middleware('customer')->group(function () {
+        Route::post('sign-out', [Web\CustomerAuthController::class, 'logout'])->name('sign-out');
+        Route::get('/', [Web\AccountController::class, 'dashboard'])->name('dashboard');
+        Route::get('profile', [Web\AccountController::class, 'editProfile'])->name('profile');
+        Route::put('profile', [Web\AccountController::class, 'updateProfile']);
+        Route::post('contact', [Web\AccountController::class, 'startContactChange'])->middleware('throttle:otp')->name('contact.start');
+        Route::post('contact/confirm', [Web\AccountController::class, 'confirmContactChange'])->middleware('throttle:otp')->name('contact.confirm');
+        Route::get('devices', [Web\AccountController::class, 'devices'])->name('devices');
+        Route::delete('devices/sessions/{id}', [Web\AccountController::class, 'revokeSession'])->name('devices.session.revoke');
+        Route::delete('devices/tokens/{id}', [Web\AccountController::class, 'revokeToken'])->whereNumber('id')->name('devices.token.revoke');
+        Route::post('devices/sign-out-others', [Web\AccountController::class, 'revokeAllOthers'])->name('devices.others');
+        Route::resource('birth-profiles', Web\BirthProfileController::class)->except('show')->parameters(['birth-profiles' => 'profile']);
+        Route::get('palmistry', [Web\PalmController::class, 'index'])->name('palm.index');
+        Route::get('palmistry/{ref}', [Web\PalmController::class, 'show'])->name('palm.show');
+        Route::post('palmistry/{ref}/photos', [Web\PalmController::class, 'upload'])->middleware('throttle:checkout')->name('palm.upload');
+        Route::get('wallet', [Web\PaymentController::class, 'wallet'])->name('wallet');
+        Route::post('wallet/recharge', [Web\PaymentController::class, 'recharge'])->middleware('throttle:checkout')->name('wallet.recharge');
+        Route::get('orders', [Web\PaymentController::class, 'orders'])->name('orders');
+        Route::get('orders/{ref}', [Web\PaymentController::class, 'receipt'])->name('receipt');
+    });
+});
+
+// Private palm photo (owner or authorised fulfilment staff with MFA session).
+Route::get('/palm-photos/{ref}/{side}', [Web\PalmController::class, 'photo'])->middleware('auth')->name('palm.photo');
+
+// ---- Checkout (customer) and Razorpay webhook ----
+Route::middleware('customer')->prefix('checkout')->name('checkout.')->group(function () {
+    Route::post('/', [Web\PaymentController::class, 'buy'])->middleware('throttle:checkout')->name('buy');
+    Route::get('{ref}', [Web\PaymentController::class, 'show'])->name('show');
+    Route::post('{ref}/verify', [Web\PaymentController::class, 'verify'])->name('verify');
+    Route::post('{ref}/cancel', [Web\PaymentController::class, 'cancel'])->name('cancel');
+});
+Route::post('/webhooks/razorpay', \App\Http\Controllers\RazorpayWebhookController::class)->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])->name('webhooks.razorpay');
+
+// ---- Staff authentication ----
+Route::prefix('staff')->name('staff.')->controller(StaffAuthController::class)->group(function () {
+    Route::get('invitation/{token}', 'showInvitation')->name('invitation');
+    Route::post('invitation/{token}', 'acceptInvitation')->middleware('throttle:staff-mfa')->name('invitation.accept');
+    Route::get('login', 'showLogin')->name('login');
+    Route::post('login', 'login')->middleware('throttle:staff-login');
+    Route::get('mfa', 'showMfa')->name('mfa');
+    Route::post('mfa', 'verifyMfa')->middleware('throttle:staff-mfa');
+    Route::middleware(['auth', 'staff'])->group(function () {
+        Route::get('step-up', 'showStepUp')->name('step-up');
+        Route::post('step-up', 'stepUp')->middleware('throttle:staff-mfa');
+        Route::post('logout', 'logout')->name('logout');
+    });
+});
+
+// ---- Admin control centre ----
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(function () {
+    Route::get('/', Admin\DashboardController::class)->name('dashboard');
+
+    Route::get('team', [Admin\TeamController::class, 'index'])->name('team.index');
+    Route::get('settings', [Admin\SettingsController::class, 'edit'])->name('settings.edit');
+    Route::get('audit', [Admin\AuditController::class, 'index'])->name('audit.index');
+    Route::get('audit/verify', [Admin\AuditController::class, 'verify'])->name('audit.verify');
+    Route::get('providers', [Admin\ProvidersController::class, 'edit'])->name('providers.edit');
+
+    Route::get('catalogue', [Admin\CatalogueController::class, 'index'])->name('catalogue.index');
+    Route::get('catalogue/new', [Admin\CatalogueController::class, 'create'])->name('catalogue.create');
+    Route::post('catalogue', [Admin\CatalogueController::class, 'store'])->name('catalogue.store');
+    Route::get('catalogue/{ref}', [Admin\CatalogueController::class, 'edit'])->name('catalogue.edit');
+    Route::put('catalogue/{ref}', [Admin\CatalogueController::class, 'update'])->name('catalogue.update');
+    Route::put('catalogue/{ref}/status', [Admin\CatalogueController::class, 'setStatus'])->name('catalogue.status');
+
+    Route::get('enquiries', [Admin\EnquiryController::class, 'index'])->name('enquiries.index');
+    Route::get('enquiries/export', [Admin\EnquiryController::class, 'export'])->name('enquiries.export');
+    Route::get('enquiries/{enquiry}', [Admin\EnquiryController::class, 'show'])->name('enquiries.show');
+    Route::put('enquiries/{enquiry}', [Admin\EnquiryController::class, 'update'])->name('enquiries.update');
+
+    Route::get('customers', [Admin\CustomerController::class, 'index'])->name('customers.index');
+    Route::get('customers/{customer}', [Admin\CustomerController::class, 'show'])->name('customers.show');
+    Route::put('customers/{customer}/status', [Admin\CustomerController::class, 'setStatus'])->name('customers.status');
+
+    Route::get('finance', [Admin\FinanceController::class, 'index'])->name('finance.index');
+    Route::get('finance/orders/{ref}', [Admin\FinanceController::class, 'order'])->name('finance.order');
+    Route::post('finance/orders/{ref}/refunds', [Admin\FinanceController::class, 'requestRefund'])->name('finance.refund.request');
+    Route::post('finance/reconcile', [Admin\FinanceController::class, 'reconcile'])->name('finance.reconcile');
+    Route::post('finance/findings/{id}/resolve', [Admin\FinanceController::class, 'resolveFinding'])->whereNumber('id')->name('finance.finding.resolve');
+    Route::get('payments', [Admin\FinanceController::class, 'settings'])->name('payments.settings');
+    Route::get('store/products', [Admin\StoreAdminController::class, 'products'])->name('store.products');
+    Route::get('store/products/new', [Admin\StoreAdminController::class, 'edit'])->name('store.new');
+    Route::get('store/products/{ref}', [Admin\StoreAdminController::class, 'edit'])->name('store.edit');
+    Route::post('store/products', [Admin\StoreAdminController::class, 'save'])->name('store.create');
+    Route::post('store/products/{ref}', [Admin\StoreAdminController::class, 'save'])->name('store.update');
+    Route::get('store/orders', [Admin\StoreAdminController::class, 'orders'])->name('store.orders');
+    Route::get('store/orders/{ref}', [Admin\StoreAdminController::class, 'order'])->name('store.order');
+    Route::put('store/orders/{ref}/shipment', [Admin\StoreAdminController::class, 'updateShipment'])->name('store.shipment');
+    Route::get('palmistry', [Admin\PalmAdminController::class, 'index'])->name('palm.index');
+    Route::get('palmistry/{ref}', [Admin\PalmAdminController::class, 'show'])->name('palm.show');
+    Route::post('palmistry/{ref}/claim', [Admin\PalmAdminController::class, 'claim'])->name('palm.claim');
+    Route::post('palmistry/{ref}/report', [Admin\PalmAdminController::class, 'report'])->name('palm.report');
+    Route::post('palmistry/{ref}/need-photos', [Admin\PalmAdminController::class, 'needPhotos'])->name('palm.need');
+    Route::get('faqs', [Admin\FaqController::class, 'index'])->name('faqs.index');
+    Route::post('faqs', [Admin\FaqController::class, 'save'])->name('faqs.save');
+    Route::delete('faqs/{id}', [Admin\FaqController::class, 'destroy'])->whereNumber('id')->name('faqs.destroy');
+
+    // Sensitive changes: fresh password + TOTP confirmation required.
+    Route::middleware('step.up')->group(function () {
+        Route::post('team/invitations', [Admin\TeamController::class, 'invite'])->name('team.invite');
+        Route::delete('team/invitations/{ref}', [Admin\TeamController::class, 'revokeInvitation'])->name('team.invitations.revoke');
+        Route::put('team/{user}/roles', [Admin\TeamController::class, 'updateRoles'])->name('team.roles');
+        Route::put('team/{user}/status', [Admin\TeamController::class, 'setStatus'])->name('team.status');
+        Route::put('settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
+        Route::put('providers/mail', [Admin\ProvidersController::class, 'updateMail'])->name('providers.mail');
+        Route::put('providers/sms', [Admin\ProvidersController::class, 'updateSms'])->name('providers.sms');
+        Route::post('providers/mail/test', [Admin\ProvidersController::class, 'testMail'])->middleware('throttle:provider-test')->name('providers.mail.test');
+        Route::post('providers/sms/test', [Admin\ProvidersController::class, 'testSms'])->middleware('throttle:provider-test')->name('providers.sms.test');
+        Route::post('catalogue/{ref}/variants', [Admin\CatalogueController::class, 'saveVariant'])->name('catalogue.variant');
+        Route::post('finance/refunds/{ref}/decision', [Admin\FinanceController::class, 'decideRefund'])->name('finance.refund.decide');
+        Route::put('payments', [Admin\FinanceController::class, 'saveSettings'])->name('payments.save');
+        Route::post('payments/packages', [Admin\FinanceController::class, 'savePackage'])->name('payments.package');
+    });
+});
+
+// Laravel's default "login" route name is used by the auth middleware for guests.
+Route::redirect('/login', '/account/sign-in')->name('login');

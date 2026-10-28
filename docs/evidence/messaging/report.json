@@ -1,0 +1,113 @@
+[
+  {
+    "viewport": "desktop",
+    "page": "/",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "/design-system",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "/admin",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "/admin/team",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "/admin/settings",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "/admin/audit",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "/admin/providers",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "consoleErrors": []
+  },
+  {
+    "viewport": "phone",
+    "page": "/",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "/design-system",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "/admin",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "/admin/team",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "/admin/settings",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "/admin/audit",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "/admin/providers",
+    "status": 200,
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "consoleErrors": []
+  },
+  {
+    "viewport": "phone",
+    "page": "/staff/login",
+    "axeViolations": []
+  }
+]

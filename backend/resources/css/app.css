@@ -1,0 +1,90 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/noto-sans-devanagari';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+/*
+ * Astro Rajnath Jha design tokens.
+ * Ivory backgrounds, deep indigo text, restrained gold accents, soft white cards.
+ * Contrast (WCAG 2.2): ink-900 on ivory-50 = 15.9:1; ink-600 on ivory-50 = 7.4:1;
+ * gold-700 on white = 5.0:1 (used for text); gold-500 is decorative/fill only, with ink text.
+ */
+@theme {
+    --font-sans: 'Inter Variable', 'Noto Sans Devanagari Variable', ui-sans-serif, system-ui, sans-serif;
+
+    --color-ivory-50: #fdfbf6;
+    --color-ivory-100: #f8f3e8;
+    --color-ivory-200: #efe6d2;
+
+    --color-ink-900: #141a3c;
+    --color-ink-800: #1e2656;
+    --color-ink-700: #2b356f;
+    --color-ink-600: #444d80;
+    --color-ink-400: #8a90b4;
+    --color-ink-200: #d7d9e8;
+
+    --color-gold-50: #fbf5e4;
+    --color-gold-200: #ecd9a0;
+    --color-gold-500: #c79a2e;
+    --color-gold-700: #8a6514;
+
+    --color-success-700: #1f6b45;
+    --color-danger-700: #a12a2a;
+    --color-warning-700: #8a5a00;
+
+    --radius-card: 1.25rem;
+    --shadow-card: 0 1px 2px rgb(20 26 60 / 0.04), 0 8px 24px -12px rgb(20 26 60 / 0.12);
+}
+
+@layer base {
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+        @apply bg-ivory-50 text-ink-900 font-sans antialiased;
+        text-rendering: optimizeLegibility;
+    }
+    h1, h2, h3, h4 { @apply font-sans font-semibold tracking-tight text-ink-900; }
+    a { @apply text-ink-800 underline decoration-ink-400 underline-offset-4 hover:decoration-ink-800; }
+    :focus-visible { outline: 3px solid var(--color-gold-500); outline-offset: 2px; border-radius: 6px; }
+    [x-cloak] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+}
+
+@utility btn {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold no-underline transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+}
+
+@layer components {
+    .container-page { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+    .card { @apply rounded-[var(--radius-card)] border border-ink-200/70 bg-white shadow-[var(--shadow-card)]; }
+    .eyebrow { @apply text-xs font-semibold uppercase tracking-[0.16em] text-gold-700; }
+
+    .btn-primary { @apply btn bg-ink-900 text-white hover:bg-ink-700; }
+    .btn-gold { @apply btn bg-gold-500 text-ink-900 hover:bg-gold-200; }
+    .btn-outline { @apply btn border border-ink-200 bg-white text-ink-900 hover:border-ink-400; }
+    .btn-ghost { @apply btn text-ink-800 hover:bg-ivory-100; }
+    .btn-danger { @apply btn bg-danger-700 text-white hover:opacity-90; }
+
+    .field-label { @apply mb-1.5 block text-sm font-medium text-ink-800; }
+    .field-hint { @apply mt-1 text-xs text-ink-600; }
+    .field-error { @apply mt-1 text-sm text-danger-700; }
+    .input { @apply block min-h-11 w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-base text-ink-900 placeholder:text-ink-400 focus:border-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-200 aria-[invalid=true]:border-danger-700; }
+
+    .badge-gold { @apply badge bg-gold-50 text-gold-700 ring-1 ring-gold-200; }
+    .badge-ink { @apply badge bg-ink-200/50 text-ink-800; }
+    .badge-success { @apply badge bg-green-50 text-success-700 ring-1 ring-green-200; }
+    .badge-danger { @apply badge bg-red-50 text-danger-700 ring-1 ring-red-200; }
+
+    .table-wrap { @apply relative w-full overflow-x-auto rounded-2xl border border-ink-200/70 bg-white; }
+    .table { @apply w-full min-w-[40rem] text-left text-sm; }
+    .table th { @apply bg-ivory-100 px-4 py-3 font-semibold text-ink-700; }
+    .table td { @apply border-t border-ink-200/60 px-4 py-3 align-top; }
+}

@@ -1,0 +1,24 @@
+{$DOMAIN} {
+	encode zstd gzip
+	root * /srv/public
+	# Static files first; everything else goes to Laravel (PHP-FPM in the "app" container).
+	@static file
+	handle @static {
+		header /build/* Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+	php_fastcgi app:9000 {
+		root /var/www/backend/public
+	}
+	request_body {
+		max_size 12MB
+	}
+	log {
+		output stdout
+		format json
+	}
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}

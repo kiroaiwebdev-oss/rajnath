@@ -1,0 +1,220 @@
+[
+  {
+    "viewport": "desktop",
+    "page": "home",
+    "url": "/",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "services",
+    "url": "/services",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "service-detail",
+    "url": "/services/vastu-consultation",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "about",
+    "url": "/about",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "contact",
+    "url": "/contact",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "faq",
+    "url": "/faq",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "sign-in",
+    "url": "/account/sign-in",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "verify",
+    "url": "/account/verify",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "account-dashboard",
+    "url": "/account",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "birth-profile-form",
+    "url": "/account/birth-profiles/create",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "birth-profiles",
+    "url": "/account/birth-profiles",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "check": "place-combobox",
+    "placeIdSelected": "1260086",
+    "savedShowsPatna": true,
+    "savedShowsOffset": true
+  },
+  {
+    "viewport": "desktop",
+    "page": "account-profile",
+    "url": "/account/profile",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "account-devices",
+    "url": "/account/devices",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "enquiry-received",
+    "url": "/enquiries/01M614THHJFBHJMKSKDJ4YX6MP/received",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "consoleErrors": []
+  },
+  {
+    "viewport": "phone",
+    "page": "home",
+    "url": "/",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "services",
+    "url": "/services",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "service-detail",
+    "url": "/services/vastu-consultation",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "about",
+    "url": "/about",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "contact",
+    "url": "/contact",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "faq",
+    "url": "/faq",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "sign-in",
+    "url": "/account/sign-in",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "verify",
+    "url": "/account/verify",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "account-dashboard",
+    "url": "/account",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "birth-profile-form",
+    "url": "/account/birth-profiles/create",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "birth-profiles",
+    "url": "/account/birth-profiles",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "check": "place-combobox",
+    "placeIdSelected": "1260086",
+    "savedShowsPatna": true,
+    "savedShowsOffset": true
+  },
+  {
+    "viewport": "phone",
+    "page": "account-profile",
+    "url": "/account/profile",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "account-devices",
+    "url": "/account/devices",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "enquiry-received",
+    "url": "/enquiries/01M614V02PP6DMDWHS91V7A7ER/received",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "consoleErrors": []
+  }
+]

@@ -1,0 +1,16 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+
+/** Safe production seed: roles/permissions, places, catalogue. Never creates users or credentials. */
+class DatabaseSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $this->command?->call('arj:rbac-sync');
+        $this->command?->call('arj:import-places');
+        $this->call(CatalogueSeeder::class);
+    }
+}
