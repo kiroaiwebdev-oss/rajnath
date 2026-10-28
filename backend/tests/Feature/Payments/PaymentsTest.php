@@ -300,4 +300,15 @@ class PaymentsTest extends TestCase
         $this->assertSame('new-secret', app(SettingsRepository::class)->get('payments.razorpay.key_secret'));
         $this->get('/admin/payments')->assertDontSee('new-secret');
     }
+
+    public function test_dispute_webhook_raises_a_finance_finding(): void
+    {
+        $this->webhook(['event' => 'payment.dispute.created', 'payload' => ['payment' => ['entity' => ['id' => 'pay_D1', 'order_id' => 'order_X', 'amount' => 210000, 'status' => 'captured']],
+            'dispute' => ['entity' => ['id' => 'disp_1', 'amount' => 210000, 'phase' => 'chargeback', 'reason_code' => 'fraud', 'respond_by' => 1798761600]]]], 'evt_disp_1')
+            ->assertOk()->assertJsonPath('status', 'dispute_recorded');
+        $f = DB::table('reconciliation_findings')->where('check', 'dispute')->first();
+        $this->assertSame('critical', $f->severity);
+        $this->assertStringContainsString('disp_1', $f->detail);
+        $this->assertStringContainsString('₹2,100.00', $f->detail);
+    }
 }
