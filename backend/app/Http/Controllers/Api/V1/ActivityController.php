@@ -41,7 +41,9 @@ class ActivityController extends Controller
 
         return ['ref' => $b->ref, 'title' => $v->title ?? 'Consultation', 'variant' => $v->ref ?? null, 'variant_name' => $v->name ?? null, 'mode' => $b->mode,
             'start_utc' => $start->toIso8601ZuluString(), 'end_utc' => CarbonImmutable::parse($b->end_utc, 'UTC')->toIso8601ZuluString(), 'status' => $b->status,
-            'meeting_link' => $b->status === 'confirmed' ? $b->meeting_link : null, 'practitioner' => $p?->display_name, 'practitioner_ref' => $p?->ref,
+            'meeting_link' => $b->status === 'confirmed' && $b->meeting_provider !== 'livekit' ? $b->meeting_link : null,
+            'meeting_provider' => $b->status === 'confirmed' ? $b->meeting_provider : null,
+            'call_open' => $b->status === 'confirmed' && now()->between($start->subMinutes(\App\Domain\Meetings\LiveKit::EARLY_MINUTES), CarbonImmutable::parse($b->end_utc, 'UTC')->addMinutes(\App\Domain\Meetings\LiveKit::LATE_MINUTES)), 'practitioner' => $p?->display_name, 'practitioner_ref' => $p?->ref,
             'can_cancel' => $changeable, 'can_reschedule' => $changeable && $b->reschedules < config('booking.max_reschedules')];
     }
 

@@ -73,7 +73,10 @@ class OperationsController extends Controller
     public function updateBooking(Request $request, string $ref, Slots $slots): RedirectResponse
     {
         $this->authorize('bookings.manage');
-        $d = $request->validate(['status' => ['nullable', Rule::in(['completed', 'no_show'])], 'meeting_link' => ['nullable', 'url:https', 'max:255']]);
+        $d = $request->validate(['status' => ['nullable', Rule::in(['completed', 'no_show'])], 'meeting_link' => ['nullable', 'url:https', 'max:255'], 'provider' => ['nullable', Rule::in(['livekit', 'zoom', 'google_meet'])]]);
+        if (! empty($d['provider'])) {
+            return $this->switchProvider($this->row('bookings', $ref), $d['provider'], $request->user());
+        }
         $slots->setOutcome($this->row('bookings', $ref), $d['status'] ?? 'link', $d['meeting_link'] ?? null, $request->user());
 
         return back()->with('status', 'Booking updated.');
@@ -263,5 +266,25 @@ class OperationsController extends Controller
         $this->audit->record('content.horoscope_'.$a, null, ['id' => $id]);
 
         return back()->with('status', $a === 'publish' ? 'Published.' : 'Rejected.');
+    }
+
+    /** Creates the call with a chosen provider (in-app, Zoom, Google Meet) and tells the customer. */
+    public static function switchProvider(object $b, string $provider, \App\Models\User $by): RedirectResponse
+    {
+        $m = app(\App\Domain\Meetings\Meetings::class);
+        if ($b->status !== 'confirmed') {
+            return back()->withErrors(['provider' => 'Only confirmed bookings can get a call link.']);
+        }
+        if (! $m->configured($provider)) {
+            return back()->withErrors(['provider' => \App\Domain\Meetings\Meetings::PROVIDERS[$provider].' is not set up yet (Admin › Calling).']);
+        }
+        if (! $m->create($b, $provider)) {
+            return back()->withErrors(['provider' => \Illuminate\Support\Facades\DB::table('bookings')->where('id', $b->id)->value('meeting_error') ?: 'Could not create the meeting.']);
+        }
+        $b = \Illuminate\Support\Facades\DB::table('bookings')->find($b->id);
+        app(\App\Support\Audit\AuditLogger::class)->record('booking.meeting_created', null, ['booking' => $b->ref, 'provider' => $provider], $by);
+        app(\App\Domain\Notify\Notifier::class)->send((int) $b->user_id, 'booking', 'Your consultation link', 'Join your consultation on '.\App\Domain\Booking\Slots::when($b).' here: '.$b->meeting_link, $b->ref, route('account.bookings'));
+
+        return back()->with('status', \App\Domain\Meetings\Meetings::PROVIDERS[$provider].' link created and sent to the customer.');
     }
 }

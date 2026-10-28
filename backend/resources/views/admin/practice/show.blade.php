@@ -65,6 +65,7 @@
         <section class="card min-w-0 p-5 xl:col-span-2" aria-labelledby="bk-h">
             <h2 id="bk-h" class="text-lg">My consultations</h2>
             @error('status')<p class="field-error" role="alert">{{ $message }}</p>@enderror
+            @error('provider')<p class="field-error" role="alert">{{ $message }}</p>@enderror
             <ul class="mt-3 divide-y divide-ink-200/60 text-sm">
                 @forelse ($bookings as $b)
                     <li class="grid gap-2 py-3 md:grid-cols-[1fr_auto] md:items-center">
@@ -75,6 +76,8 @@
                                 <label class="sr-only" for="ml-{{ $b->id }}">Meeting link</label>
                                 <input id="ml-{{ $b->id }}" name="meeting_link" class="input w-56" placeholder="https://… call link" value="{{ $b->meeting_link }}">
                                 <button class="btn-outline">Save link</button>
+                                <button name="provider" value="livekit" class="btn-ghost">In-app call</button><button name="provider" value="zoom" class="btn-ghost">Zoom</button><button name="provider" value="google_meet" class="btn-ghost">Meet</button>
+                                @if ($b->meeting_provider === 'livekit')<a class="btn-primary" href="{{ route('call.join', $b->ref) }}">Join call</a>@endif
                                 <button name="status" value="completed" class="btn-primary">Completed</button>
                                 <button name="status" value="no_show" class="btn-ghost">No-show</button></form>
                         @endif

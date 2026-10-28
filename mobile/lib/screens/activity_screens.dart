@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_client.dart';
+import '../call/booking_call.dart';
 import '../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../util/validators.dart';
 import '../widgets/common.dart';
 import 'account_screens.dart';
+import 'call_screen.dart';
 import 'purchase_screens.dart';
 import 'routing.dart';
 
@@ -168,6 +170,41 @@ class _BookingsScreenState extends State<BookingsScreen> {
     if (done == true && mounted) setState(() => _v++);
   }
 
+  Future<void> _joinCall(Map b) async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => CallScreen(api: widget.state.api, bookingRef: '${b['ref']}', title: '${b['title'] ?? 'Consultation'}'),
+    ));
+    if (mounted) setState(() => _v++);
+  }
+
+  List<Widget> _callSection(Map b) {
+    final spec = callButtonFor(BookingCall.fromJson(b));
+    final hint = spec.hint == null ? null : Text(spec.hint!, style: const TextStyle(color: ArjColors.ink600, fontSize: 13));
+    return switch (spec.kind) {
+      CallButtonKind.hidden => const [],
+      CallButtonKind.inApp => [
+          FilledButton.icon(
+            key: ValueKey('join-call-${b['ref']}'),
+            onPressed: spec.enabled ? () => _joinCall(b) : null,
+            icon: Icon(b['mode'] == 'phone' || b['mode'] == 'audio' ? Icons.call_outlined : Icons.videocam_outlined),
+            label: Text(spec.label!),
+          ),
+          if (hint != null) Padding(padding: const EdgeInsets.only(top: 6), child: hint),
+          const SizedBox(height: 8),
+        ],
+      CallButtonKind.external => [
+          FilledButton.icon(
+            key: ValueKey('join-link-${b['ref']}'),
+            onPressed: () => openExternal(context, spec.link),
+            icon: const Icon(Icons.open_in_new),
+            label: Text(spec.label!),
+          ),
+          const SizedBox(height: 8),
+        ],
+      CallButtonKind.pending => [?hint, const SizedBox(height: 8)],
+    };
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const Text('Bookings')),
@@ -195,9 +232,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       Text(formatWhen(b['start_utc'], pattern: 'EEE, d MMM yyyy · h:mm a'), style: const TextStyle(fontWeight: FontWeight.w600)),
                       Text([humanize(b['mode']), if (b['practitioner'] != null) 'with ${b['practitioner']}'].where((s) => s.isNotEmpty).join(' · '), style: const TextStyle(color: ArjColors.ink600)),
                       const SizedBox(height: 8),
+                      ..._callSection(b),
                       Wrap(spacing: 8, runSpacing: 8, children: [
-                        if (b['meeting_link'] != null)
-                          FilledButton.icon(onPressed: () => openExternal(context, '${b['meeting_link']}'), icon: const Icon(Icons.videocam_outlined), label: const Text('Join')),
                         if (b['can_reschedule'] == true) OutlinedButton(onPressed: () => _reschedule(b), child: const Text('Reschedule')),
                         if (b['can_cancel'] == true) TextButton(onPressed: () => _cancel(b), child: const Text('Cancel')),
                       ]),

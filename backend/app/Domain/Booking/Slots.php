@@ -131,7 +131,9 @@ class Slots
             ->update(['status' => 'confirmed', 'order_id' => $order->id, 'hold_expires_at' => null, 'updated_at' => now()]);
         if ($n) {
             $b = DB::table('bookings')->where('ref', $ref)->first();
-            $this->notify($b, 'Consultation confirmed', 'Your consultation is confirmed for '.self::when($b).'. We will send the call link before the session.');
+            $online = in_array($b->mode, \App\Domain\Meetings\Meetings::ONLINE_MODES, true);
+            $this->notify($b, 'Consultation confirmed', 'Your consultation is confirmed for '.self::when($b).'.'.($online ? ' Your call link is in My bookings and will also be sent to you.' : ' Please come to the office on time.'));
+            \App\Jobs\SyncMeeting::dispatch($b->id, 'confirm')->afterCommit();
         }
     }
 
@@ -193,6 +195,7 @@ class Slots
             app(\App\Domain\Payments\Refunds::class)->policyRefundToWallet($order, (int) $order->subtotal_minor - (int) $order->refunded_minor, 'Cancelled by customer within policy');
         });
         $this->audit->record('booking.cancelled', null, ['booking' => $b->ref], $u);
+        \App\Jobs\SyncMeeting::dispatch($b->id, 'cancel')->afterCommit();
         $this->notify($b, 'Booking cancelled', 'Your consultation on '.self::when($b).' was cancelled and the full amount was added to your wallet.');
     }
 
@@ -221,14 +224,15 @@ class Slots
             throw ValidationException::withMessages(['start' => 'Someone just booked this time. Please choose another slot.']);
         }
         $this->audit->record('booking.rescheduled', null, ['booking' => $b->ref], $u);
+        \App\Jobs\SyncMeeting::dispatch($b->id, 'reschedule')->afterCommit();
         $this->notify(DB::table('bookings')->find($b->id), 'Booking moved', 'Your consultation is now on '.self::when(DB::table('bookings')->find($b->id)).'.');
     }
 
     public function setOutcome(object $b, string $status, ?string $link, User $staff): void
     {
         $data = ['updated_at' => now()];
-        if ($link !== null) {
-            $data['meeting_link'] = $link;
+        if ($link !== null && $link !== $b->meeting_link) {
+            app(\App\Domain\Meetings\Meetings::class)->setManual($b, $link);
         }
         if (in_array($status, ['completed', 'no_show'], true)) {
             if ($b->status !== 'confirmed') {

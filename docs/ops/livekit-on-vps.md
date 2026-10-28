@@ -19,3 +19,15 @@ LiveKit server is open source (Apache-2.0) and runs on an ordinary Linux VPS. It
 2. Permission to open the ports above (in some providers' panels these are "security groups").
 
 After that we add a `livekit` service to `deploy/docker-compose.yml` and the API key and secret to Admin settings. The website and app then get short-lived room tokens for each booking. Join is allowed only within ±15 minutes of the slot, and only for that customer and that astrologer.
+
+## Setup steps
+The configuration is in the repository: `deploy/livekit.yaml`, the `livekit` service in `deploy/docker-compose.yml`, and a `rtc.` site in `deploy/Caddyfile`.
+
+1. Create a DNS A record for `rtc.<your-domain>` pointing to the VPS IP.
+2. Open the firewall ports: `ufw allow 7881/tcp && ufw allow 7882/udp` (also open them in your provider's panel if it has one).
+3. In `.env.production`, set `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET`:
+   - key: `openssl rand -hex 16`
+   - secret: `openssl rand -base64 36`
+4. Start the services: `docker compose --profile calls up -d`.
+5. Go to Admin › Calling. Enter the URL `wss://rtc.<your-domain>`, the same key and the same secret. Press "Test LiveKit".
+6. Choose a default provider: in-app, Zoom or Google Meet. Zoom and Google Meet need their own credentials, which you enter on the same page.

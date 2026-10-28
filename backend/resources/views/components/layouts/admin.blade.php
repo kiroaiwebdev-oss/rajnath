@@ -24,6 +24,7 @@
         ['Settings', 'admin.settings.edit', 'settings.view'],
         ['Email & SMS', 'admin.providers.edit', 'providers.manage'],
         ['Push notifications', 'admin.push.edit', 'providers.manage'],
+        ['Calling (in-app, Zoom, Meet)', 'admin.calling.edit', 'providers.manage'],
         ['AI assistant', 'admin.assistant.edit', 'assistant.knowledge'],
         ['Audit log', 'admin.audit.index', 'audit.view'],
     ], fn ($i) => $i[2] === null || $u->can($i[2]));

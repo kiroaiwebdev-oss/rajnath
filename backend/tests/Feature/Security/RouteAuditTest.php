@@ -31,7 +31,7 @@ class RouteAuditTest extends TestCase
     public function test_sensitive_admin_mutations_require_step_up(): void
     {
         $mustStepUp = ['admin/team/', 'admin/settings', 'admin/providers', 'admin/payments', 'admin/catalogue/{ref}/variants', 'admin/finance/refunds',
-            'admin/push', 'admin/commission', 'admin/payouts', 'admin/practitioners/invite'];
+            'admin/push', 'admin/calling', 'admin/commission', 'admin/payouts', 'admin/practitioners/invite'];
         foreach (Route::getRoutes() as $r) {
             $uri = $r->uri();
             if (array_intersect($r->methods(), ['POST', 'PUT', 'DELETE']) && collect($mustStepUp)->contains(fn ($p) => str_starts_with($uri, $p))) {

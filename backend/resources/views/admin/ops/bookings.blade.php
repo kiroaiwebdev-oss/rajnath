@@ -1,4 +1,5 @@
 <x-layouts.admin title="Bookings & working hours">
+    @error('provider')<p class="field-error mb-4" role="alert">{{ $message }}</p>@enderror
     @php $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']; @endphp
     <div class="grid gap-6 xl:grid-cols-[1fr_24rem]">
         <section class="min-w-0" aria-labelledby="up-h">
@@ -10,7 +11,10 @@
                     <td>@can('bookings.manage')<form method="POST" action="{{ route('admin.ops.booking', $b->ref) }}" class="flex flex-wrap gap-2">@csrf @method('PUT')
                         <label class="sr-only" for="ml-{{ $b->id }}">Meeting link</label><input id="ml-{{ $b->id }}" name="meeting_link" value="{{ $b->meeting_link }}" placeholder="https://meet…" class="input min-h-9 w-48 py-1.5 text-sm">
                         <button class="btn-outline px-3">Save link</button>
-                        <button name="status" value="completed" class="btn-ghost px-3">Done</button><button name="status" value="no_show" class="btn-ghost px-3">No-show</button></form>@endcan</td></tr>
+                        <button name="provider" value="livekit" class="btn-ghost px-3">In-app call</button><button name="provider" value="zoom" class="btn-ghost px-3">Zoom</button><button name="provider" value="google_meet" class="btn-ghost px-3">Google Meet</button>
+                        <button name="status" value="completed" class="btn-ghost px-3">Done</button><button name="status" value="no_show" class="btn-ghost px-3">No-show</button></form>
+                        @if ($b->meeting_provider)<p class="mt-1 text-xs text-ink-600">{{ \App\Domain\Meetings\Meetings::PROVIDERS[$b->meeting_provider] ?? '' }}@if ($b->meeting_provider === 'livekit') · <a href="{{ route('call.join', $b->ref) }}">join</a>@endif</p>@endif
+                        @if ($b->meeting_error)<p class="mt-1 text-xs text-danger-700">{{ $b->meeting_error }}</p>@endif @endcan</td></tr>
                 @empty<tr><td colspan="4" class="py-8 text-center text-ink-600">No upcoming bookings.</td></tr>@endforelse</tbody>
             </table></div>
         </section>

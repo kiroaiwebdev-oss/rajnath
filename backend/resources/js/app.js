@@ -131,6 +131,57 @@ Alpine.data('assistant', () => ({
     },
 }));
 
+// In-app consultation call (LiveKit). The SDK is loaded only on the call page.
+Alpine.data('callRoom', () => ({
+    state: 'idle', error: '', micOn: true, camOn: true, remoteCount: 0, room: null,
+    get idle() { return this.state === 'idle' || this.state === 'ended'; },
+    get connecting() { return this.state === 'connecting'; },
+    get live() { return this.state === 'live'; },
+    get ended() { return this.state === 'ended'; },
+    get micLabel() { return this.micOn ? 'Mute' : 'Unmute'; },
+    get camLabel() { return this.camOn ? 'Turn camera off' : 'Turn camera on'; },
+    get waiting() { return this.live && this.remoteCount === 0; },
+    get audioOnly() { return this.$root.dataset.audioOnly === '1'; },
+    get camControl() { return this.live && this.$root.dataset.audioOnly !== '1'; },
+    async join() {
+        this.state = 'connecting'; this.error = '';
+        try {
+            const r = await fetch(this.$root.dataset.tokenUrl, { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { this.state = 'idle'; this.error = (d.error && d.error.message) || 'Could not start the call.'; return; }
+            const { Room, RoomEvent, Track } = await import('livekit-client');
+            const room = new Room({ adaptiveStream: true, dynacast: true });
+            this.room = room;
+            const remote = this.$refs.remote, local = this.$refs.local;
+            room.on(RoomEvent.TrackSubscribed, (track) => {
+                const el = track.attach();
+                el.dataset.sid = track.sid;
+                if (track.kind === Track.Kind.Video) { el.className = 'h-full w-full rounded-2xl bg-ink-900 object-cover'; }
+                remote.appendChild(el);
+            });
+            room.on(RoomEvent.TrackUnsubscribed, (track) => { track.detach().forEach((el) => el.remove()); });
+            room.on(RoomEvent.ParticipantConnected, () => { this.remoteCount = room.remoteParticipants.size; });
+            room.on(RoomEvent.ParticipantDisconnected, () => { this.remoteCount = room.remoteParticipants.size; });
+            room.on(RoomEvent.Disconnected, () => { this.state = 'ended'; });
+            await room.connect(d.url, d.token);
+            await room.localParticipant.setMicrophoneEnabled(true);
+            if (!d.audio_only) {
+                const pub = await room.localParticipant.setCameraEnabled(true);
+                if (pub && pub.track) { const el = pub.track.attach(); el.muted = true; el.className = 'h-full w-full rounded-xl object-cover'; local.appendChild(el); }
+            } else { this.camOn = false; }
+            this.remoteCount = room.remoteParticipants.size;
+            this.state = 'live';
+        } catch (e) {
+            this.state = 'idle';
+            this.error = (e && e.name === 'NotAllowedError') ? 'Please allow microphone/camera access in your browser and try again.' : 'Could not connect the call. Check your internet and try again.';
+            if (this.room) { this.room.disconnect(); }
+        }
+    },
+    async toggleMic() { this.micOn = !this.micOn; await this.room.localParticipant.setMicrophoneEnabled(this.micOn); },
+    async toggleCam() { this.camOn = !this.camOn; await this.room.localParticipant.setCameraEnabled(this.camOn); if (!this.camOn) { this.$refs.local.innerHTML = ''; } else { const p = this.room.localParticipant.getTrackPublications().find((x) => x.kind === 'video'); if (p && p.track) { const el = p.track.attach(); el.muted = true; el.className = 'h-full w-full rounded-xl object-cover'; this.$refs.local.appendChild(el); } } },
+    leave() { if (this.room) { this.room.disconnect(); } this.state = 'ended'; this.$refs.remote.innerHTML = ''; this.$refs.local.innerHTML = ''; },
+}));
+
 Alpine.data('printer', () => ({ print() { window.print(); } }));
 
 window.Alpine = Alpine;
