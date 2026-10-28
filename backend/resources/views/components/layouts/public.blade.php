@@ -4,11 +4,12 @@
         ['Services', route('services.index'), 'services.*'],
         ['Consultations', route('services.index', ['family' => 'consultations']), null],
         ['Vastu', route('services.index', ['family' => 'vastu']), null],
+        ['Puja', route('services.index', ['family' => 'puja']), null],
         ['Gems', route('store.index'), 'store.*'],
+        ['Rashifal', route('rashifal'), 'rashifal'],
         ['Calculators', route('tools.index'), 'tools.*'],
         ['Panchang', route('panchang'), 'panchang'],
         ['About', route('about'), 'about'],
-        ['FAQ', route('faq'), 'faq'],
         ['Contact', route('contact'), 'contact'],
     ];
     $me = auth()->user();
@@ -70,6 +71,8 @@
                     <li><a href="{{ route('services.show', 'palmistry-photo-report') }}">Palmistry report from photos</a></li>
                     <li><a href="{{ route('tools.index') }}">Free calculators</a></li>
                     <li><a href="{{ route('panchang') }}">Today's Panchang</a></li>
+                    <li><a href="{{ route('calendar') }}">Vrat calendar</a></li>
+                    <li><a href="{{ route('rashifal') }}">Rashifal</a></li>
                     <li><a href="{{ route('faq') }}">Questions & answers</a></li>
                     <li><a href="{{ route('contact') }}">Contact & timings</a></li>
                 </ul>

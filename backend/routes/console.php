@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 \Illuminate\Support\Facades\Schedule::call(fn () => app(\App\Domain\Payments\Reconciler::class)->run())->everyTenMinutes()->name('payments-reconcile')->withoutOverlapping();
 \Illuminate\Support\Facades\Schedule::command('queue:prune-failed --hours=720')->daily();
 \Illuminate\Support\Facades\Schedule::call(fn () => app(\App\Domain\Palmistry\PalmReadings::class)->purgeOldPhotos())->dailyAt('03:30')->name('palm-photo-retention');
+\Illuminate\Support\Facades\Schedule::call(fn () => app(\App\Domain\Booking\Slots::class)->expireHolds())->everyMinute()->name('booking-holds')->withoutOverlapping();

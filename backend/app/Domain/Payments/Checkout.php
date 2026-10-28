@@ -23,7 +23,7 @@ class Checkout
 {
     public function __construct(private Razorpay $rzp, private Ledger $ledger, private AuditLogger $audit) {}
 
-    public function startServiceOrder(User $user, OfferingVariant $variant, bool $useWallet, string $idempotencyKey): array
+    public function startServiceOrder(User $user, OfferingVariant $variant, bool $useWallet, string $idempotencyKey, array $extra = []): array
     {
         $o = Offering::with(['translations', 'family'])->findOrFail($variant->offering_id);
         if ($o->status !== 'active' || ! $variant->active || $variant->price_minor === null || $variant->price_minor <= 0) {
@@ -34,7 +34,7 @@ class Checkout
             'variant' => ['ref' => $variant->ref, 'name' => $variant->name, 'mode' => $variant->mode, 'duration_min' => $variant->duration_min, 'participants' => $variant->participants, 'urgent' => $variant->urgent],
             'price_minor' => $variant->price_minor, 'currency' => 'INR', 'terms_version' => \App\Domain\Identity\CustomerAuth::TERMS_VERSION,
             'disclaimer' => $o->t('en')?->disclaimer,
-        ];
+        ] + $extra;
 
         return $this->start($user, 'service', $variant->price_minor, $snapshot, $useWallet, $idempotencyKey);
     }
@@ -172,8 +172,22 @@ class Checkout
     {
         if ($order->kind === 'product') {
             app(\App\Domain\Store\Store::class)->onPaid($order);
-        } elseif (($snap['offering']['slug'] ?? null) === \App\Domain\Palmistry\PalmReadings::OFFERING_SLUG) {
+
+            return;
+        }
+        if ($order->kind !== 'service') {
+            return;
+        }
+        $slug = $snap['offering']['slug'] ?? null;
+        $family = $snap['offering']['family'] ?? null;
+        if ($slug === \App\Domain\Palmistry\PalmReadings::OFFERING_SLUG) {
             app(\App\Domain\Palmistry\PalmReadings::class)->onOrderPaid($order);
+        } elseif (isset($snap['booking_ref'])) {
+            app(\App\Domain\Booking\Slots::class)->onOrderPaid($order);
+        } elseif (in_array($family, ['puja', 'chadhava'], true)) {
+            app(\App\Domain\Puja\PujaBookings::class)->onOrderPaid($order, $snap);
+        } elseif (in_array($family, ['report', 'bundle', 'written_question'], true)) {
+            app(\App\Domain\Reports\ReportJobs::class)->onOrderPaid($order, $snap);
         }
     }
 
@@ -188,6 +202,9 @@ class Checkout
         $n = DB::table('orders')->where('id', $order->id)->where('status', 'pending_payment')->update(['status' => 'cancelled', 'updated_at' => now()]);
         if ($n && $order->kind === 'product') {
             app(\App\Domain\Store\Store::class)->release($order->id);
+        }
+        if ($n && $order->kind === 'service') {
+            app(\App\Domain\Booking\Slots::class)->onOrderCancelled($order);
         }
     }
 }

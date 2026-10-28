@@ -11,6 +11,11 @@ class OfferingVariant extends Model
 
     protected $fillable = ['name', 'mode', 'duration_min', 'participants', 'urgent', 'price_minor', 'currency', 'active', 'sort'];
 
+    public function offering(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Offering::class);
+    }
+
     protected static function booted(): void
     {
         static::creating(fn (OfferingVariant $v) => $v->ref ??= (string) Str::ulid());

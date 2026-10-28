@@ -91,9 +91,8 @@ class CatalogueController extends Controller
             if ($o->variants->where('active', true)->isEmpty()) {
                 throw ValidationException::withMessages(['status' => 'Add at least one active variant before activating.']);
             }
-            if ($o->family->requires_supplier) {
-                // Puja/Chadhava fulfilment by third parties needs an authorised supplier (phase 9).
-                throw ValidationException::withMessages(['status' => 'This service needs an authorised temple/priest/supplier record before it can be published. Supplier management arrives with the Puja module.']);
+            if (in_array($o->family->code, ['puja', 'chadhava'], true) && ! \App\Domain\Puja\PujaBookings::canPublish($o->id, $o->slug)) {
+                throw ValidationException::withMessages(['status' => 'Link at least one priest/temple with a verified, current authorisation (Admin → Priests & temples) before publishing this puja.']);
             }
             if (! $o->t('en')?->title || ! $o->t('en')?->summary) {
                 throw ValidationException::withMessages(['status' => 'Add a title and summary before activating.']);
