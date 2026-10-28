@@ -48,7 +48,22 @@
                             </li>
                         @endforeach
                     </ul>
-                    <p class="mt-3 rounded-xl bg-ivory-100 p-3 text-xs text-ink-700">Online booking and payment are being set up. Send a request below and our team will call you to confirm the time and fee.</p>
+                    @php $payable = app(\App\Domain\Payments\Razorpay::class)->configured() && $o->variants->where('active', true)->whereNotNull('price_minor')->isNotEmpty(); @endphp
+                    @if ($payable)
+                        @auth
+                        <form method="POST" action="{{ route('checkout.buy') }}" class="mt-4 space-y-3">
+                            @csrf <input type="hidden" name="key" value="{{ \App\Http\Controllers\Web\PaymentController::newKey() }}">
+                            <x-select name="variant" label="Choose option" :options="$o->variants->where('active', true)->whereNotNull('price_minor')->mapWithKeys(fn ($v) => [$v->ref => $v->name.' — '.\App\Support\Money::format($v->price_minor)])->all()" />
+                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="use_wallet" value="1" class="size-4 accent-ink-900"> Use wallet balance first</label>
+                            <button class="btn-primary w-full">Pay & book</button>
+                        </form>
+                        <p class="mt-3 text-xs text-ink-600">After payment our team contacts you to fix the time.</p>
+                        @else
+                        <a href="{{ route('account.sign-in') }}" class="btn-primary mt-4 w-full">Sign in to pay & book</a>
+                        @endauth
+                    @else
+                        <p class="mt-3 rounded-xl bg-ivory-100 p-3 text-xs text-ink-700">Online payment is not open for this service yet. Send a request below and our team will call you to confirm the time and fee.</p>
+                    @endif
                 </div>
                 <div class="card mt-5 p-5 sm:p-6" id="request">
                     <h2 class="text-lg">Request this service</h2>

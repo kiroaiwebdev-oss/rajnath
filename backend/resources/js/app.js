@@ -76,6 +76,29 @@ Alpine.data('countdown', () => ({
     get label() { return this.left > 0 ? 'Resend code in ' + this.left + 's' : 'Resend code'; },
 }));
 
+// Razorpay Checkout: opens the hosted payment sheet; on success posts ids + signature to the
+// server, which verifies the signature and confirms the captured amount with Razorpay.
+Alpine.data('razorpayCheckout', () => ({
+    busy: false, error: '',
+    pay() {
+        const d = this.$el.dataset;
+        if (!window.Razorpay) { this.error = 'The payment window could not load. Check your connection and try again.'; return; }
+        this.busy = true; this.error = '';
+        const rzp = new window.Razorpay({
+            key: d.key, order_id: d.order, amount: Number(d.amount), currency: 'INR', name: d.name,
+            prefill: { name: d.customer, email: d.email || undefined, contact: d.contact || undefined },
+            theme: { color: '#141a3c' },
+            handler: (res) => {
+                this.$refs.pid.value = res.razorpay_payment_id; this.$refs.oid.value = res.razorpay_order_id; this.$refs.sig.value = res.razorpay_signature;
+                this.$refs.verify.submit();
+            },
+            modal: { ondismiss: () => { this.busy = false; } },
+        });
+        rzp.on('payment.failed', (r) => { this.busy = false; this.error = (r.error && r.error.description) || 'Payment failed. You have not been charged; please try again.'; });
+        rzp.open();
+    },
+}));
+
 window.Alpine = Alpine;
 Alpine.start();
 

@@ -47,8 +47,21 @@ Route::prefix('account')->name('account.')->group(function () {
         Route::delete('devices/tokens/{id}', [Web\AccountController::class, 'revokeToken'])->whereNumber('id')->name('devices.token.revoke');
         Route::post('devices/sign-out-others', [Web\AccountController::class, 'revokeAllOthers'])->name('devices.others');
         Route::resource('birth-profiles', Web\BirthProfileController::class)->except('show')->parameters(['birth-profiles' => 'profile']);
+        Route::get('wallet', [Web\PaymentController::class, 'wallet'])->name('wallet');
+        Route::post('wallet/recharge', [Web\PaymentController::class, 'recharge'])->middleware('throttle:checkout')->name('wallet.recharge');
+        Route::get('orders', [Web\PaymentController::class, 'orders'])->name('orders');
+        Route::get('orders/{ref}', [Web\PaymentController::class, 'receipt'])->name('receipt');
     });
 });
+
+// ---- Checkout (customer) and Razorpay webhook ----
+Route::middleware('customer')->prefix('checkout')->name('checkout.')->group(function () {
+    Route::post('/', [Web\PaymentController::class, 'buy'])->middleware('throttle:checkout')->name('buy');
+    Route::get('{ref}', [Web\PaymentController::class, 'show'])->name('show');
+    Route::post('{ref}/verify', [Web\PaymentController::class, 'verify'])->name('verify');
+    Route::post('{ref}/cancel', [Web\PaymentController::class, 'cancel'])->name('cancel');
+});
+Route::post('/webhooks/razorpay', \App\Http\Controllers\RazorpayWebhookController::class)->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])->name('webhooks.razorpay');
 
 // ---- Staff authentication ----
 Route::prefix('staff')->name('staff.')->controller(StaffAuthController::class)->group(function () {
@@ -91,6 +104,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::get('customers/{customer}', [Admin\CustomerController::class, 'show'])->name('customers.show');
     Route::put('customers/{customer}/status', [Admin\CustomerController::class, 'setStatus'])->name('customers.status');
 
+    Route::get('finance', [Admin\FinanceController::class, 'index'])->name('finance.index');
+    Route::get('finance/orders/{ref}', [Admin\FinanceController::class, 'order'])->name('finance.order');
+    Route::post('finance/orders/{ref}/refunds', [Admin\FinanceController::class, 'requestRefund'])->name('finance.refund.request');
+    Route::post('finance/reconcile', [Admin\FinanceController::class, 'reconcile'])->name('finance.reconcile');
+    Route::post('finance/findings/{id}/resolve', [Admin\FinanceController::class, 'resolveFinding'])->whereNumber('id')->name('finance.finding.resolve');
+    Route::get('payments', [Admin\FinanceController::class, 'settings'])->name('payments.settings');
     Route::get('faqs', [Admin\FaqController::class, 'index'])->name('faqs.index');
     Route::post('faqs', [Admin\FaqController::class, 'save'])->name('faqs.save');
     Route::delete('faqs/{id}', [Admin\FaqController::class, 'destroy'])->whereNumber('id')->name('faqs.destroy');
@@ -107,6 +126,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
         Route::post('providers/mail/test', [Admin\ProvidersController::class, 'testMail'])->middleware('throttle:provider-test')->name('providers.mail.test');
         Route::post('providers/sms/test', [Admin\ProvidersController::class, 'testSms'])->middleware('throttle:provider-test')->name('providers.sms.test');
         Route::post('catalogue/{ref}/variants', [Admin\CatalogueController::class, 'saveVariant'])->name('catalogue.variant');
+        Route::post('finance/refunds/{ref}/decision', [Admin\FinanceController::class, 'decideRefund'])->name('finance.refund.decide');
+        Route::put('payments', [Admin\FinanceController::class, 'saveSettings'])->name('payments.save');
+        Route::post('payments/packages', [Admin\FinanceController::class, 'savePackage'])->name('payments.package');
     });
 });
 

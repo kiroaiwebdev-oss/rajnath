@@ -1,0 +1,70 @@
+[
+  {
+    "viewport": "desktop",
+    "page": "tools",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "kundli-result",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "matching-result",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "loshu-result",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "panchang",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "consoleErrors": []
+  },
+  {
+    "viewport": "phone",
+    "page": "tools",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "kundli-result",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "matching-result",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "loshu-result",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "panchang",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "consoleErrors": []
+  }
+]

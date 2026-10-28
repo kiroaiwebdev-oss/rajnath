@@ -6,6 +6,8 @@
         ['Enquiries', 'admin.enquiries.index', 'bookings.view'],
         ['Customers', 'admin.customers.index', 'customers.view'],
         ['Catalogue', 'admin.catalogue.index', 'catalogue.view'],
+        ['Finance', 'admin.finance.index', 'finance.view'],
+        ['Payments setup', 'admin.payments.settings', 'providers.manage'],
         ['FAQs', 'admin.faqs.index', 'content.author'],
         ['Team', 'admin.team.index', 'team.view'],
         ['Settings', 'admin.settings.edit', 'settings.view'],
