@@ -4,7 +4,8 @@
         ['Services', route('services.index'), 'services.*'],
         ['Consultations', route('services.index', ['family' => 'consultations']), null],
         ['Vastu', route('services.index', ['family' => 'vastu']), null],
-        ['Remedies', route('services.index', ['family' => 'remedies']), null],
+        ['Calculators', route('tools.index'), 'tools.*'],
+        ['Panchang', route('panchang'), 'panchang'],
         ['About', route('about'), 'about'],
         ['FAQ', route('faq'), 'faq'],
         ['Contact', route('contact'), 'contact'],
@@ -64,6 +65,8 @@
                 <ul class="mt-2 space-y-1.5">
                     <li><a href="{{ route('services.index') }}">All services</a></li>
                     <li><a href="{{ route('about') }}">About Acharya Ji</a></li>
+                    <li><a href="{{ route('tools.index') }}">Free calculators</a></li>
+                    <li><a href="{{ route('panchang') }}">Today's Panchang</a></li>
                     <li><a href="{{ route('faq') }}">Questions & answers</a></li>
                     <li><a href="{{ route('contact') }}">Contact & timings</a></li>
                 </ul>

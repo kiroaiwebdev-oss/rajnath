@@ -13,6 +13,10 @@ Route::get('/services/{slug}', [Web\SiteController::class, 'service'])->name('se
 Route::post('/enquiries', [Web\SiteController::class, 'enquire'])->middleware('throttle:enquiry')->name('enquiries.store');
 Route::get('/enquiries/{ref}/received', [Web\SiteController::class, 'thanks'])->name('enquiry.thanks');
 Route::get('/faq', [Web\SiteController::class, 'faq'])->name('faq');
+Route::get('/tools', [Web\ToolController::class, 'index'])->name('tools.index');
+Route::get('/tools/{slug}', [Web\ToolController::class, 'show'])->name('tools.show');
+Route::post('/tools/{slug}', [Web\ToolController::class, 'compute'])->middleware('throttle:tools')->name('tools.compute');
+Route::get('/panchang', [Web\ToolController::class, 'panchang'])->middleware('throttle:tools')->name('panchang');
 Route::view('/about', 'public.about')->name('about');
 Route::view('/contact', 'public.contact')->name('contact');
 Route::view('/privacy', 'public.privacy')->name('privacy');

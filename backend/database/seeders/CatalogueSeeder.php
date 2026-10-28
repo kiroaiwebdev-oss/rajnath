@@ -41,6 +41,36 @@ class CatalogueSeeder extends Seeder
         }
         $fam = ServiceFamily::pluck('id', 'code');
 
+        // Principal consultation with all modes/durations; team tiers stay draft until real,
+        // approved practitioners are added (no invented astrologers).
+        $this->offering($fam['consultation'], 'consultation-with-acharya-ji', 'active', [
+            'image' => 'images/owner/portrait-navy-480.jpg', 'title' => 'Personal Consultation with Acharya Ji',
+            'summary' => 'Speak one-to-one with Acharya Dr. Rajnath Jha about career, marriage, health, finance or any life question.',
+            'body' => "Acharya Ji studies your birth chart before and during the session and gives practical guidance with simple remedies.\n\nChoose audio, video or an in-person meeting in Patna, for 30 minutes or 1 hour. Couple sessions include both charts. Urgent sessions are given priority scheduling.",
+            'includes' => ['Birth chart reviewed before the call', 'Answers to your questions', 'Remedies suited to your chart', 'Couple option with both charts'],
+            'audience' => ['Anyone facing an important decision', 'Couples', 'Families'],
+            'disclaimer' => 'Guidance is traditional and interpretive. It does not replace medical, legal or financial advice.',
+        ], [
+            ['name' => 'Audio call — 30 min', 'mode' => 'audio', 'duration_min' => 30], ['name' => 'Audio call — 1 hour', 'mode' => 'audio', 'duration_min' => 60],
+            ['name' => 'Video call — 30 min', 'mode' => 'video', 'duration_min' => 30], ['name' => 'Video call — 1 hour', 'mode' => 'video', 'duration_min' => 60],
+            ['name' => 'In person (Patna) — 30 min', 'mode' => 'in_person', 'duration_min' => 30], ['name' => 'In person (Patna) — 1 hour', 'mode' => 'in_person', 'duration_min' => 60],
+            ['name' => 'Couple — video, 1 hour', 'mode' => 'video', 'duration_min' => 60, 'participants' => 2], ['name' => 'Couple — in person, 1 hour', 'mode' => 'in_person', 'duration_min' => 60, 'participants' => 2],
+            ['name' => 'Urgent — audio, 30 min', 'mode' => 'audio', 'duration_min' => 30, 'urgent' => true], ['name' => 'Urgent — video, 30 min', 'mode' => 'video', 'duration_min' => 30, 'urgent' => true],
+        ], 0, true);
+        foreach ([['elite-astrologer-consultation', 'Elite Astrologer Consultation'], ['premium-astrologer-consultation', 'Premium Astrologer Consultation'], ['team-astrologer-consultation', 'Team Astrologer Consultation']] as $i => [$slug, $title]) {
+            $this->offering($fam['consultation'], $slug, 'draft', ['title' => $title, 'summary' => 'Consultation with an approved astrologer from our team. Opens when practitioners are approved.'],
+                [['name' => 'Audio — 30 min', 'mode' => 'audio', 'duration_min' => 30], ['name' => 'Video — 30 min', 'mode' => 'video', 'duration_min' => 30], ['name' => 'Chat — 30 min', 'mode' => 'chat', 'duration_min' => 30], ['name' => 'Urgent — audio, 30 min', 'mode' => 'audio', 'duration_min' => 30, 'urgent' => true]], 90 + $i);
+        }
+        $this->offering($fam['consultation'], 'baby-muhurat-consultation', 'active', [
+            'image' => 'images/owner/writing-navy-480.jpg', 'title' => 'Baby Muhurat Consultation',
+            'summary' => 'Guidance on auspicious windows for naming, first feeding, mundan and other samskaras of your child.',
+            'body' => 'Acharya Ji studies the Panchang and the family charts to suggest suitable dates and times for your child\'s samskaras.',
+            'includes' => ['Namkaran, Annaprashana, Mundan, Karnavedha and Vidyarambh muhurat', 'Dates checked against tithi, nakshatra and vara', 'Simple puja guidance'],
+            'audience' => ['New parents', 'Families planning a samskara'],
+            'disclaimer' => 'Muhurat guidance is traditional. The timing and method of childbirth are medical decisions for your doctors and must never be changed for astrological reasons.',
+        ], [['name' => 'Video call — 30 min', 'mode' => 'video', 'duration_min' => 30], ['name' => 'Audio call — 30 min', 'mode' => 'audio', 'duration_min' => 30], ['name' => 'In person (Patna) — 30 min', 'mode' => 'in_person', 'duration_min' => 30]], 5);
+        $this->offering($fam['bundle'], 'navratri-guidance-package', 'draft', ['title' => 'Navratri Guidance Package', 'summary' => 'Seasonal package for Navratri — details to be finalised before publication.'], [['name' => 'Package', 'mode' => 'report']], 130);
+
         foreach ($this->activeServices() as $i => $s) {
             $this->offering($fam[$s['family']], $s['slug'], 'active', $s, $s['variants'] ?? self::CONSULT_VARIANTS, $i, $s['featured'] ?? false);
         }
