@@ -4,6 +4,12 @@
     $items = array_filter([
         ['Dashboard', 'admin.dashboard', null],
         ['Enquiries', 'admin.enquiries.index', 'bookings.view'],
+        ['Bookings & hours', 'admin.ops.bookings', 'bookings.view'],
+        ['Puja bookings', 'admin.ops.pujas', 'puja.fulfil'],
+        ['Priests & temples', 'admin.ops.suppliers', 'suppliers.manage'],
+        ['Reports to write', 'admin.ops.reports', 'reports.fulfil'],
+        ['Support', 'admin.ops.tickets', 'support.view'],
+        ['Rashifal', 'admin.ops.horoscopes', 'content.author'],
         ['Customers', 'admin.customers.index', 'customers.view'],
         ['Catalogue', 'admin.catalogue.index', 'catalogue.view'],
         ['Finance', 'admin.finance.index', 'finance.view'],

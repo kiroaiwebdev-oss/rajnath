@@ -1,0 +1,346 @@
+[
+  {
+    "viewport": "desktop",
+    "page": "rashifal",
+    "status": 200,
+    "url": "/rashifal",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "calendar",
+    "status": 200,
+    "url": "/calendar",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-bookings",
+    "status": 200,
+    "url": "/account/bookings",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-book-pick",
+    "status": 200,
+    "url": "/account/book/01M61FWSDZ65QGAQ2CA06C8CNA",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-reschedule",
+    "status": 200,
+    "url": "/account/bookings/01M61FWX5G6FCCFZAKRM9D55ZC/reschedule",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-puja-list",
+    "status": 200,
+    "url": "/account/puja",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-puja-show",
+    "status": 200,
+    "url": "/account/puja/01M61FWX3NKVFJ4CRWCEFE7D8Y",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-reports",
+    "status": 200,
+    "url": "/account/reports",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-report-show",
+    "status": 200,
+    "url": "/account/reports/01M61FWX4VAPX3SKNJ3EMRHPXZ",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-support",
+    "status": 200,
+    "url": "/account/support",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-ticket",
+    "status": 200,
+    "url": "/account/support/01M61FWX6K9TYZVGGB2J627TQY",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-privacy",
+    "status": 200,
+    "url": "/account/privacy",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-bookings",
+    "status": 200,
+    "url": "/admin/bookings",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-suppliers",
+    "status": 200,
+    "url": "/admin/suppliers",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-pujas",
+    "status": 200,
+    "url": "/admin/pujas?status=all",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-puja",
+    "status": 200,
+    "url": "/admin/pujas/01M61FWX3NKVFJ4CRWCEFE7D8Y",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-reports",
+    "status": 200,
+    "url": "/admin/reports?status=all",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-report",
+    "status": 200,
+    "url": "/admin/reports/01M61FWX4VAPX3SKNJ3EMRHPXZ",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-support",
+    "status": 200,
+    "url": "/admin/support?status=all",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-ticket",
+    "status": 200,
+    "url": "/admin/support/01M61FWX6K9TYZVGGB2J627TQY",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-rashifal",
+    "status": 200,
+    "url": "/admin/rashifal",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "consoleErrors": []
+  },
+  {
+    "viewport": "phone",
+    "page": "rashifal",
+    "status": 200,
+    "url": "/rashifal",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "calendar",
+    "status": 200,
+    "url": "/calendar",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-bookings",
+    "status": 200,
+    "url": "/account/bookings",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-book-pick",
+    "status": 200,
+    "url": "/account/book/01M61FWSDZ65QGAQ2CA06C8CNA",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-reschedule",
+    "status": 200,
+    "url": "/account/bookings/01M61FWX5G6FCCFZAKRM9D55ZC/reschedule",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-puja-list",
+    "status": 200,
+    "url": "/account/puja",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-puja-show",
+    "status": 200,
+    "url": "/account/puja/01M61FWX3NKVFJ4CRWCEFE7D8Y",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-reports",
+    "status": 200,
+    "url": "/account/reports",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-report-show",
+    "status": 200,
+    "url": "/account/reports/01M61FWX4VAPX3SKNJ3EMRHPXZ",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-support",
+    "status": 200,
+    "url": "/account/support",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-ticket",
+    "status": 200,
+    "url": "/account/support/01M61FWX6K9TYZVGGB2J627TQY",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-privacy",
+    "status": 200,
+    "url": "/account/privacy",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-bookings",
+    "status": 200,
+    "url": "/admin/bookings",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-suppliers",
+    "status": 200,
+    "url": "/admin/suppliers",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-pujas",
+    "status": 200,
+    "url": "/admin/pujas?status=all",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-puja",
+    "status": 200,
+    "url": "/admin/pujas/01M61FWX3NKVFJ4CRWCEFE7D8Y",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-reports",
+    "status": 200,
+    "url": "/admin/reports?status=all",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-report",
+    "status": 200,
+    "url": "/admin/reports/01M61FWX4VAPX3SKNJ3EMRHPXZ",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-support",
+    "status": 200,
+    "url": "/admin/support?status=all",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-ticket",
+    "status": 200,
+    "url": "/admin/support/01M61FWX6K9TYZVGGB2J627TQY",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-rashifal",
+    "status": 200,
+    "url": "/admin/rashifal",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "consoleErrors": []
+  }
+]

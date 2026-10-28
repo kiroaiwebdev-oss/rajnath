@@ -99,6 +99,8 @@ Alpine.data('razorpayCheckout', () => ({
     },
 }));
 
+Alpine.data('printer', () => ({ print() { window.print(); } }));
+
 window.Alpine = Alpine;
 Alpine.start();
 

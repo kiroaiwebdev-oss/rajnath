@@ -50,6 +50,9 @@ class PaymentController extends Controller
     {
         $d = $request->validate(['variant' => ['required', 'string', 'size:26'], 'use_wallet' => ['nullable', 'boolean'], 'key' => ['required', 'string', 'max:64']]);
         $v = OfferingVariant::where('ref', $d['variant'])->firstOrFail();
+        if (\App\Domain\Booking\Slots::bookable($v) && $v->active && $v->price_minor > 0 && $v->offering?->status === 'active') {
+            return redirect()->route('account.book', $v->ref); // choose a time first
+        }
         try {
             $r = $this->checkout->startServiceOrder($request->user(), $v, (bool) ($d['use_wallet'] ?? false), $d['key']);
         } catch (RuntimeException $e) {

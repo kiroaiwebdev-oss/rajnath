@@ -13,6 +13,8 @@ Route::get('/services/{slug}', [Web\SiteController::class, 'service'])->name('se
 Route::post('/enquiries', [Web\SiteController::class, 'enquire'])->middleware('throttle:enquiry')->name('enquiries.store');
 Route::get('/enquiries/{ref}/received', [Web\SiteController::class, 'thanks'])->name('enquiry.thanks');
 Route::get('/faq', [Web\SiteController::class, 'faq'])->name('faq');
+Route::get('/rashifal', [Web\ContentController::class, 'rashifal'])->name('rashifal');
+Route::get('/calendar', [Web\ContentController::class, 'calendar'])->middleware('throttle:tools')->name('calendar');
 Route::get('/gems', [Web\StoreController::class, 'index'])->name('store.index');
 Route::get('/gems/{slug}', [Web\StoreController::class, 'show'])->name('store.show');
 Route::post('/gems/buy', [Web\StoreController::class, 'buy'])->middleware(['customer', 'throttle:checkout'])->name('store.buy');
@@ -53,6 +55,26 @@ Route::prefix('account')->name('account.')->group(function () {
         Route::get('palmistry', [Web\PalmController::class, 'index'])->name('palm.index');
         Route::get('palmistry/{ref}', [Web\PalmController::class, 'show'])->name('palm.show');
         Route::post('palmistry/{ref}/photos', [Web\PalmController::class, 'upload'])->middleware('throttle:checkout')->name('palm.upload');
+        Route::get('bookings', [Web\BookingController::class, 'index'])->name('bookings');
+        Route::post('bookings/{ref}/cancel', [Web\BookingController::class, 'cancel'])->name('bookings.cancel');
+        Route::get('bookings/{ref}/reschedule', [Web\BookingController::class, 'rescheduleForm'])->name('bookings.reschedule');
+        Route::post('bookings/{ref}/reschedule', [Web\BookingController::class, 'reschedule'])->middleware('throttle:checkout');
+        Route::get('book/{variant}', [Web\BookingController::class, 'pick'])->name('book');
+        Route::post('book/{variant}', [Web\BookingController::class, 'hold'])->middleware('throttle:checkout');
+        Route::get('puja', [Web\CustomerOpsController::class, 'pujaIndex'])->name('puja.index');
+        Route::get('puja/{ref}', [Web\CustomerOpsController::class, 'pujaShow'])->name('puja.show');
+        Route::post('puja/{ref}/details', [Web\CustomerOpsController::class, 'pujaDetails'])->middleware('throttle:checkout')->name('puja.details');
+        Route::get('reports', [Web\CustomerOpsController::class, 'reportIndex'])->name('reports.index');
+        Route::get('reports/{ref}', [Web\CustomerOpsController::class, 'reportShow'])->name('reports.show');
+        Route::post('reports/{ref}/details', [Web\CustomerOpsController::class, 'reportDetails'])->middleware('throttle:checkout')->name('reports.details');
+        Route::get('support', [Web\CustomerOpsController::class, 'supportIndex'])->name('support.index');
+        Route::post('support', [Web\CustomerOpsController::class, 'supportStore'])->middleware('throttle:checkout')->name('support.store');
+        Route::get('support/{ref}', [Web\CustomerOpsController::class, 'supportShow'])->name('support.show');
+        Route::post('support/{ref}/reply', [Web\CustomerOpsController::class, 'supportReply'])->middleware('throttle:checkout')->name('support.reply');
+        Route::post('support/{ref}/close', [Web\CustomerOpsController::class, 'supportClose'])->name('support.close');
+        Route::get('privacy', [Web\CustomerOpsController::class, 'privacy'])->name('privacy');
+        Route::post('privacy/export', [Web\CustomerOpsController::class, 'export'])->middleware('throttle:checkout')->name('privacy.export');
+        Route::post('privacy/delete', [Web\CustomerOpsController::class, 'destroy'])->middleware('throttle:checkout')->name('privacy.delete');
         Route::get('wallet', [Web\PaymentController::class, 'wallet'])->name('wallet');
         Route::post('wallet/recharge', [Web\PaymentController::class, 'recharge'])->middleware('throttle:checkout')->name('wallet.recharge');
         Route::get('orders', [Web\PaymentController::class, 'orders'])->name('orders');
@@ -62,6 +84,8 @@ Route::prefix('account')->name('account.')->group(function () {
 
 // Private palm photo (owner or authorised fulfilment staff with MFA session).
 Route::get('/palm-photos/{ref}/{side}', [Web\PalmController::class, 'photo'])->middleware('auth')->name('palm.photo');
+
+Route::get('/puja-photos/{ref}/{i}', [Web\CustomerOpsController::class, 'pujaPhoto'])->whereNumber('i')->middleware('auth')->name('puja.photo');
 
 // ---- Checkout (customer) and Razorpay webhook ----
 Route::middleware('customer')->prefix('checkout')->name('checkout.')->group(function () {
@@ -132,6 +156,27 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::post('palmistry/{ref}/claim', [Admin\PalmAdminController::class, 'claim'])->name('palm.claim');
     Route::post('palmistry/{ref}/report', [Admin\PalmAdminController::class, 'report'])->name('palm.report');
     Route::post('palmistry/{ref}/need-photos', [Admin\PalmAdminController::class, 'needPhotos'])->name('palm.need');
+    Route::controller(Admin\OperationsController::class)->group(function () {
+        Route::get('bookings', 'bookings')->name('ops.bookings');
+        Route::post('bookings/rules', 'saveRule')->name('ops.rule');
+        Route::delete('bookings/rules/{id}', 'deleteRule')->whereNumber('id')->name('ops.rule.delete');
+        Route::post('bookings/leave', 'addLeave')->name('ops.leave');
+        Route::put('bookings/{ref}', 'updateBooking')->name('ops.booking');
+        Route::get('suppliers', 'suppliers')->name('ops.suppliers');
+        Route::post('suppliers', 'saveSupplier')->name('ops.supplier');
+        Route::get('pujas', 'pujas')->name('ops.pujas');
+        Route::get('pujas/{ref}', 'puja')->name('ops.puja');
+        Route::post('pujas/{ref}', 'pujaAction')->name('ops.puja.action');
+        Route::get('reports', 'reports')->name('ops.reports');
+        Route::get('reports/{ref}', 'report')->name('ops.report');
+        Route::post('reports/{ref}', 'saveReport')->name('ops.report.save');
+        Route::get('support', 'tickets')->name('ops.tickets');
+        Route::get('support/{ref}', 'ticket')->name('ops.ticket');
+        Route::post('support/{ref}', 'ticketReply')->name('ops.ticket.reply');
+        Route::get('rashifal', 'horoscopes')->name('ops.horoscopes');
+        Route::post('rashifal', 'saveHoroscope')->name('ops.horoscope');
+        Route::post('rashifal/{id}/decision', 'decideHoroscope')->whereNumber('id')->name('ops.horoscope.decide');
+    });
     Route::get('faqs', [Admin\FaqController::class, 'index'])->name('faqs.index');
     Route::post('faqs', [Admin\FaqController::class, 'save'])->name('faqs.save');
     Route::delete('faqs/{id}', [Admin\FaqController::class, 'destroy'])->whereNumber('id')->name('faqs.destroy');

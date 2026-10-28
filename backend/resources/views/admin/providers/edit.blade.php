@@ -47,7 +47,7 @@
                     <div class="grid gap-5 sm:grid-cols-2">
                         @include('admin.providers._fields', ['fields' => \App\Domain\Messaging\ProviderConfig::SMS_FIELDS['twilio']])
                     </div>
-                    <p class="mt-3 text-xs text-ink-600">Find these in the Twilio Console → Account info. Indian numbers need your sender and template registered on DLT through Twilio.</p>
+                    <p class="mt-3 text-xs text-ink-600">Find these in the Twilio Console › Account info. Indian numbers need your sender and template registered on DLT through Twilio.</p>
                 </fieldset>
 
                 <fieldset x-show="isFast2sms" class="rounded-2xl border border-ink-200 p-4">

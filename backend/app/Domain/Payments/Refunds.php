@@ -52,6 +52,26 @@ class Refunds
         return (int) DB::table('refunds')->where('order_id', $order->id)->where('destination', 'source')->whereIn('status', ['requested', 'approved', 'processing', 'processed'])->sum('amount_minor');
     }
 
+    /**
+     * Refund to wallet under a published policy (e.g. customer cancels ≥ 24 h before a booking).
+     * No maker/checker because no staff discretion is involved; recorded and audited as 'system'.
+     */
+    public function policyRefundToWallet(object $order, int $amount, string $reason): ?object
+    {
+        if ($amount <= 0 || ! in_array($order->status, ['paid', 'partially_refunded'], true)) {
+            return null;
+        }
+        $id = DB::table('refunds')->insertGetId([
+            'ref' => (string) Str::ulid(), 'order_id' => $order->id, 'payment_id' => null, 'amount_minor' => $amount, 'destination' => 'wallet',
+            'reason' => $reason, 'status' => 'approved', 'requested_by' => $order->user_id, 'decided_by' => null, 'decided_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $r = DB::table('refunds')->find($id);
+        $this->execute($r);
+        $this->audit->record('refund.policy', null, ['refund' => $r->ref, 'order' => $order->ref, 'amount' => $amount], null, 'system');
+
+        return DB::table('refunds')->find($id);
+    }
+
     public function decide(string $ref, bool $approve, User $by): object
     {
         $r = DB::transaction(function () use ($ref, $approve, $by) {

@@ -17,11 +17,15 @@
             @foreach ($refunds as $r)<div class="flex justify-between gap-3 text-success-700"><dt>Refunded ({{ $r->destination === 'wallet' ? 'to wallet' : 'to original payment' }})</dt><dd>−{{ \App\Support\Money::format((int) $r->amount_minor) }}</dd></div>@endforeach
         </dl>
         @if ($payment)<p class="mt-4 text-xs text-ink-600">Payment reference: {{ $payment->provider_payment_id }}</p>@endif
+        @php $pj = $o->status === 'paid' ? \Illuminate\Support\Facades\DB::table('puja_bookings')->where('order_id', $o->id)->first() : null; $rj = $o->status === 'paid' ? \Illuminate\Support\Facades\DB::table('report_jobs')->where('order_id', $o->id)->first() : null; $bk = \Illuminate\Support\Facades\DB::table('bookings')->where('order_id', $o->id)->first(); @endphp
+        @if ($pj)<a href="{{ route('account.puja.show', $pj->ref) }}" class="btn-primary mt-5">{{ $pj->status === 'awaiting_details' ? 'Add sankalp details' : 'Open your puja booking' }}</a>@endif
+        @if ($rj)<a href="{{ route('account.reports.show', $rj->ref) }}" class="btn-primary mt-5">{{ $rj->status === 'awaiting_details' ? 'Choose birth details for your report' : 'Open your report' }}</a>@endif
+        @if ($bk && $bk->status === 'confirmed')<p class="mt-4 text-sm">Booked for <strong>{{ \Illuminate\Support\Carbon::parse($bk->start_utc, 'UTC')->tz('Asia/Kolkata')->format('l, d M Y, g:i A') }} IST</strong>. <a href="{{ route('account.bookings') }}">Manage booking</a></p>@endif
         @php $palm = $o->status === 'paid' ? \Illuminate\Support\Facades\DB::table('palm_readings')->where('order_id', $o->id)->first() : null; $ship = $o->kind === 'product' ? \Illuminate\Support\Facades\DB::table('shipments')->where('order_id', $o->id)->first() : null; @endphp
         @if ($palm)
             <a href="{{ route('account.palm.show', $palm->ref) }}" class="btn-primary mt-5">{{ $palm->status === 'awaiting_photos' ? 'Upload your palm photos' : 'Open your palmistry report' }}</a>
         @elseif ($ship)
             <p class="mt-4 text-sm">Delivery: <strong>{{ str_replace('_', ' ', $ship->status) }}</strong>@if ($ship->awb) · {{ $ship->courier }} {{ $ship->awb }}@endif @if ($ship->tracking_url) · <a href="{{ $ship->tracking_url }}" rel="noopener">Track</a>@endif</p>
-        @elseif ($o->kind === 'service' && $o->status === 'paid')<p class="mt-4 text-sm">Our team will contact you to schedule this service. You can also call {{ $site('contact.phone') }}.</p>@endif
+        @elseif ($o->kind === 'service' && $o->status === 'paid' && ! $pj && ! $rj && ! $bk)<p class="mt-4 text-sm">Our team will contact you to schedule this service. You can also call {{ $site('contact.phone') }}.</p>@endif
     </article>
 </x-layouts.account>

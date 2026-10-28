@@ -4,7 +4,7 @@
             @csrf @method('PUT')
             <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="text-lg">Razorpay</h2>
                 @if (! $configured)<span class="badge-danger">Not configured</span>@elseif ($mode === 'live' && ! $live)<span class="badge-danger">Live key saved, live payments off</span>@else<span class="badge-success">{{ ucfirst($mode) }} mode</span>@endif</div>
-            <x-field name="key_id" label="Key ID" :value="$keyId" hint="Razorpay Dashboard → Settings → API Keys. Start with test keys (rzp_test_…)." />
+            <x-field name="key_id" label="Key ID" :value="$keyId" hint="Razorpay Dashboard › Settings › API Keys. Start with test keys (rzp_test_…)." />
             <x-field name="key_secret" label="Key secret" type="password" autocomplete="new-password" :hint="($secretMasked ? 'Saved: '.$secretMasked.'. ' : 'Not saved. ').'Leave blank to keep.'" />
             <x-field name="webhook_secret" label="Webhook secret" type="password" autocomplete="new-password" :hint="($webhookMasked ? 'Saved: '.$webhookMasked.'. ' : 'Not saved. ').'Webhook URL: '.route('webhooks.razorpay').' — events: payment.captured, payment.failed, order.paid, refund.processed'" />
             <label class="flex items-start gap-3 rounded-xl border border-gold-200 bg-gold-50 p-3 text-sm"><input type="checkbox" name="live_enabled" value="1" class="mt-1 size-4 accent-ink-900" @checked($live)>

@@ -72,7 +72,8 @@ class PaymentsTest extends TestCase
     private function pricedVariant(int $minor = 210000)
     {
         $v = Offering::where('slug', 'janma-kundali-reading')->first()->variants()->first();
-        $v->update(['price_minor' => $minor]);
+        // a non-slot mode: slot-bookable consultations go through BookingController (tested in Ops)
+        $v->update(['price_minor' => $minor, 'mode' => 'report']);
 
         return $v->fresh();
     }

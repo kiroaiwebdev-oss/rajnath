@@ -20,7 +20,7 @@
             <x-field name="awb" label="AWB / tracking number" :value="$s->awb" />
             <x-field name="tracking_url" label="Tracking link (https)" :value="$s->tracking_url" />
             <button class="btn-primary w-full">Save</button>
-            <p class="text-xs text-ink-600">Refunds for cancelled or returned items: Finance → order → Request refund.</p>
+            <p class="text-xs text-ink-600">Refunds for cancelled or returned items: Finance › order › Request refund.</p>
         </form>
         @else
         <p class="card h-fit p-5 text-sm">Not paid yet — nothing to dispatch.</p>

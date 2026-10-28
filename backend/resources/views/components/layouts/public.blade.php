@@ -3,12 +3,13 @@
     $nav = [
         ['Services', route('services.index'), 'services.*'],
         ['Consultations', route('services.index', ['family' => 'consultations']), null],
-        ['Vastu', route('services.index', ['family' => 'vastu']), null],
+        ['Vastu', route('services.index', ['family' => 'vastu']), null, false],
+        ['Puja', route('services.index', ['family' => 'puja']), null],
         ['Gems', route('store.index'), 'store.*'],
-        ['Calculators', route('tools.index'), 'tools.*'],
+        ['Rashifal', route('rashifal'), 'rashifal'],
+        ['Calculators', route('tools.index'), 'tools.*', false],
         ['Panchang', route('panchang'), 'panchang'],
-        ['About', route('about'), 'about'],
-        ['FAQ', route('faq'), 'faq'],
+        ['About', route('about'), 'about', false],
         ['Contact', route('contact'), 'contact'],
     ];
     $me = auth()->user();
@@ -23,14 +24,15 @@
             </a>
             <nav aria-label="Primary" class="hidden xl:block">
                 <ul class="flex items-center gap-1">
-                    @foreach ($nav as [$label, $href, $active])
-                        <li><a href="{{ $href }}" class="btn-ghost px-3" @if ($active && request()->routeIs($active)) aria-current="page" @endif>{{ $label }}</a></li>
+                    {{-- desktop shows the main sections; Vastu, Calculators and About stay in the footer and mobile menu --}}
+                    @foreach (array_filter($nav, fn ($n) => $n[3] ?? true) as [$label, $href, $active])
+                        <li><a href="{{ $href }}" class="btn-ghost whitespace-nowrap px-3" @if ($active && request()->routeIs($active)) aria-current="page" @endif>{{ $label }}</a></li>
                     @endforeach
                 </ul>
             </nav>
             <div class="flex items-center gap-2">
-                <a href="{{ $accountUrl }}" class="btn-ghost hidden px-3 sm:inline-flex">{{ $me ? 'My account' : 'Sign in' }}</a>
-                <a href="{{ route('services.index', ['family' => 'consultations']) }}" class="btn-primary hidden sm:inline-flex">Book consultation</a>
+                <a href="{{ $accountUrl }}" class="btn-ghost hidden whitespace-nowrap px-3 sm:inline-flex">{{ $me ? 'My account' : 'Sign in' }}</a>
+                <a href="{{ route('services.index', ['family' => 'consultations']) }}" class="btn-primary hidden whitespace-nowrap sm:inline-flex">Book consultation</a>
                 <button type="button" class="btn-ghost xl:hidden" @click="toggle" :aria-expanded="expanded" aria-controls="mobile-nav" aria-label="Menu">
                     <svg aria-hidden="true" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
                 </button>
@@ -70,6 +72,8 @@
                     <li><a href="{{ route('services.show', 'palmistry-photo-report') }}">Palmistry report from photos</a></li>
                     <li><a href="{{ route('tools.index') }}">Free calculators</a></li>
                     <li><a href="{{ route('panchang') }}">Today's Panchang</a></li>
+                    <li><a href="{{ route('calendar') }}">Vrat calendar</a></li>
+                    <li><a href="{{ route('rashifal') }}">Rashifal</a></li>
                     <li><a href="{{ route('faq') }}">Questions & answers</a></li>
                     <li><a href="{{ route('contact') }}">Contact & timings</a></li>
                 </ul>
