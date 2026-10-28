@@ -1,0 +1,58 @@
+[
+  {
+    "viewport": "desktop",
+    "page": "gems",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "gem-detail",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "palmistry-service",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "home",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "consoleErrors": []
+  },
+  {
+    "viewport": "phone",
+    "page": "gems",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "gem-detail",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "palmistry-service",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "home",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "consoleErrors": []
+  }
+]
