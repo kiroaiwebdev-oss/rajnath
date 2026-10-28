@@ -105,12 +105,8 @@ class ReportJobs
         DB::table('report_jobs')->where('id', $job->id)->update(['sections' => json_encode($clean, JSON_UNESCAPED_UNICODE), 'assigned_to' => $job->assigned_to ?? $staff->id,
             'status' => $complete ? 'completed' : 'in_preparation', 'completed_at' => $complete ? now() : null, 'updated_at' => now()]);
         $this->audit->record($complete ? 'report.completed' : 'report.draft_saved', null, ['job' => $job->ref], $staff);
-        if ($complete && ($u = User::find($job->user_id))?->email) {
-            try {
-                Mail::raw('Your report from '.config('brand')['brand.name'].' is ready: '.route('account.reports.show', $job->ref), fn ($m) => $m->to($u->email)->subject('Your report is ready'));
-            } catch (Throwable $e) {
-                report($e);
-            }
+        if ($complete) {
+            app(\App\Domain\Notify\Notifier::class)->send($job->user_id, 'report', 'Your report is ready', 'Your report from '.config('brand')['brand.name'].' is ready to read and save as PDF.', $job->ref, route('account.reports.show', $job->ref));
         }
     }
 }

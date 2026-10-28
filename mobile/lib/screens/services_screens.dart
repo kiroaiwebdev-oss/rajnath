@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
+import '../models/slots.dart';
 import '../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import 'purchase_screens.dart';
+import 'store_screens.dart';
 
 class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key, required this.state});
@@ -32,6 +35,16 @@ class _ServicesScreenState extends State<ServicesScreen> {
         final items = (d['items'] as List).cast<Map>();
         final fams = (d['families'] as List).cast<Map>();
         return ListView(padding: const EdgeInsets.all(16), children: [
+          Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: const Icon(Icons.diamond_outlined, color: ArjColors.gold700),
+              title: const Text('Gemstone store'),
+              subtitle: const Text('Certified natural gemstones'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => StoreScreen(state: widget.state))),
+            ),
+          ),
           TextField(decoration: const InputDecoration(labelText: 'Search services', prefixIcon: Icon(Icons.search)), textInputAction: TextInputAction.search,
               onSubmitted: (v) => setState(() => _q = v.trim())),
           const SizedBox(height: 12),
@@ -92,21 +105,54 @@ class ServiceDetailScreen extends StatelessWidget {
               for (final i in o['includes'] as List) ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.check, color: ArjColors.gold700), title: Text('$i')),
             ],
             const SectionTitle('Options & prices'),
-            for (final v in o['variants'] as List)
+            for (final v in (o['variants'] as List).cast<Map>())
               ListTile(contentPadding: EdgeInsets.zero, title: Text('${v['name']}'),
-                  subtitle: Text([if (v['duration_min'] != null) '${v['duration_min']} min', if ((v['participants'] ?? 1) > 1) '${v['participants']} people', if (v['urgent'] == true) 'Priority'].join(' · ')),
-                  trailing: Text(formatPaise((v['price_minor'] as num?)?.toInt()), style: const TextStyle(fontWeight: FontWeight.w600))),
+                  subtitle: Text([if (v['duration_min'] != null) '${v['duration_min']} min', if ((v['participants'] ?? 1) > 1) '${v['participants']} people', if (v['urgent'] == true) 'Priority', formatPaise((v['price_minor'] as num?)?.toInt())].join(' · ')),
+                  trailing: v['price_minor'] == null
+                      ? null
+                      : FilledButton.tonal(
+                          onPressed: () => _buy(context, o, v),
+                          child: Text(isSlotVariant(v) ? 'Book' : 'Buy', semanticsLabel: '${isSlotVariant(v) ? 'Book' : 'Buy'} ${v['name']}'),
+                        )),
             if (o['disclaimer'] != null)
               Container(margin: const EdgeInsets.only(top: 16), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: ArjColors.gold50, borderRadius: BorderRadius.circular(12), border: Border.all(color: ArjColors.gold200)),
                   child: Text('Please note: ${o['disclaimer']}')),
             const SizedBox(height: 20),
-            FilledButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RequestScreen(state: state, slug: slug, title: '${o['title']}'))), child: const Text('Request this service')),
-            const SizedBox(height: 8),
-            const Text('Our team will call you to confirm the time and fee.', textAlign: TextAlign.center, style: TextStyle(color: ArjColors.ink600)),
+            if ((o['variants'] as List).isEmpty || (o['variants'] as List).any((v) => v['price_minor'] == null)) ...[
+              FilledButton(onPressed: () => _request(context, o), child: const Text('Request this service')),
+              const SizedBox(height: 8),
+              const Text('Our team will call you to confirm the time and fee.', textAlign: TextAlign.center, style: TextStyle(color: ArjColors.ink600)),
+            ] else
+              TextButton(onPressed: () => _request(context, o), child: const Text('Have a question first? Send us a request')),
           ]),
         ),
       ),
     );
+  }
+}
+
+extension on ServiceDetailScreen {
+  void _request(BuildContext context, Map o) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => RequestScreen(state: state, slug: slug, title: '${o['title']}')));
+
+  /// Priced variant: slot booking (optionally via a team astrologer) or direct checkout.
+  Future<void> _buy(BuildContext context, Map o, Map v) async {
+    if (!await ensureSignedIn(context, state, reason: 'Sign in to book and pay securely.') || !context.mounted) return;
+    final nav = Navigator.of(context);
+    final title = '${o['title']}';
+    if (!isSlotVariant(v)) {
+      await nav.push(MaterialPageRoute(builder: (_) => ServiceBuyScreen(state: state, title: title, variant: v)));
+      return;
+    }
+    Map? practitioner;
+    if (teamOfferingSlugs.contains(slug)) {
+      practitioner = await nav.push<Map>(MaterialPageRoute(builder: (_) => PractitionerPickerScreen(state: state, offeringSlug: slug, title: title)));
+      if (practitioner == null) return;
+    }
+    await nav.push(MaterialPageRoute(
+      builder: (_) => SlotBookingScreen(
+        state: state, variantRef: '${v['ref']}', title: title, variantName: '${v['name']}', priceMinor: (v['price_minor'] as num?)?.toInt(), practitioner: practitioner),
+    ));
   }
 }
 

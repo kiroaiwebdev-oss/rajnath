@@ -100,3 +100,51 @@ String formatPaise(int? minor) {
 }
 
 void showSnack(BuildContext context, String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+
+/// Small coloured pill for an API status code.
+class StatusChip extends StatelessWidget {
+  const StatusChip(this.status, {super.key});
+  final Object? status;
+
+  static Color colorFor(String s) => switch (s) {
+        'paid' || 'completed' || 'confirmed' || 'performed' || 'scheduled' => ArjColors.success700,
+        'cancelled' || 'failed' || 'needs_new_photos' || 'no_show' => ArjColors.danger700,
+        'pending_payment' || 'awaiting_details' || 'awaiting_photos' => ArjColors.gold700,
+        _ => ArjColors.ink600,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final s = '${status ?? ''}';
+    final label = s.replaceAll('_', ' ');
+    final c = colorFor(s);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: c.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(99), border: Border.all(color: c.withValues(alpha: 0.4))),
+      child: Text(label.isEmpty ? '' : label[0].toUpperCase() + label.substring(1), style: TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+/// Titled body sections (reports, palmistry readings).
+class SectionsView extends StatelessWidget {
+  const SectionsView(this.sections, {super.key});
+  final List sections;
+  @override
+  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        for (final s in sections.whereType<Map>()) ...[
+          SectionTitle('${s['title'] ?? ''}'),
+          SelectableText('${s['body'] ?? ''}', style: const TextStyle(height: 1.5)),
+        ],
+      ]);
+}
+
+/// Error line under a form.
+class FormError extends StatelessWidget {
+  const FormError(this.text, {super.key});
+  final String? text;
+  @override
+  Widget build(BuildContext context) => text == null
+      ? const SizedBox.shrink()
+      : Padding(padding: const EdgeInsets.only(top: 8), child: Text(text!, style: TextStyle(color: Theme.of(context).colorScheme.error), semanticsLabel: 'Error: $text'));
+}

@@ -88,3 +88,8 @@
     .table th { @apply bg-ivory-100 px-4 py-3 font-semibold text-ink-700; }
     .table td { @apply border-t border-ink-200/60 px-4 py-3 align-top; }
 }
+
+@layer components {
+    .chat-user { @apply ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-ink-900 px-4 py-2.5 text-sm text-white; }
+    .chat-bot { @apply mr-auto max-w-[85%] rounded-2xl rounded-bl-sm bg-ivory-100 px-4 py-2.5 text-sm text-ink-900; }
+}

@@ -151,15 +151,7 @@ class PujaBookings
 
     private function notify(object $b, string $subject, string $body): void
     {
-        $u = User::find($b->user_id);
-        if (! $u?->email) {
-            return;
-        }
-        try {
-            Mail::raw($body."\n\n".route('account.puja.show', $b->ref), fn ($m) => $m->to($u->email)->subject($subject));
-        } catch (Throwable $e) {
-            report($e);
-        }
+        app(\App\Domain\Notify\Notifier::class)->send($b->user_id, 'puja', $subject, $body, $b->ref, route('account.puja.show', $b->ref));
     }
 
     public static function storeAuthorization(UploadedFile $f): string

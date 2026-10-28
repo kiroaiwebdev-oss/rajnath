@@ -5,6 +5,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 ///   flutter build apk --dart-define=API_BASE=https://staging.example.com/api/v1
 const apiBase = String.fromEnvironment('API_BASE', defaultValue: 'https://astrorajnathjha.com/api/v1');
 
+/// Website origin derived from [apiBase] (strips a trailing `/api/v1`).
+String siteOriginFor(String base) => base.replaceFirst(RegExp(r'/api/v1/?$'), '').replaceFirst(RegExp(r'/$'), '');
+final siteOrigin = siteOriginFor(apiBase);
+
 class ApiException implements Exception {
   ApiException(this.message, {this.code, this.status, this.fieldErrors = const {}});
   final String message;
@@ -40,7 +44,11 @@ class ApiClient {
   Future<Map<String, dynamic>> get(String path, {Map<String, dynamic>? query}) => _wrap(() => dio.get(path, queryParameters: query));
   Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) => _wrap(() => dio.post(path, data: body));
   Future<Map<String, dynamic>> patch(String path, Map<String, dynamic> body) => _wrap(() => dio.patch(path, data: body));
-  Future<Map<String, dynamic>> delete(String path) => _wrap(() => dio.delete(path));
+  Future<Map<String, dynamic>> delete(String path, [Map<String, dynamic>? body]) => _wrap(() => dio.delete(path, data: body));
+
+  /// Multipart upload (e.g. palm photos). Same error mapping as the JSON calls.
+  Future<Map<String, dynamic>> postMultipart(String path, FormData form) =>
+      _wrap(() => dio.post(path, data: form, options: Options(sendTimeout: const Duration(minutes: 2), receiveTimeout: const Duration(minutes: 1))));
 
   Future<Map<String, dynamic>> _wrap(Future<Response<dynamic>> Function() call) async {
     try {
@@ -52,7 +60,7 @@ class ApiClient {
   }
 
   ApiException toApiException(DioException e) {
-    if (e.type == DioExceptionType.connectionError || e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+    if (e.type == DioExceptionType.connectionError || e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout || e.type == DioExceptionType.sendTimeout) {
       return ApiException('No internet connection. Please check and try again.', code: 'offline');
     }
     final status = e.response?.statusCode;

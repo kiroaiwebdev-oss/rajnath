@@ -502,6 +502,7 @@ class OperationsTest extends TestCase
         $this->assertSame(0, DB::table('birth_profiles')->where('user_id', $u->id)->count());
         $this->assertSame(1, DB::table('orders')->where('id', $order->id)->count(), 'orders kept for tax');
         $this->assertDatabaseHas('privacy_requests', ['type' => 'delete', 'status' => 'completed', 'user_id' => null]);
+        $this->assertSame(0, DB::table('user_notifications')->where('user_id', $u->id)->count(), 'notices deleted');
     }
 
     public function test_wallet_balance_blocks_delete(): void

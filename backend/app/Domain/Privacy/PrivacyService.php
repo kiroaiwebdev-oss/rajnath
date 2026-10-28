@@ -40,6 +40,10 @@ class PrivacyService
                 'messages' => DB::table('ticket_messages')->where('ticket_id', $t->id)->where('internal', false)->get(['body', 'created_at'])]),
             'reports' => DB::table('report_jobs')->where('user_id', $u->id)->get(['ref', 'offering_slug', 'status', 'sections', 'completed_at']),
             'palm_readings' => DB::table('palm_readings')->where('user_id', $u->id)->get(['ref', 'status', 'question', 'report', 'completed_at']),
+            'notifications' => DB::table('user_notifications')->where('user_id', $u->id)->orderBy('id')->get(['kind', 'title', 'body', 'created_at', 'read_at']),
+            'assistant_conversations' => DB::table('assistant_conversations')->where('user_id', $u->id)->get()->map(fn ($c) => ['ref' => $c->ref, 'channel' => $c->channel, 'created_at' => $c->created_at,
+                'messages' => DB::table('assistant_messages')->where('conversation_id', $c->id)->orderBy('id')->get(['role', 'content', 'created_at'])]),
+            'app_devices_for_push' => DB::table('push_tokens')->where('user_id', $u->id)->count(),
             'puja_bookings' => DB::table('puja_bookings')->where('user_id', $u->id)->get()->map(fn ($b) => ['ref' => $b->ref, 'status' => $b->status, 'sankalp' => $b->sankalp ? json_decode(Crypt::decryptString($b->sankalp), true) : null, 'scheduled_at' => $b->scheduled_at]),
         ];
         DB::table('privacy_requests')->insert(['ref' => (string) Str::ulid(), 'user_id' => $u->id, 'type' => 'export', 'status' => 'completed', 'created_at' => now(), 'updated_at' => now()]);
@@ -109,6 +113,10 @@ class PrivacyService
                 DB::table('shipments')->where('id', $sid)->update(['address' => Crypt::encryptString(json_encode(['name' => 'Deleted']))]);
             }
             $steps[] = 'enquiries, tickets, report and delivery details anonymised';
+            DB::table('assistant_conversations')->where('user_id', $u->id)->delete();
+            DB::table('user_notifications')->where('user_id', $u->id)->delete();
+            DB::table('push_tokens')->where('user_id', $u->id)->delete();
+            $steps[] = 'assistant chats, notifications and push registrations deleted';
             DB::table('otp_challenges')->where('user_id', $u->id)->delete();
             DB::table('sessions')->where('user_id', $u->id)->delete();
             $u->tokens()->delete();

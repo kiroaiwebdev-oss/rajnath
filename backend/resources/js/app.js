@@ -99,6 +99,38 @@ Alpine.data('razorpayCheckout', () => ({
     },
 }));
 
+// Assistant chat. Text is always rendered with x-text (never HTML).
+Alpine.data('assistant', () => ({
+    messages: [], draft: '', busy: false, error: '', conversation: null, handoff: false, limited: false,
+    get empty() { return this.messages.length === 0; },
+    get cannotSend() { return this.busy || this.limited || this.draft.trim().length < 2; },
+    async send() {
+        const text = this.draft.trim();
+        if (text.length < 2 || this.busy) return;
+        this.messages.push({ id: Date.now(), role: 'user', content: text, cls: 'chat-user' });
+        this.draft = ''; this.busy = true; this.error = '';
+        try {
+            const r = await fetch(this.$root.dataset.endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                body: JSON.stringify({ message: text, conversation: this.conversation }),
+            });
+            const data = await r.json().catch(() => ({}));
+            if (r.status === 429) { this.limited = true; this.error = (data.error && data.error.message) || 'Daily limit reached. Please try again tomorrow.'; return; }
+            if (r.status === 503) { this.error = 'The assistant is not available right now. Please contact our team.'; this.handoff = true; return; }
+            if (!r.ok) { this.error = (data.errors && data.errors.message && data.errors.message[0]) || 'Something went wrong. Please try again.'; return; }
+            this.conversation = data.conversation;
+            this.handoff = this.handoff || data.handoff;
+            this.messages.push({ id: Date.now() + 1, role: 'assistant', content: data.reply, cls: 'chat-bot' });
+            this.$nextTick(() => { const l = this.$refs.log; if (l) l.scrollTop = l.scrollHeight; });
+        } catch (e) {
+            this.error = 'No connection. Please check your internet and try again.';
+        } finally {
+            this.busy = false;
+        }
+    },
+}));
+
 Alpine.data('printer', () => ({ print() { window.print(); } }));
 
 window.Alpine = Alpine;

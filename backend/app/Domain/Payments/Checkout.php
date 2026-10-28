@@ -192,6 +192,48 @@ class Checkout
         } elseif (in_array($family, ['report', 'bundle', 'written_question'], true)) {
             app(\App\Domain\Reports\ReportJobs::class)->onOrderPaid($order, $snap);
         }
+        $this->paidNotice($order, $snap);
+    }
+
+    /** "Payment received" with the customer's next step. Slot bookings send their own confirmation. */
+    private function paidNotice(object $order, array $snap): void
+    {
+        if (isset($snap['booking_ref'])) {
+            return;
+        }
+        $next = self::next($order);
+        $step = match ($next['type'] ?? null) {
+            'palm_upload' => ' Next: upload photos of both palms.',
+            'puja_details' => ' Next: add the sankalp details (names, gotra) for the puja.',
+            'report_details' => ' Next: choose the birth details for your report.',
+            'shipment' => ' We will email you when it is dispatched.',
+            default => '',
+        };
+        app(\App\Domain\Notify\Notifier::class)->send((int) $order->user_id, 'order', 'Payment received',
+            'We received ₹'.number_format($order->subtotal_minor / 100, 2).' for '.self::label($order->kind, $snap).'.'.$step, $order->ref, route('account.receipt', $order->ref));
+    }
+
+    /** The customer's next step for a paid order, used by the web receipt, the app and notices. */
+    public static function next(object $order): ?array
+    {
+        $find = fn (string $table) => DB::table($table)->where('order_id', $order->id)->first();
+        if ($order->kind === 'product') {
+            return ['type' => 'shipment', 'ref' => $order->ref];
+        }
+        if ($b = $find('bookings')) {
+            return ['type' => 'booking', 'ref' => $b->ref];
+        }
+        if (($p = $find('palm_readings')) && in_array($p->status, ['awaiting_photos', 'needs_new_photos'], true)) {
+            return ['type' => 'palm_upload', 'ref' => $p->ref];
+        }
+        if (($p = $find('puja_bookings')) && $p->status === 'awaiting_details') {
+            return ['type' => 'puja_details', 'ref' => $p->ref];
+        }
+        if (($j = $find('report_jobs')) && $j->status === 'awaiting_details') {
+            return ['type' => 'report_details', 'ref' => $j->ref];
+        }
+
+        return null;
     }
 
     public function markFailed(string $providerOrderId, ?string $paymentId, string $error): void

@@ -131,6 +131,23 @@ class CustomerOpsController extends Controller
         return back()->with('status', 'Request closed.');
     }
 
+    // ---------- Notifications inbox ----------
+    public function notifications(Request $r): View
+    {
+        $rows = DB::table('user_notifications')->where('user_id', $r->user()->id)->orderByDesc('id')->paginate(30);
+        // Opening the inbox marks what is shown as read.
+        DB::table('user_notifications')->whereIn('id', collect($rows->items())->pluck('id'))->whereNull('read_at')->update(['read_at' => now()]);
+
+        return view('account.notifications', ['rows' => $rows]);
+    }
+
+    public function readAllNotifications(Request $r): RedirectResponse
+    {
+        DB::table('user_notifications')->where('user_id', $r->user()->id)->whereNull('read_at')->update(['read_at' => now()]);
+
+        return back()->with('status', 'All notifications marked as read.');
+    }
+
     // ---------- Privacy ----------
     private function recentlySignedIn(Request $r): bool
     {

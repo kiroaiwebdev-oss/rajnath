@@ -51,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
         ]);
         RateLimiter::for('tools', fn (Request $r) => Limit::perMinute(30)->by('tl:'.($r->user()?->id ?: $r->ip())));
         RateLimiter::for('checkout', fn (Request $r) => Limit::perMinute(10)->by('co:'.($r->user()?->id ?: $r->ip())));
+        RateLimiter::for('assistant', fn (Request $r) => [Limit::perMinute(6)->by('ai:'.($r->user()?->id ?: $r->ip())), Limit::perHour(60)->by('aih:'.$r->ip())]);
         RateLimiter::for('places', fn (Request $r) => Limit::perMinute(60)->by('pl:'.$r->ip()));
         RateLimiter::for('enquiry', fn (Request $r) => [Limit::perMinute(3)->by('enq:'.$r->ip()), Limit::perDay(30)->by('enqd:'.$r->ip())]);
         RateLimiter::for('provider-test', fn (Request $r) => Limit::perMinute(5)->by('u:'.$r->user()?->id));

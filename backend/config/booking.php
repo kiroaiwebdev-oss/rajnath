@@ -6,4 +6,6 @@ return [
     'hold_minutes' => (int) env('BOOKING_HOLD_MINUTES', 15),        // unpaid hold before the slot is freed
     'change_hours' => (int) env('BOOKING_CHANGE_HOURS', 24),        // cancel/reschedule allowed until this many hours before
     'max_reschedules' => (int) env('BOOKING_MAX_RESCHEDULES', 1),
+    // Practitioner earnings become payable this many days after the session (refund window).
+    'earning_hold_days' => (int) env('EARNING_HOLD_DAYS', 7),
 ];

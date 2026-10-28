@@ -1,0 +1,166 @@
+[
+  {
+    "viewport": "desktop",
+    "page": "assistant",
+    "status": 200,
+    "url": "/assistant",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "check": "assistant-chat",
+    "reply": "I'm really sorry you are feeling this way. You don't have to",
+    "handoffShown": true
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-notifications",
+    "status": 200,
+    "url": "/account/notifications",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-choose-astrologer",
+    "status": 200,
+    "url": "/account/book/01M61KJ8KD8H97WVRVNDF4RK5H",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "acct-astrologer-slots",
+    "status": 200,
+    "url": "/account/book/01M61KJ8KD8H97WVRVNDF4RK5H?practitioner=01M61KJD72SGY0ZEFY6BD2MFQ6",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-push",
+    "status": 200,
+    "url": "/admin/push",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-assistant",
+    "status": 200,
+    "url": "/admin/assistant",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-practitioners",
+    "status": 200,
+    "url": "/admin/practitioners",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "admin-practitioner",
+    "status": 200,
+    "url": "/admin/practitioners/01M61KJD72SGY0ZEFY6BD2MFQ6",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "page": "practice",
+    "status": 200,
+    "url": "/admin/practice",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "desktop",
+    "consoleErrors": []
+  },
+  {
+    "viewport": "phone",
+    "page": "assistant",
+    "status": 200,
+    "url": "/assistant",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "check": "assistant-chat",
+    "reply": "I'm really sorry you are feeling this way. You don't have to",
+    "handoffShown": true
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-notifications",
+    "status": 200,
+    "url": "/account/notifications",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-choose-astrologer",
+    "status": 200,
+    "url": "/account/book/01M61KJ8KD8H97WVRVNDF4RK5H",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "acct-astrologer-slots",
+    "status": 200,
+    "url": "/account/book/01M61KJ8KD8H97WVRVNDF4RK5H?practitioner=01M61KJD72SGY0ZEFY6BD2MFQ6",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-push",
+    "status": 200,
+    "url": "/admin/push",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-assistant",
+    "status": 200,
+    "url": "/admin/assistant",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-practitioners",
+    "status": 200,
+    "url": "/admin/practitioners",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "admin-practitioner",
+    "status": 200,
+    "url": "/admin/practitioners/01M61KJD72SGY0ZEFY6BD2MFQ6",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "page": "practice",
+    "status": 200,
+    "url": "/admin/practice",
+    "horizontalOverflowPx": 0,
+    "axeViolations": []
+  },
+  {
+    "viewport": "phone",
+    "consoleErrors": []
+  }
+]
