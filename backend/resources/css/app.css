@@ -47,7 +47,7 @@
         text-rendering: optimizeLegibility;
     }
     h1, h2, h3, h4 { @apply font-sans font-semibold tracking-tight text-ink-900; }
-    a { @apply text-ink-800 underline-offset-4; }
+    a { @apply text-ink-800 underline decoration-ink-400 underline-offset-4 hover:decoration-ink-800; }
     :focus-visible { outline: 3px solid var(--color-gold-500); outline-offset: 2px; border-radius: 6px; }
     [x-cloak] { display: none !important; }
     @media (prefers-reduced-motion: reduce) {

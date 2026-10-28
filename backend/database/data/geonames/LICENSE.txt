@@ -1,0 +1,4 @@
+Data from GeoNames (https://www.geonames.org), downloaded 28 Oct 2026:
+cities15000.txt, admin1CodesASCII.txt, countryInfo.txt.
+Licensed under Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).
+Attribution is shown on the website's place search and in docs/licences.md.

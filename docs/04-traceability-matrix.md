@@ -9,9 +9,9 @@ evidence linked in `docs/evidence/`.
 | Toolchain & planning | — | 1 | implemented | `docs/evidence/phase-1.md` |
 | Architecture & data model docs | — | 1 | implemented | `02-architecture.md`, `03-data-model.md` |
 | Foundation: roles, audit, settings, design system (§6, §18) | ID-07..09, AD-15..16 | 2 | implemented | `docs/evidence/phase-2.md` |
-| Accounts & OTP (§7) | ID-01..06 | 3 | not started | |
+| Accounts & OTP (§7) | ID-01..06 | 3 | implemented (web + API); real provider send not yet verified; export/deletion in phase 10 | `docs/evidence/phase-3-4.md` |
 | Email/SMS provider configuration (§16, §17) | AD-17 (SMTP, OTP part), NO-01 (email, SMS send) | 3 | implemented — real-account send not yet verified | `docs/evidence/messaging.md` |
-| Catalogue & public website/PWA (§3, §6) | AD-01..05, ED-06 | 4 | not started | |
+| Catalogue & public website/PWA (§3, §6) | AD-01..05, ED-06 | 4 | implemented (English); Hindi + media library pending | `docs/evidence/phase-3-4.md` |
 | Wallet, payments, ledger (§9) | FI-01..08, FI-13 | 5 | not started | |
 | Consultations & calling (§8) | CO-01..14, PR-01..07 | 6 | not started | |
 | Astro engine, calculators, Panchang (§11, §12) | CA-01..24, PA-01..07 | 7 | not started | |

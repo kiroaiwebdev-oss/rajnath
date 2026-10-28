@@ -3,6 +3,10 @@
     $u = auth()->user();
     $items = array_filter([
         ['Dashboard', 'admin.dashboard', null],
+        ['Enquiries', 'admin.enquiries.index', 'bookings.view'],
+        ['Customers', 'admin.customers.index', 'customers.view'],
+        ['Catalogue', 'admin.catalogue.index', 'catalogue.view'],
+        ['FAQs', 'admin.faqs.index', 'content.author'],
         ['Team', 'admin.team.index', 'team.view'],
         ['Settings', 'admin.settings.edit', 'settings.view'],
         ['Email & SMS', 'admin.providers.edit', 'providers.manage'],

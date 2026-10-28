@@ -20,9 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'staff' => EnsureStaff::class,
             'step.up' => RequireStepUp::class,
+            'customer' => \App\Http\Middleware\EnsureCustomer::class,
+            'customer.api' => \App\Http\Middleware\EnsureActiveCustomerToken::class,
+            'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
         ]);
         $middleware->trustProxies(at: env('TRUSTED_PROXIES', '127.0.0.1'));
-        $middleware->redirectGuestsTo(fn (Request $r) => route('staff.login'));
+        $middleware->redirectGuestsTo(fn (Request $r) => $r->is('admin', 'admin/*', 'staff/*') ? route('staff.login') : route('account.sign-in'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

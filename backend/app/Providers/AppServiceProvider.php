@@ -44,6 +44,13 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by('email:'.strtolower((string) $r->input('email'))),
         ]);
         RateLimiter::for('staff-mfa', fn (Request $r) => Limit::perMinute(6)->by('sess:'.$r->session()->getId()));
+        // OTP endpoints: per IP and per identifier; the OTP service adds per-destination hourly caps.
+        RateLimiter::for('otp', fn (Request $r) => [
+            Limit::perMinute(10)->by('otp-ip:'.$r->ip()),
+            Limit::perMinute(5)->by('otp-id:'.strtolower((string) ($r->input('identifier') ?? $r->input('challenge') ?? ($r->hasSession() ? $r->session()->getId() : $r->ip())))),
+        ]);
+        RateLimiter::for('places', fn (Request $r) => Limit::perMinute(60)->by('pl:'.$r->ip()));
+        RateLimiter::for('enquiry', fn (Request $r) => [Limit::perMinute(3)->by('enq:'.$r->ip()), Limit::perDay(30)->by('enqd:'.$r->ip())]);
         RateLimiter::for('provider-test', fn (Request $r) => Limit::perMinute(5)->by('u:'.$r->user()?->id));
 
         // Apply SMTP settings saved in admin (falls back to .env MAIL_* when none are saved).
