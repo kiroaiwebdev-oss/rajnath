@@ -1,24 +1,42 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'api/api_client.dart';
+import 'push/push_service.dart';
 import 'screens/account_screens.dart';
+import 'screens/assistant_screen.dart';
 import 'screens/astro_screens.dart';
+import 'screens/purchase_screens.dart';
+import 'screens/routing.dart';
 import 'screens/services_screens.dart';
+import 'screens/store_screens.dart';
 import 'state/app_state.dart';
 import 'theme/app_theme.dart';
 
+final navigatorKey = GlobalKey<NavigatorState>();
+final messengerKey = GlobalKey<ScaffoldMessengerState>();
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  final state = AppState(ApiClient())..bootstrap();
-  runApp(ArjApp(state: state));
+  final state = AppState(ApiClient());
+  final boot = state.bootstrap();
+  runApp(ArjApp(state: state, navigatorKey: navigatorKey, messengerKey: messengerKey));
+  final push = PushService(state, navigatorKey, messengerKey: messengerKey, targetBuilder: (kind, ref) => screenForTarget(state, kind, ref));
+  // Meta (push config) loads after the session; push failures are swallowed inside start().
+  unawaited(boot.then((_) => push.start()).catchError((Object _) {}));
 }
 
 class ArjApp extends StatelessWidget {
-  const ArjApp({super.key, required this.state});
+  const ArjApp({super.key, required this.state, this.navigatorKey, this.messengerKey});
   final AppState state;
+  final GlobalKey<NavigatorState>? navigatorKey;
+  final GlobalKey<ScaffoldMessengerState>? messengerKey;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
+        navigatorKey: navigatorKey,
+        scaffoldMessengerKey: messengerKey,
         title: 'Astro Rajnath Jha',
         debugShowCheckedModeBanner: false,
         theme: buildArjTheme(),
@@ -50,11 +68,16 @@ class _HomeShellState extends State<HomeShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (i) => setState(() => _tab = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.auto_awesome_outlined), selectedIcon: Icon(Icons.auto_awesome), label: 'Services'),
-          NavigationDestination(icon: Icon(Icons.calculate_outlined), selectedIcon: Icon(Icons.calculate), label: 'Tools'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Account'),
+        destinations: [
+          const NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
+          const NavigationDestination(icon: Icon(Icons.auto_awesome_outlined), selectedIcon: Icon(Icons.auto_awesome), label: 'Services'),
+          const NavigationDestination(icon: Icon(Icons.calculate_outlined), selectedIcon: Icon(Icons.calculate), label: 'Tools'),
+          NavigationDestination(
+            icon: Badge(isLabelVisible: widget.state.unread > 0, label: Text('${widget.state.unread}'), child: const Icon(Icons.person_outline)),
+            selectedIcon: Badge(isLabelVisible: widget.state.unread > 0, label: Text('${widget.state.unread}'), child: const Icon(Icons.person)),
+            label: 'Account',
+            tooltip: widget.state.unread > 0 ? 'Account, ${widget.state.unread} unread notifications' : 'Account',
+          ),
         ],
       ),
     );
@@ -81,6 +104,23 @@ class HomeTab extends StatelessWidget {
         OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => KundliScreen(state: state))), child: const Text('Free Kundli')),
         const SizedBox(height: 8),
         OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PanchangScreen(state: state))), child: const Text("Today's Panchang")),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => StoreScreen(state: state))),
+          icon: const Icon(Icons.diamond_outlined),
+          label: const Text('Gemstone store'),
+        ),
+        if (state.assistantEnabled) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () async {
+              if (!await ensureSignedIn(context, state, reason: 'Sign in to chat with our assistant.') || !context.mounted) return;
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => AssistantScreen(state: state)));
+            },
+            icon: const Icon(Icons.chat_bubble_outline),
+            label: const Text('Ask our assistant'),
+          ),
+        ],
         const SizedBox(height: 24),
         const Text('Astrological guidance is traditional and interpretive. It does not replace medical, legal or financial advice.', style: TextStyle(fontSize: 12, color: ArjColors.ink600)),
       ]);

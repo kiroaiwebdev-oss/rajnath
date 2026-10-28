@@ -138,6 +138,10 @@ class Refunds
             $total = (int) $order->refunded_minor + (int) $r->amount_minor;
             DB::table('orders')->where('id', $order->id)->update(['refunded_minor' => $total, 'status' => $total >= (int) $order->subtotal_minor ? 'refunded' : 'partially_refunded', 'updated_at' => now()]);
         });
+        app(\App\Domain\Practitioners\Payouts::class)->onRefund($order);
+        app(\App\Domain\Notify\Notifier::class)->send((int) $order->user_id, 'order', 'Refund processed',
+            'A refund of ₹'.number_format($r->amount_minor / 100, 2).' was processed '.($r->destination === 'wallet' ? 'to your wallet.' : 'to your original payment method. Banks usually take 5–7 working days.'),
+            $order->ref, route('account.receipt', $order->ref));
         $this->audit->record('refund.processed', null, ['refund' => $r->ref, 'provider_refund' => $providerId], null, 'system');
     }
 }

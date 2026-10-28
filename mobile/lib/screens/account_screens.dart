@@ -5,7 +5,10 @@ import '../api/api_client.dart';
 import '../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import 'activity_screens.dart';
 import 'astro_screens.dart';
+import 'palm_screens.dart';
+import 'wallet_screen.dart';
 import 'sign_in_screen.dart';
 
 class AccountScreen extends StatelessWidget {
@@ -34,9 +37,19 @@ class AccountScreen extends StatelessWidget {
       const SizedBox(height: 4),
       Text([u['email'], u['phone']].whereType<String>().join(' · '), style: const TextStyle(color: ArjColors.ink600)),
       const SizedBox(height: 16),
+      const SectionTitle('My activity'),
+      _tile(context, Icons.receipt_long_outlined, 'Orders', () => OrdersScreen(state: state)),
+      _tile(context, Icons.event_outlined, 'Bookings', () => BookingsScreen(state: state)),
+      _tile(context, Icons.description_outlined, 'Reports', () => ReportsScreen(state: state)),
+      _tile(context, Icons.local_fire_department_outlined, 'Puja', () => PujaListScreen(state: state)),
+      _tile(context, Icons.back_hand_outlined, 'Palmistry', () => PalmListScreen(state: state)),
+      _tile(context, Icons.account_balance_wallet_outlined, 'Wallet', () => WalletScreen(state: state)),
+      _tile(context, Icons.notifications_outlined, 'Notifications', () => NotificationsScreen(state: state),
+          badge: state.unread > 0 ? '${state.unread}' : null),
+      const SectionTitle('Settings'),
       _tile(context, Icons.people_outline, 'Birth profiles', () => BirthProfilesScreen(state: state)),
       _tile(context, Icons.devices_outlined, 'Signed-in devices', () => DevicesScreen(state: state)),
-      _tile(context, Icons.notifications_outlined, 'Notifications', () => NotificationPrefsScreen(state: state)),
+      _tile(context, Icons.tune, 'Notification settings', () => NotificationPrefsScreen(state: state)),
       const SizedBox(height: 16),
       OutlinedButton(onPressed: () => state.signOut(), child: const Text('Sign out')),
       const SizedBox(height: 24),
@@ -44,9 +57,21 @@ class AccountScreen extends StatelessWidget {
     ]);
   }
 
-  Widget _tile(BuildContext context, IconData icon, String title, Widget Function() page) => Card(
+  Widget _tile(BuildContext context, IconData icon, String title, Widget Function() page, {String? badge}) => Card(
         margin: const EdgeInsets.only(bottom: 8),
-        child: ListTile(leading: Icon(icon), title: Text(title), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => page()))),
+        child: ListTile(
+          leading: Icon(icon),
+          title: Text(title),
+          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+            if (badge != null) Badge(label: Text(badge, semanticsLabel: '$badge unread')),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right),
+          ]),
+          onTap: () async {
+            await Navigator.of(context).push(MaterialPageRoute(builder: (_) => page()));
+            await state.refreshUnread();
+          },
+        ),
       );
 }
 

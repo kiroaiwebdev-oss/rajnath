@@ -2,14 +2,14 @@
     <div class="grid gap-6 lg:grid-cols-[1fr_22rem]">
         <section class="card min-w-0 p-5" aria-labelledby="slots-h">
             <h2 id="slots-h" class="text-lg">{{ $o->t('en')->title }} — {{ $v->name }}</h2>
-            <p class="text-sm text-ink-600">Times are India time (IST). {{ $v->duration_min }} minutes.</p>
+            <p class="text-sm text-ink-600">@if ($practitioner ?? null)With {{ $practitioner->display_name }} · @endif Times are India time (IST). {{ $v->duration_min }} minutes.</p>
             @error('start')<p class="field-error mt-3" role="alert">{{ $message }}</p>@enderror
             @if (! $slots)
                 <p class="mt-6 rounded-xl bg-ivory-100 p-4 text-sm">No free times in the next three weeks. Please <a href="{{ route('contact') }}">contact us</a> and we will find a time.</p>
             @else
                 <form method="POST" action="{{ $reschedule ? route('account.bookings.reschedule', $reschedule->ref) : route('account.book', $v->ref) }}" class="mt-4 space-y-6">
                     @csrf
-                    @unless ($reschedule)<input type="hidden" name="key" value="{{ \App\Http\Controllers\Web\PaymentController::newKey() }}">@endunless
+                    @unless ($reschedule)<input type="hidden" name="key" value="{{ \App\Http\Controllers\Web\PaymentController::newKey() }}">@if ($practitioner ?? null)<input type="hidden" name="practitioner" value="{{ $practitioner->ref }}">@endif @endunless
                     @foreach ($slots as $date => $list)
                         <fieldset>
                             <legend class="text-sm font-semibold">{{ \Illuminate\Support\Carbon::parse($date)->format('l, d M') }}</legend>

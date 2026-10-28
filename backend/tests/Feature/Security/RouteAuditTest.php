@@ -30,7 +30,8 @@ class RouteAuditTest extends TestCase
 
     public function test_sensitive_admin_mutations_require_step_up(): void
     {
-        $mustStepUp = ['admin/team/', 'admin/settings', 'admin/providers', 'admin/payments', 'admin/catalogue/{ref}/variants', 'admin/finance/refunds'];
+        $mustStepUp = ['admin/team/', 'admin/settings', 'admin/providers', 'admin/payments', 'admin/catalogue/{ref}/variants', 'admin/finance/refunds',
+            'admin/push', 'admin/commission', 'admin/payouts', 'admin/practitioners/invite'];
         foreach (Route::getRoutes() as $r) {
             $uri = $r->uri();
             if (array_intersect($r->methods(), ['POST', 'PUT', 'DELETE']) && collect($mustStepUp)->contains(fn ($p) => str_starts_with($uri, $p))) {
@@ -66,7 +67,8 @@ class RouteAuditTest extends TestCase
     public function test_api_customer_routes_require_token_and_ability(): void
     {
         $open = ['api/v1/meta', 'api/v1/auth/otp/start', 'api/v1/auth/otp/resend', 'api/v1/auth/otp/verify', 'api/v1/catalogue/families', 'api/v1/catalogue/offerings',
-            'api/v1/catalogue/offerings/{slug}', 'api/v1/places', 'api/v1/tools', 'api/v1/tools/{slug}', 'api/v1/panchang', 'api/v1/enquiries'];
+            'api/v1/catalogue/offerings/{slug}', 'api/v1/places', 'api/v1/tools', 'api/v1/tools/{slug}', 'api/v1/panchang', 'api/v1/enquiries',
+            'api/v1/store/products', 'api/v1/store/products/{slug}', 'api/v1/practitioners'];
         foreach (Route::getRoutes() as $r) {
             if (! str_starts_with($r->uri(), 'api/') || in_array($r->uri(), $open, true)) {
                 continue;
@@ -79,7 +81,8 @@ class RouteAuditTest extends TestCase
 
     public function test_every_route_is_rate_limited_where_it_sends_or_charges(): void
     {
-        foreach (['account/sign-in', 'account/verify', 'api/v1/auth/otp/start', 'api/v1/auth/otp/verify', 'enquiries', 'checkout', 'gems/buy', 'staff/login', 'staff/mfa', 'tools/{slug}'] as $uri) {
+        foreach (['account/sign-in', 'account/verify', 'api/v1/auth/otp/start', 'api/v1/auth/otp/verify', 'enquiries', 'checkout', 'gems/buy', 'staff/login', 'staff/mfa', 'tools/{slug}',
+            'assistant/chat', 'api/v1/assistant/chat', 'api/v1/checkout/service', 'api/v1/checkout/booking', 'api/v1/checkout/product', 'api/v1/checkout/recharge', 'api/v1/palmistry/{ref}/photos'] as $uri) {
             $route = collect(Route::getRoutes())->first(fn ($r) => $r->uri() === $uri && array_intersect($r->methods(), ['POST']));
             $this->assertNotNull($route, $uri);
             $this->assertMatchesRegularExpression('/throttle/', implode(' ', $route->gatherMiddleware()), $uri);

@@ -10,7 +10,12 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         'brand' => config('brand')['brand.name'],
         'min_app_version' => config('app.min_mobile_version', '1.0.0'),
         'source_code_url' => config('brand')['source.repository_url'],
+        'push' => ($fb = app(\App\Domain\Notify\Fcm::class)->clientConfig()) ? ['firebase' => $fb] : null,
+        'assistant' => ['enabled' => app(\App\Domain\Assistant\Assistant::class)->enabled()],
     ]))->name('api.v1.meta');
+    Route::get('store/products', [V1\CommerceController::class, 'products']);
+    Route::get('store/products/{slug}', [V1\CommerceController::class, 'productShow']);
+    Route::get('practitioners', [V1\CommerceController::class, 'practitioners']);
 
     Route::prefix('auth/otp')->middleware('throttle:otp')->group(function () {
         Route::post('start', [V1\AuthController::class, 'start']);
@@ -38,5 +43,37 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('birth-profiles/{ref}', [V1\BirthProfileController::class, 'show']);
         Route::put('birth-profiles/{ref}', [V1\BirthProfileController::class, 'update']);
         Route::delete('birth-profiles/{ref}', [V1\BirthProfileController::class, 'destroy']);
+
+        Route::post('push-tokens', [V1\NotificationController::class, 'register']);
+        Route::delete('push-tokens', [V1\NotificationController::class, 'unregister']);
+        Route::get('notifications', [V1\NotificationController::class, 'index']);
+        Route::post('notifications/read-all', [V1\NotificationController::class, 'readAll']);
+        Route::post('notifications/{id}/read', [V1\NotificationController::class, 'read'])->whereNumber('id');
+
+        Route::get('wallet', [V1\CommerceController::class, 'wallet']);
+        Route::get('slots', [V1\CommerceController::class, 'slots']);
+        Route::middleware('throttle:checkout')->group(function () {
+            Route::post('checkout/service', [V1\CommerceController::class, 'service']);
+            Route::post('checkout/booking', [V1\CommerceController::class, 'booking']);
+            Route::post('checkout/recharge', [V1\CommerceController::class, 'recharge']);
+            Route::post('checkout/product', [V1\CommerceController::class, 'product']);
+            Route::post('orders/{ref}/verify', [V1\CommerceController::class, 'verify']);
+            Route::post('orders/{ref}/cancel', [V1\CommerceController::class, 'cancel']);
+            Route::post('bookings/{ref}/cancel', [V1\ActivityController::class, 'cancelBooking']);
+            Route::post('bookings/{ref}/reschedule', [V1\ActivityController::class, 'rescheduleBooking']);
+            Route::post('palmistry/{ref}/photos', [V1\ActivityController::class, 'palmUpload']);
+            Route::post('reports/{ref}/details', [V1\ActivityController::class, 'reportDetails']);
+            Route::post('puja/{ref}/details', [V1\ActivityController::class, 'pujaDetails']);
+        });
+        Route::get('orders', [V1\CommerceController::class, 'orders']);
+        Route::get('orders/{ref}', [V1\CommerceController::class, 'show']);
+        Route::get('bookings', [V1\ActivityController::class, 'bookings']);
+        Route::get('palmistry', [V1\ActivityController::class, 'palms']);
+        Route::get('palmistry/{ref}', [V1\ActivityController::class, 'palmShow']);
+        Route::get('reports', [V1\ActivityController::class, 'reports']);
+        Route::get('reports/{ref}', [V1\ActivityController::class, 'reportShow']);
+        Route::get('puja', [V1\ActivityController::class, 'pujas']);
+        Route::get('puja/{ref}', [V1\ActivityController::class, 'pujaShow']);
+        Route::post('assistant/chat', [\App\Http\Controllers\Web\AssistantController::class, 'chat'])->middleware('throttle:assistant');
     });
 });

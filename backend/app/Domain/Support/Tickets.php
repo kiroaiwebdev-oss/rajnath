@@ -58,12 +58,8 @@ class Tickets
             DB::table('tickets')->where('id', $t->id)->update(['status' => $new, 'updated_at' => now()] + ($isStaff ? ['assigned_to' => $t->assigned_to ?? $by->id] : ['last_customer_at' => now()]));
         });
         $this->audit->record($internal ? 'ticket.note' : 'ticket.reply', null, ['ticket' => $t->ref], $by);
-        if ($isStaff && ! $internal && ($u = User::find($t->user_id))?->email) {
-            try {
-                Mail::raw("We replied to your request \"{$t->subject}\".\n\n".route('account.support.show', $t->ref), fn ($m) => $m->to($u->email)->subject('Reply to your support request'));
-            } catch (Throwable $e) {
-                report($e);
-            }
+        if ($isStaff && ! $internal) {
+            app(\App\Domain\Notify\Notifier::class)->send($t->user_id, 'ticket', 'Reply to your support request', "We replied to your request \"{$t->subject}\".", $t->ref, route('account.support.show', $t->ref));
         }
     }
 

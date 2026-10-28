@@ -74,6 +74,7 @@
                     <li><a href="{{ route('panchang') }}">Today's Panchang</a></li>
                     <li><a href="{{ route('calendar') }}">Vrat calendar</a></li>
                     <li><a href="{{ route('rashifal') }}">Rashifal</a></li>
+                    <li><a href="{{ route('assistant') }}">Ask our assistant</a></li>
                     <li><a href="{{ route('faq') }}">Questions & answers</a></li>
                     <li><a href="{{ route('contact') }}">Contact & timings</a></li>
                 </ul>

@@ -14,6 +14,8 @@ Route::post('/enquiries', [Web\SiteController::class, 'enquire'])->middleware('t
 Route::get('/enquiries/{ref}/received', [Web\SiteController::class, 'thanks'])->name('enquiry.thanks');
 Route::get('/faq', [Web\SiteController::class, 'faq'])->name('faq');
 Route::get('/rashifal', [Web\ContentController::class, 'rashifal'])->name('rashifal');
+Route::get('/assistant', [Web\AssistantController::class, 'page'])->name('assistant');
+Route::post('/assistant/chat', [Web\AssistantController::class, 'chat'])->middleware('throttle:assistant')->name('assistant.chat');
 Route::get('/calendar', [Web\ContentController::class, 'calendar'])->middleware('throttle:tools')->name('calendar');
 Route::get('/gems', [Web\StoreController::class, 'index'])->name('store.index');
 Route::get('/gems/{slug}', [Web\StoreController::class, 'show'])->name('store.show');
@@ -73,6 +75,8 @@ Route::prefix('account')->name('account.')->group(function () {
         Route::post('support/{ref}/reply', [Web\CustomerOpsController::class, 'supportReply'])->middleware('throttle:checkout')->name('support.reply');
         Route::post('support/{ref}/close', [Web\CustomerOpsController::class, 'supportClose'])->name('support.close');
         Route::get('privacy', [Web\CustomerOpsController::class, 'privacy'])->name('privacy');
+        Route::get('notifications', [Web\CustomerOpsController::class, 'notifications'])->name('notifications');
+        Route::post('notifications/read-all', [Web\CustomerOpsController::class, 'readAllNotifications'])->name('notifications.read-all');
         Route::post('privacy/export', [Web\CustomerOpsController::class, 'export'])->middleware('throttle:checkout')->name('privacy.export');
         Route::post('privacy/delete', [Web\CustomerOpsController::class, 'destroy'])->middleware('throttle:checkout')->name('privacy.delete');
         Route::get('wallet', [Web\PaymentController::class, 'wallet'])->name('wallet');
@@ -120,6 +124,25 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::get('audit', [Admin\AuditController::class, 'index'])->name('audit.index');
     Route::get('audit/verify', [Admin\AuditController::class, 'verify'])->name('audit.verify');
     Route::get('providers', [Admin\ProvidersController::class, 'edit'])->name('providers.edit');
+    Route::get('push', [Admin\IntegrationsController::class, 'push'])->name('push.edit');
+    Route::get('assistant', [Admin\IntegrationsController::class, 'assistant'])->name('assistant.edit');
+    Route::post('assistant/knowledge', [Admin\IntegrationsController::class, 'saveKnowledge'])->name('assistant.knowledge');
+    Route::get('assistant/conversations/{ref}', [Admin\IntegrationsController::class, 'conversation'])->name('assistant.conversation');
+    Route::get('practitioners', [Admin\PractitionerController::class, 'index'])->name('practitioners.index');
+    Route::get('practitioners/{ref}', [Admin\PractitionerController::class, 'show'])->name('practitioners.show');
+    Route::post('practitioners/{ref}/review', [Admin\PractitionerController::class, 'review'])->name('practitioners.review');
+    Route::post('practitioners/{ref}/commission', [Admin\PractitionerController::class, 'proposeCommission'])->name('practitioners.commission');
+    Route::post('practitioners/{ref}/payout', [Admin\PractitionerController::class, 'proposePayout'])->name('practitioners.payout');
+    Route::controller(Admin\PracticeController::class)->prefix('practice')->name('practice.')->group(function () {
+        Route::get('/', 'show')->name('show');
+        Route::put('profile', 'saveProfile')->name('profile');
+        Route::put('payout', 'savePayout')->name('payout');
+        Route::post('hours', 'saveHours')->name('hours');
+        Route::delete('hours/{id}', 'deleteHours')->whereNumber('id')->name('hours.delete');
+        Route::post('leave', 'addLeave')->name('leave');
+        Route::put('bookings/{ref}', 'updateBooking')->name('booking');
+        Route::get('statement', 'statement')->name('statement');
+    });
 
     Route::get('catalogue', [Admin\CatalogueController::class, 'index'])->name('catalogue.index');
     Route::get('catalogue/new', [Admin\CatalogueController::class, 'create'])->name('catalogue.create');
@@ -183,6 +206,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
 
     // Sensitive changes: fresh password + TOTP confirmation required.
     Route::middleware('step.up')->group(function () {
+        Route::put('push', [Admin\IntegrationsController::class, 'savePush'])->name('push.save');
+        Route::post('push/test', [Admin\IntegrationsController::class, 'testPush'])->middleware('throttle:provider-test')->name('push.test');
+        Route::put('assistant', [Admin\IntegrationsController::class, 'saveAssistant'])->name('assistant.save');
+        Route::post('assistant/test', [Admin\IntegrationsController::class, 'testAssistant'])->middleware('throttle:provider-test')->name('assistant.test');
+        Route::post('practitioners/invite', [Admin\PractitionerController::class, 'invite'])->name('practitioners.invite');
+        Route::post('commission/{id}/decision', [Admin\PractitionerController::class, 'decideCommission'])->whereNumber('id')->name('practitioners.commission.decide');
+        Route::post('payouts/{ref}', [Admin\PractitionerController::class, 'payoutAction'])->name('payouts.action');
         Route::post('team/invitations', [Admin\TeamController::class, 'invite'])->name('team.invite');
         Route::delete('team/invitations/{ref}', [Admin\TeamController::class, 'revokeInvitation'])->name('team.invitations.revoke');
         Route::put('team/{user}/roles', [Admin\TeamController::class, 'updateRoles'])->name('team.roles');

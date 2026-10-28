@@ -50,6 +50,8 @@ android {
                 ?: throw GradleException("Release signing is not configured: create android/key.properties (docs/release/signing.md).")
             isMinifyEnabled = true
             isShrinkResources = true
+            // Flutter adds its own rules; these add Razorpay's keep rules.
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }

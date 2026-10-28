@@ -94,6 +94,9 @@ class CatalogueController extends Controller
             if (in_array($o->family->code, ['puja', 'chadhava'], true) && ! \App\Domain\Puja\PujaBookings::canPublish($o->id, $o->slug)) {
                 throw ValidationException::withMessages(['status' => 'Link at least one priest/temple with a verified, current authorisation (Admin › Priests & temples) before publishing this puja.']);
             }
+            if (! \App\Domain\Practitioners\Practitioners::canPublish($o->slug)) {
+                throw ValidationException::withMessages(['status' => 'Approve at least one astrologer of this tier, with an approved commission, before publishing (Admin › Practitioners).']);
+            }
             if (! $o->t('en')?->title || ! $o->t('en')?->summary) {
                 throw ValidationException::withMessages(['status' => 'Add a title and summary before activating.']);
             }

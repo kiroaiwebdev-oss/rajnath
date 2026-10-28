@@ -33,11 +33,11 @@ class Slots
     }
 
     /** @return array<string, list<array{start: string, label: string}>> keyed by local date */
-    public function available(int $durationMin, int $days = 21): array
+    public function available(int $durationMin, int $days = 21, int $resource = 0): array
     {
-        $rules = DB::table('availability_rules')->where('active', true)->get()->groupBy('weekday');
-        $leave = DB::table('availability_exceptions')->pluck('date')->map(fn ($d) => substr($d, 0, 10))->flip();
-        $taken = DB::table('booking_units')->where('unit_start', '>=', now('UTC')->subDay())->pluck('unit_start')->map(fn ($t) => substr($t, 0, 16))->flip();
+        $rules = DB::table('availability_rules')->where('resource_key', $resource)->where('active', true)->get()->groupBy('weekday');
+        $leave = DB::table('availability_exceptions')->where('resource_key', $resource)->pluck('date')->map(fn ($d) => substr($d, 0, 10))->flip();
+        $taken = DB::table('booking_units')->where('resource_key', $resource)->where('unit_start', '>=', now('UTC')->subDay())->pluck('unit_start')->map(fn ($t) => substr($t, 0, 16))->flip();
         $earliest = CarbonImmutable::now('UTC')->addMinutes(config('booking.lead_minutes'));
         $out = [];
         $today = CarbonImmutable::now(self::TZ)->startOfDay();
@@ -69,30 +69,32 @@ class Slots
     }
 
     /** Holds the slot and creates the order. Returns [booking, checkout payload]. */
-    public function hold(User $user, OfferingVariant $v, string $startIso, ?int $birthProfileId, ?string $topic, string $key, bool $useWallet = false): array
+    public function hold(User $user, OfferingVariant $v, string $startIso, ?int $birthProfileId, ?string $topic, string $key, bool $useWallet = false, ?string $practitionerRef = null): array
     {
         if (! self::bookable($v)) {
             throw ValidationException::withMessages(['start' => 'This option is not booked by time slot.']);
         }
+        $practitioner = \App\Domain\Practitioners\Practitioners::forBooking($v, $practitionerRef);
+        $resource = (int) ($practitioner->id ?? 0);
         if (DB::table('bookings')->where('user_id', $user->id)->where('status', 'held')->where('hold_expires_at', '>', now())->count() >= 2) {
             throw ValidationException::withMessages(['start' => 'You already have unpaid bookings on hold. Complete or wait for them to expire first.']);
         }
         $start = CarbonImmutable::parse($startIso)->utc();
-        $slotsForDay = $this->available((int) $v->duration_min, 31)[$start->setTimezone(self::TZ)->toDateString()] ?? [];
+        $slotsForDay = $this->available((int) $v->duration_min, 31, $resource)[$start->setTimezone(self::TZ)->toDateString()] ?? [];
         if (! collect($slotsForDay)->contains('start', $start->format('Y-m-d\TH:i\Z'))) {
             throw ValidationException::withMessages(['start' => 'This time is no longer available. Please choose another slot.']);
         }
-        $step = (int) (DB::table('availability_rules')->where('weekday', $start->setTimezone(self::TZ)->dayOfWeek)->value('slot_minutes') ?: 30);
+        $step = $this->step($resource, $start);
         $units = (int) ceil($v->duration_min / $step);
         try {
-            $booking = DB::transaction(function () use ($user, $v, $start, $birthProfileId, $topic, $units, $step) {
+            $booking = DB::transaction(function () use ($user, $v, $start, $birthProfileId, $topic, $units, $step, $resource) {
                 $id = DB::table('bookings')->insertGetId([
                     'ref' => (string) Str::ulid(), 'user_id' => $user->id, 'variant_id' => $v->id, 'start_utc' => $start, 'end_utc' => $start->addMinutes($v->duration_min),
                     'status' => 'held', 'hold_expires_at' => now()->addMinutes(config('booking.hold_minutes')), 'mode' => $v->mode,
-                    'birth_profile_id' => $birthProfileId, 'topic' => $topic, 'created_at' => now(), 'updated_at' => now(),
+                    'birth_profile_id' => $birthProfileId, 'topic' => $topic, 'practitioner_id' => $resource ?: null, 'created_at' => now(), 'updated_at' => now(),
                 ]);
                 for ($u = 0; $u < $units; $u++) {
-                    DB::table('booking_units')->insert(['booking_id' => $id, 'unit_start' => $start->addMinutes($u * $step)]);
+                    DB::table('booking_units')->insert(['booking_id' => $id, 'resource_key' => $resource, 'unit_start' => $start->addMinutes($u * $step)]);
                 }
 
                 return DB::table('bookings')->find($id);
@@ -104,7 +106,7 @@ class Slots
             throw $e;
         }
         try {
-            $r = $this->checkout->startServiceOrder($user, $v, $useWallet, $key, ['booking_ref' => $booking->ref, 'start_utc' => $start->format('Y-m-d\TH:i\Z')]);
+            $r = $this->checkout->startServiceOrder($user, $v, $useWallet, $key, ['booking_ref' => $booking->ref, 'start_utc' => $start->format('Y-m-d\TH:i\Z')] + ($practitioner ? ['practitioner' => ['ref' => $practitioner->ref, 'name' => $practitioner->display_name]] : []));
         } catch (\Throwable $e) {
             $this->release($booking->id, 'cancelled');
             throw $e;
@@ -125,8 +127,12 @@ class Slots
         // Matched by the ref in the order snapshot: a fully wallet-paid order is marked paid before
         // hold() has linked order_id to the booking.
         $ref = json_decode($order->snapshot, true)['booking_ref'] ?? null;
-        DB::table('bookings')->where('ref', $ref)->where('user_id', $order->user_id)->where('status', 'held')
+        $n = DB::table('bookings')->where('ref', $ref)->where('user_id', $order->user_id)->where('status', 'held')
             ->update(['status' => 'confirmed', 'order_id' => $order->id, 'hold_expires_at' => null, 'updated_at' => now()]);
+        if ($n) {
+            $b = DB::table('bookings')->where('ref', $ref)->first();
+            $this->notify($b, 'Consultation confirmed', 'Your consultation is confirmed for '.self::when($b).'. We will send the call link before the session.');
+        }
     }
 
     public function onOrderCancelled(object $order): void
@@ -187,6 +193,7 @@ class Slots
             app(\App\Domain\Payments\Refunds::class)->policyRefundToWallet($order, (int) $order->subtotal_minor - (int) $order->refunded_minor, 'Cancelled by customer within policy');
         });
         $this->audit->record('booking.cancelled', null, ['booking' => $b->ref], $u);
+        $this->notify($b, 'Booking cancelled', 'Your consultation on '.self::when($b).' was cancelled and the full amount was added to your wallet.');
     }
 
     public function reschedule(object $b, User $u, string $newStartIso): void
@@ -196,16 +203,17 @@ class Slots
             throw ValidationException::withMessages(['start' => 'This booking can no longer be rescheduled online. Please contact support.']);
         }
         $v = OfferingVariant::findOrFail($b->variant_id);
+        $resource = (int) ($b->practitioner_id ?? 0);
         $start = CarbonImmutable::parse($newStartIso)->utc();
-        if (! collect($this->available((int) $v->duration_min, 31)[$start->setTimezone(self::TZ)->toDateString()] ?? [])->contains('start', $start->format('Y-m-d\TH:i\Z'))) {
+        if (! collect($this->available((int) $v->duration_min, 31, $resource)[$start->setTimezone(self::TZ)->toDateString()] ?? [])->contains('start', $start->format('Y-m-d\TH:i\Z'))) {
             throw ValidationException::withMessages(['start' => 'This time is no longer available.']);
         }
-        $step = (int) (DB::table('availability_rules')->where('weekday', $start->setTimezone(self::TZ)->dayOfWeek)->value('slot_minutes') ?: 30);
+        $step = $this->step($resource, $start);
         try {
-            DB::transaction(function () use ($b, $start, $v, $step) {
+            DB::transaction(function () use ($b, $start, $v, $step, $resource) {
                 DB::table('booking_units')->where('booking_id', $b->id)->delete();
                 for ($u = 0; $u < (int) ceil($v->duration_min / $step); $u++) {
-                    DB::table('booking_units')->insert(['booking_id' => $b->id, 'unit_start' => $start->addMinutes($u * $step)]);
+                    DB::table('booking_units')->insert(['booking_id' => $b->id, 'resource_key' => $resource, 'unit_start' => $start->addMinutes($u * $step)]);
                 }
                 DB::table('bookings')->where('id', $b->id)->update(['start_utc' => $start, 'end_utc' => $start->addMinutes($v->duration_min), 'reschedules' => $b->reschedules + 1, 'updated_at' => now()]);
             });
@@ -213,6 +221,7 @@ class Slots
             throw ValidationException::withMessages(['start' => 'Someone just booked this time. Please choose another slot.']);
         }
         $this->audit->record('booking.rescheduled', null, ['booking' => $b->ref], $u);
+        $this->notify(DB::table('bookings')->find($b->id), 'Booking moved', 'Your consultation is now on '.self::when(DB::table('bookings')->find($b->id)).'.');
     }
 
     public function setOutcome(object $b, string $status, ?string $link, User $staff): void
@@ -227,7 +236,49 @@ class Slots
             }
             $data['status'] = $status;
         }
-        DB::table('bookings')->where('id', $b->id)->update($data);
+        DB::transaction(function () use ($b, $data, $status) {
+            DB::table('bookings')->where('id', $b->id)->update($data);
+            if ($status === 'completed' && $b->practitioner_id) {
+                app(\App\Domain\Practitioners\Payouts::class)->accrue(DB::table('bookings')->find($b->id));
+            }
+        });
         $this->audit->record('booking.updated', null, ['booking' => $b->ref, 'status' => $status], $staff);
+        if ($link !== null && $link !== $b->meeting_link) {
+            $this->notify($b, 'Your consultation link', 'Join your consultation on '.self::when($b).' here: '.$link);
+        }
+    }
+
+    private function step(int $resource, CarbonImmutable $start): int
+    {
+        return (int) (DB::table('availability_rules')->where('resource_key', $resource)->where('weekday', $start->setTimezone(self::TZ)->dayOfWeek)->value('slot_minutes') ?: 30);
+    }
+
+    public static function when(object $b): string
+    {
+        return CarbonImmutable::parse($b->start_utc, 'UTC')->setTimezone(self::TZ)->format('D, d M Y \a\t g:i A').' IST';
+    }
+
+    private function notify(object $b, string $title, string $body): void
+    {
+        app(\App\Domain\Notify\Notifier::class)->send((int) $b->user_id, 'booking', $title, $body, $b->ref, route('account.bookings'));
+    }
+
+    /** Scheduled every 10 minutes: reminders 24 hours and 1 hour before a confirmed consultation. */
+    public function sendReminders(): int
+    {
+        $n = 0;
+        foreach ([['reminded_24h_at', 24 * 60, 'tomorrow'], ['reminded_1h_at', 60, 'in about an hour']] as [$col, $minutes, $words]) {
+            $due = DB::table('bookings')->where('status', 'confirmed')->whereNull($col)
+                ->where('start_utc', '>', now())->where('start_utc', '<=', now()->addMinutes($minutes))->get();
+            foreach ($due as $b) {
+                if (DB::table('bookings')->where('id', $b->id)->whereNull($col)->update([$col => now()])) {
+                    $link = $b->meeting_link ? ' Join here: '.$b->meeting_link : '';
+                    $this->notify($b, 'Consultation reminder', "Your consultation is $words: ".self::when($b).'.'.$link);
+                    $n++;
+                }
+            }
+        }
+
+        return $n;
     }
 }

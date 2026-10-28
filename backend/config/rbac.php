@@ -27,7 +27,7 @@ return [
         'puja.fulfil', 'suppliers.manage',
         // Finance
         'finance.view', 'refunds.request', 'refunds.approve',
-        'payouts.approve', 'commission.propose', 'commission.approve',
+        'payouts.propose', 'payouts.approve', 'commission.propose', 'commission.approve',
         'reconciliation.manage',
         // Support & privacy
         'support.view', 'support.handle', 'privacy.handle', 'privacy.approve',
@@ -47,7 +47,7 @@ return [
             'commission.propose', 'refunds.request',
         ],
         'finance' => [
-            'finance.view', 'refunds.request', 'refunds.approve', 'payouts.approve',
+            'finance.view', 'refunds.request', 'refunds.approve', 'payouts.propose', 'payouts.approve',
             'commission.propose', 'reconciliation.manage', 'customers.view', 'bookings.view',
         ],
         'support' => [

@@ -129,14 +129,6 @@ class PalmReadings
 
     private function notify(object $r, string $subject, string $body): void
     {
-        $u = User::find($r->user_id);
-        if (! $u?->email) {
-            return;
-        }
-        try {
-            Mail::raw($body."\n\n".route('account.palm.show', $r->ref), fn ($m) => $m->to($u->email)->subject($subject));
-        } catch (Throwable $e) {
-            report($e);
-        }
+        app(\App\Domain\Notify\Notifier::class)->send($r->user_id, 'palm', $subject, $body, $r->ref, route('account.palm.show', $r->ref));
     }
 }

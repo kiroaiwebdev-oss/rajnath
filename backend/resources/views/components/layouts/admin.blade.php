@@ -3,6 +3,7 @@
     $u = auth()->user();
     $items = array_filter([
         ['Dashboard', 'admin.dashboard', null],
+        ...($u->hasRole('practitioner') ? [['My practice', 'admin.practice.show', null]] : []),
         ['Enquiries', 'admin.enquiries.index', 'bookings.view'],
         ['Bookings & hours', 'admin.ops.bookings', 'bookings.view'],
         ['Puja bookings', 'admin.ops.pujas', 'puja.fulfil'],
@@ -11,6 +12,7 @@
         ['Support', 'admin.ops.tickets', 'support.view'],
         ['Rashifal', 'admin.ops.horoscopes', 'content.author'],
         ['Customers', 'admin.customers.index', 'customers.view'],
+        ['Practitioners', 'admin.practitioners.index', 'practitioners.view'],
         ['Catalogue', 'admin.catalogue.index', 'catalogue.view'],
         ['Finance', 'admin.finance.index', 'finance.view'],
         ['Gem store', 'admin.store.products', 'catalogue.view'],
@@ -21,6 +23,8 @@
         ['Team', 'admin.team.index', 'team.view'],
         ['Settings', 'admin.settings.edit', 'settings.view'],
         ['Email & SMS', 'admin.providers.edit', 'providers.manage'],
+        ['Push notifications', 'admin.push.edit', 'providers.manage'],
+        ['AI assistant', 'admin.assistant.edit', 'assistant.knowledge'],
         ['Audit log', 'admin.audit.index', 'audit.view'],
     ], fn ($i) => $i[2] === null || $u->can($i[2]));
 @endphp
