@@ -93,7 +93,10 @@ class PracticeController extends Controller
         $p = $this->me($r);
         $b = DB::table('bookings')->where('ref', $ref)->where('practitioner_id', $p->id)->first();
         abort_unless($b, 404);
-        $d = $r->validate(['status' => ['nullable', Rule::in(['completed', 'no_show'])], 'meeting_link' => ['nullable', 'url:https', 'max:255']]);
+        $d = $r->validate(['status' => ['nullable', Rule::in(['completed', 'no_show'])], 'meeting_link' => ['nullable', 'url:https', 'max:255'], 'provider' => ['nullable', Rule::in(['livekit', 'zoom', 'google_meet'])]]);
+        if (! empty($d['provider'])) {
+            return \App\Http\Controllers\Admin\OperationsController::switchProvider($b, $d['provider'], $r->user());
+        }
         if (($d['status'] ?? null) && \Carbon\CarbonImmutable::parse($b->start_utc, 'UTC')->isFuture()) {
             return back()->withErrors(['status' => 'You can close a session only after its start time.']);
         }

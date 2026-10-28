@@ -87,3 +87,9 @@ Palm = `{ "ref", "status": "awaiting_photos|submitted|in_review|needs_new_photos
 - `POST /assistant/chat` `{ "message": "...", "conversation"?: "<ref>" }` → `{ "conversation": "<ref>", "reply": "...", "handoff": bool, "disclaimer": "..." }`
   `429` when the daily limit is reached. `503 {"error":{"code":"assistant_unavailable"}}` when no AI provider is configured.
   When `handoff` is true, show a "Talk to our team" button that opens Support (website `/account/support`).
+
+### In-app call (LiveKit)
+- Booking items have `meeting_provider`: `livekit` | `zoom` | `google_meet` | `manual` | null, and `call_open`. `call_open` is true from 15 minutes before the start until 30 minutes after the end.
+  `meeting_link` is the https link for Zoom, Meet or a manual link (open it in the browser). For `livekit` it is null: use the call token instead.
+- `POST /bookings/{ref}/call-token` → `{ "url": "wss://…", "token": "<jwt>", "room": "booking-<ref>", "audio_only": bool, "identity": "c-…" }`.
+  Returns 422 `{"error":{"code":"call_not_available","message"}}` when the call is too early, over, not in-app, or not set up.

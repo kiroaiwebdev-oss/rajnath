@@ -23,6 +23,11 @@ class SecurityHeaders
         if ($request->isSecure()) {
             $h->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
+        $lk = '';
+        if ($request->is('call/*')) {
+            $u = (string) rescue(fn () => app(\App\Support\Settings\SettingsRepository::class)->get('calling.livekit.url'), '', false);
+            $lk = preg_match('#^wss://([a-z0-9.\-]+(:\d+)?)#i', $u, $m) ? ' https://'.$m[1] : '';
+        }
         $dev = app()->environment('local') ? ' http://localhost:5173 ws://localhost:5173' : '';
         $h->set('Content-Security-Policy', implode('; ', [
             "default-src 'self'",
@@ -30,7 +35,7 @@ class SecurityHeaders
             "style-src 'self' 'unsafe-inline'$dev",
             "img-src 'self' data: blob:",
             "font-src 'self'",
-            "connect-src 'self' https://api.razorpay.com wss:$dev",
+            "connect-src 'self' https://api.razorpay.com wss:$lk$dev",
             "frame-src https://api.razorpay.com https://checkout.razorpay.com",
             "frame-ancestors 'none'",
             "base-uri 'self'",

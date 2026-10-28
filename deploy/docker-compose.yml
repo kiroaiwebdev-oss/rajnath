@@ -43,6 +43,20 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on: [app]
+    extra_hosts: ["host.docker.internal:host-gateway"]   # reaches LiveKit on the host network
+
+  # In-app audio/video calls. Host networking so WebRTC media (UDP 7882, TCP 7881) is reachable
+  # directly; signalling (7880) is proxied by Caddy at rtc.<domain>. Open 7881/tcp and 7882/udp.
+  livekit:
+    image: livekit/livekit-server:${LIVEKIT_VERSION:-v1.9.0}
+    profiles: ["calls"]
+    restart: unless-stopped
+    network_mode: host
+    command: ["--config", "/etc/livekit.yaml"]
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
 
   db:
     image: mariadb:11.4

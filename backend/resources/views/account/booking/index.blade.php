@@ -9,7 +9,9 @@
                     <div class="flex flex-wrap items-start justify-between gap-3">
                         <div><p class="font-medium">{{ $b->title }} — {{ $b->variant }}</p>
                             <p class="text-sm text-ink-600">{{ $start->format('l, d M Y, g:i A') }} IST · {{ \App\Models\OfferingVariant::MODES[$b->mode] ?? $b->mode }}</p>
-                            @if ($b->meeting_link && $future)<p class="mt-1 text-sm"><a href="{{ $b->meeting_link }}" rel="noopener">Join link</a></p>@endif</div>
+                            @php $open = $b->status === 'confirmed' && \Illuminate\Support\Carbon::parse($b->end_utc, 'UTC')->addMinutes(30)->isFuture(); @endphp
+                            @if ($b->meeting_link && $open)<p class="mt-2"><a href="{{ $b->meeting_link }}" class="btn-primary" @if ($b->meeting_provider !== 'livekit') rel="noopener" target="_blank" @endif>{{ ['livekit' => 'Join call', 'zoom' => 'Join on Zoom', 'google_meet' => 'Join on Google Meet'][$b->meeting_provider] ?? 'Join link' }}</a></p>
+                            @elseif ($open && in_array($b->mode, ['audio', 'video'], true))<p class="mt-1 text-sm text-ink-600">Your call link will appear here before the session.</p>@endif</div>
                         <span @class(['badge-success' => $b->status === 'confirmed', 'badge-ink' => $b->status !== 'confirmed'])>{{ str_replace('_', ' ', ucfirst($b->status)) }}</span>
                     </div>
                     @if ($changeable)

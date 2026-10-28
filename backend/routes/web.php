@@ -89,6 +89,10 @@ Route::prefix('account')->name('account.')->group(function () {
 // Private palm photo (owner or authorised fulfilment staff with MFA session).
 Route::get('/palm-photos/{ref}/{side}', [Web\PalmController::class, 'photo'])->middleware('auth')->name('palm.photo');
 
+Route::middleware('auth')->group(function () {
+    Route::get('/call/{ref}', [Web\CallController::class, 'page'])->name('call.join');
+    Route::post('/call/{ref}/token', [Web\CallController::class, 'token'])->middleware('throttle:checkout')->name('call.token');
+});
 Route::get('/puja-photos/{ref}/{i}', [Web\CustomerOpsController::class, 'pujaPhoto'])->whereNumber('i')->middleware('auth')->name('puja.photo');
 
 // ---- Checkout (customer) and Razorpay webhook ----
@@ -125,6 +129,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::get('audit/verify', [Admin\AuditController::class, 'verify'])->name('audit.verify');
     Route::get('providers', [Admin\ProvidersController::class, 'edit'])->name('providers.edit');
     Route::get('push', [Admin\IntegrationsController::class, 'push'])->name('push.edit');
+    Route::get('calling', [Admin\CallingController::class, 'edit'])->name('calling.edit');
+    Route::get('calling/google/callback', [Admin\CallingController::class, 'googleCallback'])->name('calling.google.callback');
     Route::get('assistant', [Admin\IntegrationsController::class, 'assistant'])->name('assistant.edit');
     Route::post('assistant/knowledge', [Admin\IntegrationsController::class, 'saveKnowledge'])->name('assistant.knowledge');
     Route::get('assistant/conversations/{ref}', [Admin\IntegrationsController::class, 'conversation'])->name('assistant.conversation');
@@ -207,6 +213,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     // Sensitive changes: fresh password + TOTP confirmation required.
     Route::middleware('step.up')->group(function () {
         Route::put('push', [Admin\IntegrationsController::class, 'savePush'])->name('push.save');
+        Route::put('calling', [Admin\CallingController::class, 'update'])->name('calling.update');
+        Route::post('calling/test', [Admin\CallingController::class, 'test'])->middleware('throttle:provider-test')->name('calling.test');
+        Route::post('calling/google/connect', [Admin\CallingController::class, 'googleConnect'])->name('calling.google.connect');
         Route::post('push/test', [Admin\IntegrationsController::class, 'testPush'])->middleware('throttle:provider-test')->name('push.test');
         Route::put('assistant', [Admin\IntegrationsController::class, 'saveAssistant'])->name('assistant.save');
         Route::post('assistant/test', [Admin\IntegrationsController::class, 'testAssistant'])->middleware('throttle:provider-test')->name('assistant.test');

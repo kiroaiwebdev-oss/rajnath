@@ -68,6 +68,7 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('orders', [V1\CommerceController::class, 'orders']);
         Route::get('orders/{ref}', [V1\CommerceController::class, 'show']);
         Route::get('bookings', [V1\ActivityController::class, 'bookings']);
+        Route::post('bookings/{ref}/call-token', [\App\Http\Controllers\Web\CallController::class, 'token'])->middleware('throttle:checkout');
         Route::get('palmistry', [V1\ActivityController::class, 'palms']);
         Route::get('palmistry/{ref}', [V1\ActivityController::class, 'palmShow']);
         Route::get('reports', [V1\ActivityController::class, 'reports']);
