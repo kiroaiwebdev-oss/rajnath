@@ -13,6 +13,9 @@ Route::get('/services/{slug}', [Web\SiteController::class, 'service'])->name('se
 Route::post('/enquiries', [Web\SiteController::class, 'enquire'])->middleware('throttle:enquiry')->name('enquiries.store');
 Route::get('/enquiries/{ref}/received', [Web\SiteController::class, 'thanks'])->name('enquiry.thanks');
 Route::get('/faq', [Web\SiteController::class, 'faq'])->name('faq');
+Route::get('/gems', [Web\StoreController::class, 'index'])->name('store.index');
+Route::get('/gems/{slug}', [Web\StoreController::class, 'show'])->name('store.show');
+Route::post('/gems/buy', [Web\StoreController::class, 'buy'])->middleware(['customer', 'throttle:checkout'])->name('store.buy');
 Route::get('/tools', [Web\ToolController::class, 'index'])->name('tools.index');
 Route::get('/tools/{slug}', [Web\ToolController::class, 'show'])->name('tools.show');
 Route::post('/tools/{slug}', [Web\ToolController::class, 'compute'])->middleware('throttle:tools')->name('tools.compute');
@@ -47,12 +50,18 @@ Route::prefix('account')->name('account.')->group(function () {
         Route::delete('devices/tokens/{id}', [Web\AccountController::class, 'revokeToken'])->whereNumber('id')->name('devices.token.revoke');
         Route::post('devices/sign-out-others', [Web\AccountController::class, 'revokeAllOthers'])->name('devices.others');
         Route::resource('birth-profiles', Web\BirthProfileController::class)->except('show')->parameters(['birth-profiles' => 'profile']);
+        Route::get('palmistry', [Web\PalmController::class, 'index'])->name('palm.index');
+        Route::get('palmistry/{ref}', [Web\PalmController::class, 'show'])->name('palm.show');
+        Route::post('palmistry/{ref}/photos', [Web\PalmController::class, 'upload'])->middleware('throttle:checkout')->name('palm.upload');
         Route::get('wallet', [Web\PaymentController::class, 'wallet'])->name('wallet');
         Route::post('wallet/recharge', [Web\PaymentController::class, 'recharge'])->middleware('throttle:checkout')->name('wallet.recharge');
         Route::get('orders', [Web\PaymentController::class, 'orders'])->name('orders');
         Route::get('orders/{ref}', [Web\PaymentController::class, 'receipt'])->name('receipt');
     });
 });
+
+// Private palm photo (owner or authorised fulfilment staff with MFA session).
+Route::get('/palm-photos/{ref}/{side}', [Web\PalmController::class, 'photo'])->middleware('auth')->name('palm.photo');
 
 // ---- Checkout (customer) and Razorpay webhook ----
 Route::middleware('customer')->prefix('checkout')->name('checkout.')->group(function () {
@@ -110,6 +119,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::post('finance/reconcile', [Admin\FinanceController::class, 'reconcile'])->name('finance.reconcile');
     Route::post('finance/findings/{id}/resolve', [Admin\FinanceController::class, 'resolveFinding'])->whereNumber('id')->name('finance.finding.resolve');
     Route::get('payments', [Admin\FinanceController::class, 'settings'])->name('payments.settings');
+    Route::get('store/products', [Admin\StoreAdminController::class, 'products'])->name('store.products');
+    Route::get('store/products/new', [Admin\StoreAdminController::class, 'edit'])->name('store.new');
+    Route::get('store/products/{ref}', [Admin\StoreAdminController::class, 'edit'])->name('store.edit');
+    Route::post('store/products', [Admin\StoreAdminController::class, 'save'])->name('store.create');
+    Route::post('store/products/{ref}', [Admin\StoreAdminController::class, 'save'])->name('store.update');
+    Route::get('store/orders', [Admin\StoreAdminController::class, 'orders'])->name('store.orders');
+    Route::get('store/orders/{ref}', [Admin\StoreAdminController::class, 'order'])->name('store.order');
+    Route::put('store/orders/{ref}/shipment', [Admin\StoreAdminController::class, 'updateShipment'])->name('store.shipment');
+    Route::get('palmistry', [Admin\PalmAdminController::class, 'index'])->name('palm.index');
+    Route::get('palmistry/{ref}', [Admin\PalmAdminController::class, 'show'])->name('palm.show');
+    Route::post('palmistry/{ref}/claim', [Admin\PalmAdminController::class, 'claim'])->name('palm.claim');
+    Route::post('palmistry/{ref}/report', [Admin\PalmAdminController::class, 'report'])->name('palm.report');
+    Route::post('palmistry/{ref}/need-photos', [Admin\PalmAdminController::class, 'needPhotos'])->name('palm.need');
     Route::get('faqs', [Admin\FaqController::class, 'index'])->name('faqs.index');
     Route::post('faqs', [Admin\FaqController::class, 'save'])->name('faqs.save');
     Route::delete('faqs/{id}', [Admin\FaqController::class, 'destroy'])->whereNumber('id')->name('faqs.destroy');

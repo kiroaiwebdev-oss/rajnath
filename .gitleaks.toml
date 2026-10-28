@@ -1,0 +1,7 @@
+# Secret scanning config (gitleaks). Test fixtures use obviously fake values.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake credentials in automated tests"
+paths = ['''backend/tests/.*''']

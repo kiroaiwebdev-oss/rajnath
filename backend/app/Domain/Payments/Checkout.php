@@ -39,6 +39,11 @@ class Checkout
         return $this->start($user, 'service', $variant->price_minor, $snapshot, $useWallet, $idempotencyKey);
     }
 
+    public function startProductOrder(User $user, array $snapshot, string $idempotencyKey): array
+    {
+        return $this->start($user, 'product', (int) $snapshot['price_minor'], $snapshot, false, $idempotencyKey);
+    }
+
     public function startRecharge(User $user, object $package, string $idempotencyKey): array
     {
         return $this->start($user, 'recharge', (int) $package->amount_minor, ['package_id' => $package->id, 'amount_minor' => (int) $package->amount_minor, 'bonus_minor' => (int) $package->bonus_minor], false, $idempotencyKey);
@@ -81,6 +86,15 @@ class Checkout
         $this->audit->record('order.created', null, ['order' => $order->ref, 'kind' => $kind, 'amount' => $amount], $user);
 
         return $this->checkoutPayload($order);
+    }
+
+    public static function label(string $kind, array $snap): string
+    {
+        return match ($kind) {
+            'recharge' => 'Wallet recharge',
+            'product' => $snap['product']['name'].' × '.$snap['quantity'],
+            default => $snap['offering']['title'].' — '.$snap['variant']['name'],
+        };
     }
 
     public function checkoutPayload(object $order): array
@@ -145,9 +159,22 @@ class Checkout
             }
             $lines[] = [$this->ledger->account('revenue', 'revenue'), 'credit', (int) $order->subtotal_minor];
         }
-        $this->ledger->post($order->kind === 'recharge' ? 'wallet_recharge' : 'service_purchase', 'order-paid:'.$order->ref, $lines, $snap['offering']['title'] ?? 'Wallet recharge', 'order', $order->id);
+        $kind = ['recharge' => 'wallet_recharge', 'product' => 'product_sale'][$order->kind] ?? 'service_purchase';
+        $memo = $snap['offering']['title'] ?? ($snap['product']['name'] ?? 'Wallet recharge');
+        $this->ledger->post($kind, 'order-paid:'.$order->ref, $lines, $memo, 'order', $order->id);
         DB::table('orders')->where('id', $order->id)->update(['status' => 'paid', 'paid_at' => now(), 'updated_at' => now()]);
         $this->audit->record('order.paid', null, ['order' => $order->ref, 'payment' => $paymentId], null, 'system');
+        $this->fulfil(DB::table('orders')->find($order->id), $snap);
+    }
+
+    /** Starts post-payment work for the item bought. Runs inside the capture transaction. */
+    private function fulfil(object $order, array $snap): void
+    {
+        if ($order->kind === 'product') {
+            app(\App\Domain\Store\Store::class)->onPaid($order);
+        } elseif (($snap['offering']['slug'] ?? null) === \App\Domain\Palmistry\PalmReadings::OFFERING_SLUG) {
+            app(\App\Domain\Palmistry\PalmReadings::class)->onOrderPaid($order);
+        }
     }
 
     public function markFailed(string $providerOrderId, ?string $paymentId, string $error): void
@@ -158,6 +185,9 @@ class Checkout
 
     public function cancel(object $order): void
     {
-        DB::table('orders')->where('id', $order->id)->where('status', 'pending_payment')->update(['status' => 'cancelled', 'updated_at' => now()]);
+        $n = DB::table('orders')->where('id', $order->id)->where('status', 'pending_payment')->update(['status' => 'cancelled', 'updated_at' => now()]);
+        if ($n && $order->kind === 'product') {
+            app(\App\Domain\Store\Store::class)->release($order->id);
+        }
     }
 }

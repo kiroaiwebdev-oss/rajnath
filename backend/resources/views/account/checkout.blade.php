@@ -2,8 +2,8 @@
     <div class="card max-w-xl p-6" x-data="razorpayCheckout"
          data-key="{{ $rzp['key'] ?? '' }}" data-order="{{ $rzp['order_id'] ?? '' }}" data-amount="{{ $rzp['amount'] ?? 0 }}"
          data-name="{{ $site('brand.name') }}" data-email="{{ $user->email }}" data-contact="{{ $user->phone_e164 }}" data-customer="{{ $user->name }}">
-        <h2 class="text-lg">{{ $o->kind === 'recharge' ? 'Wallet recharge' : $snap['offering']['title'] }}</h2>
-        @if ($o->kind === 'service')<p class="text-sm text-ink-600">{{ $snap['variant']['name'] }}</p>@endif
+        <h2 class="text-lg">{{ \App\Domain\Payments\Checkout::label($o->kind, $snap) }}</h2>
+        
         <dl class="mt-4 space-y-2 text-sm">
             <div class="flex justify-between"><dt>Total</dt><dd>{{ \App\Support\Money::format((int) $o->subtotal_minor) }}</dd></div>
             @if ($o->wallet_applied_minor)<div class="flex justify-between"><dt>From wallet</dt><dd>−{{ \App\Support\Money::format((int) $o->wallet_applied_minor) }}</dd></div>@endif

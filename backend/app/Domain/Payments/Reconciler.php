@@ -37,7 +37,7 @@ class Reconciler
                     }
                 } elseif ($p->created_at < now()->subDay()) {
                     DB::table('payments')->where('id', $p->id)->update(['status' => 'failed', 'error' => 'Expired without capture', 'updated_at' => now()]);
-                    DB::table('orders')->where('id', $p->order_id)->where('status', 'pending_payment')->update(['status' => 'cancelled', 'updated_at' => now()]);
+                    $this->checkout->cancel(DB::table('orders')->find($p->order_id));
                     $summary['cancelled']++;
                 }
                 DB::table('payments')->where('id', $p->id)->update(['last_checked_at' => now()]);

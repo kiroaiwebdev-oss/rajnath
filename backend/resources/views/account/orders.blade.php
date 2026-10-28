@@ -6,7 +6,7 @@
             @foreach ($orders as $o)
                 @php $s = json_decode($o->snapshot, true); @endphp
                 <li class="card flex flex-wrap items-center justify-between gap-3 p-4">
-                    <div><p class="font-medium">{{ $o->kind === 'recharge' ? 'Wallet recharge' : ($s['offering']['title'].' — '.$s['variant']['name']) }}</p>
+                    <div><p class="font-medium">{{ \App\Domain\Payments\Checkout::label($o->kind, $s) }}</p>
                         <p class="text-xs text-ink-600">{{ \Illuminate\Support\Carbon::parse($o->created_at)->tz(auth()->user()->display_timezone)->format('d M Y, g:i A') }} · {{ \App\Support\Money::format((int) $o->subtotal_minor) }}</p></div>
                     <div class="flex items-center gap-3">
                         <span @class(['badge-success' => $o->status === 'paid', 'badge-gold' => $o->status === 'pending_payment', 'badge-ink' => ! in_array($o->status, ['paid', 'pending_payment'])])>{{ ucwords(str_replace('_', ' ', $o->status)) }}</span>

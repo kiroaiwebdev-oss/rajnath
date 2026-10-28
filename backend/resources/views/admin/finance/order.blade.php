@@ -4,7 +4,7 @@
             <dl class="grid gap-3 sm:grid-cols-2">
                 <div><dt class="text-ink-600">Customer</dt><dd class="font-medium">{{ $customer->name }}</dd></div>
                 <div><dt class="text-ink-600">Status</dt><dd class="font-medium">{{ str_replace('_', ' ', $o->status) }}</dd></div>
-                <div><dt class="text-ink-600">Item</dt><dd class="font-medium">{{ $o->kind === 'recharge' ? 'Wallet recharge' : $snap['offering']['title'].' — '.$snap['variant']['name'] }}</dd></div>
+                <div><dt class="text-ink-600">Item</dt><dd class="font-medium">{{ \App\Domain\Payments\Checkout::label($o->kind, $snap) }}</dd></div>
                 <div><dt class="text-ink-600">Total / wallet / online</dt><dd class="font-medium tabular-nums">{{ \App\Support\Money::format((int) $o->subtotal_minor) }} / {{ \App\Support\Money::format((int) $o->wallet_applied_minor) }} / {{ \App\Support\Money::format((int) $o->payable_minor) }}</dd></div>
                 <div><dt class="text-ink-600">Refunded</dt><dd class="font-medium tabular-nums">{{ \App\Support\Money::format((int) $o->refunded_minor) }}</dd></div>
             </dl>
