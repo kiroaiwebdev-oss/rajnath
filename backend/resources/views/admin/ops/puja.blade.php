@@ -45,7 +45,7 @@
             @if (! in_array($b->status, ['completed', 'cancelled']))
                 <form method="POST" action="{{ route('admin.ops.puja.action', $b->ref) }}" class="card space-y-3 p-5">@csrf <input type="hidden" name="action" value="cancel">
                     <x-field name="reason" label="Cancel — reason shown to customer" /><button class="btn-danger w-full">Cancel booking</button>
-                    <p class="text-xs text-ink-600">Then refund from Finance → order.</p></form>
+                    <p class="text-xs text-ink-600">Then refund from Finance › order.</p></form>
             @endif
         </div>
     </div>

@@ -18,7 +18,7 @@
             <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="internal" value="1" class="size-4 accent-ink-900"> Internal note (customer does not see it)</label>
             <x-select name="status" label="Set status" :options="['' => 'Automatic'] + \App\Domain\Support\Tickets::STATUSES" />
             <button class="btn-primary w-full">Save</button>
-            <p class="text-xs text-ink-600">Refunds: use Finance → order → Request refund (needs a second approver).</p>
+            <p class="text-xs text-ink-600">Refunds: use Finance › order › Request refund (needs a second approver).</p>
         </form>
         @endcan
     </div>

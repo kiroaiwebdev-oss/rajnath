@@ -49,7 +49,7 @@
                 @if (! empty($report[$k]))<section class="mt-6"><h3 class="text-base">{{ $title }}</h3><div class="mt-2 space-y-3 leading-7">@foreach (preg_split('/\R{2,}/', $report[$k]) as $para)<p>{{ $para }}</p>@endforeach</div></section>@endif
             @endforeach
             <p class="mt-8 rounded-xl bg-ivory-100 p-3 text-xs">Palmistry is a traditional interpretive practice. It is not a medical, legal or financial assessment.</p>
-            <p class="mt-4 text-sm">To save a copy, use your browser's <strong>Print → Save as PDF</strong>.</p>
+            <p class="mt-4 text-sm">To save a copy, use your browser's <strong>Print › Save as PDF</strong>.</p>
         </article>
     @endif
 </x-layouts.account>

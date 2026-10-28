@@ -69,10 +69,13 @@ class Slots
     }
 
     /** Holds the slot and creates the order. Returns [booking, checkout payload]. */
-    public function hold(User $user, OfferingVariant $v, string $startIso, ?int $birthProfileId, ?string $topic, string $key): array
+    public function hold(User $user, OfferingVariant $v, string $startIso, ?int $birthProfileId, ?string $topic, string $key, bool $useWallet = false): array
     {
         if (! self::bookable($v)) {
             throw ValidationException::withMessages(['start' => 'This option is not booked by time slot.']);
+        }
+        if (DB::table('bookings')->where('user_id', $user->id)->where('status', 'held')->where('hold_expires_at', '>', now())->count() >= 2) {
+            throw ValidationException::withMessages(['start' => 'You already have unpaid bookings on hold. Complete or wait for them to expire first.']);
         }
         $start = CarbonImmutable::parse($startIso)->utc();
         $slotsForDay = $this->available((int) $v->duration_min, 31)[$start->setTimezone(self::TZ)->toDateString()] ?? [];
@@ -101,12 +104,17 @@ class Slots
             throw $e;
         }
         try {
-            $r = $this->checkout->startServiceOrder($user, $v, false, $key, ['booking_ref' => $booking->ref, 'start_utc' => $start->format('Y-m-d\TH:i\Z')]);
+            $r = $this->checkout->startServiceOrder($user, $v, $useWallet, $key, ['booking_ref' => $booking->ref, 'start_utc' => $start->format('Y-m-d\TH:i\Z')]);
         } catch (\Throwable $e) {
             $this->release($booking->id, 'cancelled');
             throw $e;
         }
-        DB::table('bookings')->where('id', $booking->id)->update(['order_id' => $r['order']->id]);
+        if ((json_decode($r['order']->snapshot, true)['booking_ref'] ?? null) !== $booking->ref) {
+            // the idempotency key belonged to an earlier attempt: keep that one, drop this hold
+            $this->release($booking->id, 'cancelled');
+            throw ValidationException::withMessages(['start' => 'This form was already submitted. Please reload the page and choose a time again.']);
+        }
+        DB::table('bookings')->where('id', $booking->id)->whereNull('order_id')->update(['order_id' => $r['order']->id]);
         $this->audit->record('booking.held', null, ['booking' => $booking->ref], $user);
 
         return [DB::table('bookings')->find($booking->id), $r];
@@ -114,7 +122,11 @@ class Slots
 
     public function onOrderPaid(object $order): void
     {
-        DB::table('bookings')->where('order_id', $order->id)->where('status', 'held')->update(['status' => 'confirmed', 'hold_expires_at' => null, 'updated_at' => now()]);
+        // Matched by the ref in the order snapshot: a fully wallet-paid order is marked paid before
+        // hold() has linked order_id to the booking.
+        $ref = json_decode($order->snapshot, true)['booking_ref'] ?? null;
+        DB::table('bookings')->where('ref', $ref)->where('user_id', $order->user_id)->where('status', 'held')
+            ->update(['status' => 'confirmed', 'order_id' => $order->id, 'hold_expires_at' => null, 'updated_at' => now()]);
     }
 
     public function onOrderCancelled(object $order): void
@@ -131,20 +143,28 @@ class Slots
         $n = 0;
         foreach (DB::table('bookings')->where('status', 'held')->where('hold_expires_at', '<', now())->get() as $b) {
             if ($b->order_id) {
+                // cancel() only acts on pending_payment orders and releases the hold via onOrderCancelled.
+                // If the payment landed meanwhile the order is paid and the booking stays (confirmed by onOrderPaid).
                 $this->checkout->cancel(DB::table('orders')->find($b->order_id));
+                $n += (int) (DB::table('bookings')->where('id', $b->id)->value('status') === 'cancelled');
+            } elseif ($this->release($b->id, 'cancelled', 'held')) {
+                $n++;
             }
-            $this->release($b->id, 'cancelled');
-            $n++;
         }
 
         return $n;
     }
 
-    private function release(int $bookingId, string $status): void
+    /** Frees the units and sets the status, only if the booking is still in $from. */
+    private function release(int $bookingId, string $status, string $from = 'held'): bool
     {
-        DB::transaction(function () use ($bookingId, $status) {
+        return DB::transaction(function () use ($bookingId, $status, $from) {
+            if (! DB::table('bookings')->where('id', $bookingId)->where('status', $from)->update(['status' => $status, 'updated_at' => now()])) {
+                return false;
+            }
             DB::table('booking_units')->where('booking_id', $bookingId)->delete();
-            DB::table('bookings')->where('id', $bookingId)->update(['status' => $status, 'updated_at' => now()]);
+
+            return true;
         });
     }
 
@@ -159,9 +179,13 @@ class Slots
         if (! $this->changeable($b)) {
             throw ValidationException::withMessages(['booking' => 'Bookings can be cancelled up to '.config('booking.change_hours').' hours before the start time. Please contact support.']);
         }
-        $order = DB::table('orders')->find($b->order_id);
-        $this->release($b->id, 'cancelled');
-        app(\App\Domain\Payments\Refunds::class)->policyRefundToWallet($order, (int) $order->subtotal_minor - (int) $order->refunded_minor, 'Cancelled by customer within policy');
+        DB::transaction(function () use ($b) {
+            if (! $this->release($b->id, 'cancelled', 'confirmed')) {
+                throw ValidationException::withMessages(['booking' => 'This booking was already changed.']);
+            }
+            $order = DB::table('orders')->where('id', $b->order_id)->lockForUpdate()->first();
+            app(\App\Domain\Payments\Refunds::class)->policyRefundToWallet($order, (int) $order->subtotal_minor - (int) $order->refunded_minor, 'Cancelled by customer within policy');
+        });
         $this->audit->record('booking.cancelled', null, ['booking' => $b->ref], $u);
     }
 

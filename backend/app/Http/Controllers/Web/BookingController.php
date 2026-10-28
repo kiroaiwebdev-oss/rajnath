@@ -23,16 +23,17 @@ class BookingController extends Controller
         abort_unless($o && $o->status === 'active' && Slots::bookable($v) && $v->price_minor, 404);
 
         return view('account.booking.pick', ['v' => $v, 'o' => $o, 'slots' => $this->slots->available((int) $v->duration_min),
-            'profiles' => BirthProfile::where('user_id', $request->user()->id)->orderByDesc('is_primary')->get(), 'reschedule' => null]);
+            'profiles' => BirthProfile::where('user_id', $request->user()->id)->orderByDesc('is_primary')->get(), 'reschedule' => null,
+            'wallet' => app(\App\Domain\Ledger\Ledger::class)->walletBalance($request->user()->id)]);
     }
 
     public function hold(Request $request, string $variantRef): RedirectResponse
     {
         $v = OfferingVariant::where('ref', $variantRef)->where('active', true)->firstOrFail();
-        $d = $request->validate(['start' => ['required', 'string', 'regex:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z$/'], 'birth_profile' => ['nullable', 'string', 'size:26'], 'topic' => ['nullable', 'string', 'max:1000'], 'key' => ['required', 'string', 'max:64']]);
-        $bp = $d['birth_profile'] ? BirthProfile::where('user_id', $request->user()->id)->where('ref', $d['birth_profile'])->value('id') : null;
+        $d = $request->validate(['start' => ['required', 'string', 'regex:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z$/'], 'birth_profile' => ['nullable', 'string', 'size:26'], 'topic' => ['nullable', 'string', 'max:1000'], 'use_wallet' => ['nullable', 'boolean'], 'key' => ['required', 'string', 'max:64']]);
+        $bp = ! empty($d['birth_profile']) ? BirthProfile::where('user_id', $request->user()->id)->where('ref', $d['birth_profile'])->value('id') : null;
         try {
-            [, $r] = $this->slots->hold($request->user(), $v, $d['start'], $bp, $d['topic'] ?? null, $d['key']);
+            [, $r] = $this->slots->hold($request->user(), $v, $d['start'], $bp, $d['topic'] ?? null, $d['key'], (bool) ($d['use_wallet'] ?? false));
         } catch (RuntimeException $e) {
             report($e);
 

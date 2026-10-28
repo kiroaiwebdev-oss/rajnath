@@ -4,8 +4,8 @@
         <h1 class="mt-2 text-3xl">{{ $month->format('F Y') }} — vrat dates</h1>
         <p class="mt-1 text-ink-600">{{ $placeLabel }}</p>
         <nav class="mt-4 flex flex-wrap gap-2" aria-label="Month">
-            <a class="btn-outline" href="{{ route('calendar', array_filter(['month' => $month->subMonth()->format('Y-m'), 'place_id' => $place->id])) }}">← {{ $month->subMonth()->format('M') }}</a>
-            <a class="btn-outline" href="{{ route('calendar', array_filter(['month' => $month->addMonth()->format('Y-m'), 'place_id' => $place->id])) }}">{{ $month->addMonth()->format('M') }} →</a>
+            <a class="btn-outline" href="{{ route('calendar', array_filter(['month' => $month->subMonth()->format('Y-m'), 'place_id' => $place->id])) }}"><svg aria-hidden="true" class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg> <span class="sr-only">Previous month:</span> {{ $month->subMonth()->format('M') }}</a>
+            <a class="btn-outline" href="{{ route('calendar', array_filter(['month' => $month->addMonth()->format('Y-m'), 'place_id' => $place->id])) }}"><span class="sr-only">Next month:</span> {{ $month->addMonth()->format('M') }} <svg aria-hidden="true" class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg></a>
         </nav>
         @if ($days === null)
             <div class="card mt-6 border-red-200 bg-red-50 p-5" role="alert">The calendar could not be calculated right now. Please try again shortly.</div>

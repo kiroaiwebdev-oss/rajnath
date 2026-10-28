@@ -121,7 +121,7 @@ return new class extends Migration
             $table->string('category', 20);
             $table->string('subject', 160);
             $table->string('priority', 8)->default('normal');
-            $table->string('status', 12)->index();          // open | waiting_customer | resolved | closed
+            $table->string('status', 20)->index();          // open | waiting_customer | resolved | closed
             $table->foreignId('order_id')->nullable();
             $table->foreignId('assigned_to')->nullable();
             $table->timestamp('last_customer_at')->nullable();

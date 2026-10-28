@@ -31,7 +31,7 @@ class ProviderConfig
             'sms.twilio.messaging_service_sid' => ['label' => 'Messaging Service SID (optional)', 'hint' => 'Starts with MG…', 'secret' => false],
         ],
         'fast2sms' => [
-            'sms.fast2sms.api_key' => ['label' => 'API key', 'hint' => 'Fast2SMS → Dev API. Leave blank to keep the saved key', 'secret' => true],
+            'sms.fast2sms.api_key' => ['label' => 'API key', 'hint' => 'Fast2SMS › Dev API. Leave blank to keep the saved key', 'secret' => true],
             'sms.fast2sms.route' => ['label' => 'Route', 'hint' => 'DLT uses your own approved header and template. OTP route uses Fast2SMS’s standard OTP message.', 'secret' => false, 'options' => ['dlt' => 'DLT route (recommended)', 'otp' => 'OTP route']],
             'sms.fast2sms.sender_id' => ['label' => 'DLT sender ID / header', 'hint' => '6 letters, approved on DLT (DLT route only)', 'secret' => false],
             'sms.fast2sms.template_id' => ['label' => 'DLT message ID', 'hint' => 'From Fast2SMS DLT Manager (DLT route only)', 'secret' => false],

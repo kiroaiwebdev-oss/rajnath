@@ -29,6 +29,9 @@ class Checkout
         if ($o->status !== 'active' || ! $variant->active || $variant->price_minor === null || $variant->price_minor <= 0) {
             throw ValidationException::withMessages(['variant' => 'This option cannot be bought online yet.']);
         }
+        if (\App\Domain\Booking\Slots::bookable($variant) && ! isset($extra['booking_ref'])) {
+            throw ValidationException::withMessages(['variant' => 'Choose a consultation time first.']);
+        }
         $snapshot = [
             'offering' => ['ref' => $o->ref, 'slug' => $o->slug, 'title' => $o->t('en')?->title, 'family' => $o->family->code],
             'variant' => ['ref' => $variant->ref, 'name' => $variant->name, 'mode' => $variant->mode, 'duration_min' => $variant->duration_min, 'participants' => $variant->participants, 'urgent' => $variant->urgent],

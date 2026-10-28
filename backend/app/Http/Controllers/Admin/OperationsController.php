@@ -161,7 +161,7 @@ class OperationsController extends Controller
             'cancel' => $puja->cancel($b, $request->validate(['reason' => ['required', 'string', 'max:300']])['reason'], $request->user()),
         };
 
-        return back()->with('status', 'Puja updated.'.($a === 'cancel' ? ' Issue the refund from Finance → order.' : ''));
+        return back()->with('status', 'Puja updated.'.($a === 'cancel' ? ' Issue the refund from Finance › order.' : ''));
     }
 
     // ---------- Reports ----------
