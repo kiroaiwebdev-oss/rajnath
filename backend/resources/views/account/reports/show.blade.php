@@ -9,7 +9,8 @@
                 <x-select name="profile_a" :label="$two ? 'First person' : 'Birth profile'" :options="$profiles->mapWithKeys(fn ($p) => [$p->ref => $p->name.' — '.$p->birth_date->format('d M Y')])->all()" />
                 @if ($two)<x-select name="profile_b" label="Second person" :options="$profiles->mapWithKeys(fn ($p) => [$p->ref => $p->name.' — '.$p->birth_date->format('d M Y')])->all()" :value="$profiles->skip(1)->first()?->ref" />@endif
                 <x-select name="language" label="Report language" :options="['en' => 'English', 'hi' => 'Hindi']" />
-                <div><label for="f-q" class="field-label">Anything specific you want covered? (optional)</label><textarea id="f-q" name="question" rows="3" maxlength="1000" class="input"></textarea></div>
+                @php $ask = str_starts_with($j->offering_slug, 'ask-'); @endphp
+                <div><label for="f-q" class="field-label">{{ $ask ? 'Your question (for two or three questions, write each on a new line)' : 'Anything specific you want covered? (optional)' }}</label><textarea id="f-q" name="question" rows="{{ $ask ? 6 : 3 }}" maxlength="2000" class="input" @if ($ask) required @endif></textarea></div>
                 <button class="btn-primary">Submit</button>
                 <p class="text-xs text-ink-600"><a href="{{ route('account.birth-profiles.create') }}">Add another birth profile</a></p>
             @endif

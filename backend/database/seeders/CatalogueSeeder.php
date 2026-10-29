@@ -18,6 +18,41 @@ use Illuminate\Support\Facades\DB;
  */
 class CatalogueSeeder extends Seeder
 {
+    /** Team astrologer tiers: audio/video/chat, 30 min or 1 hour, couple, normal or urgent. */
+    private const TEAM_VARIANTS = [
+        ['name' => 'Audio — 30 min', 'mode' => 'audio', 'duration_min' => 30], ['name' => 'Video — 30 min', 'mode' => 'video', 'duration_min' => 30],
+        ['name' => 'Chat — 30 min', 'mode' => 'chat', 'duration_min' => 30], ['name' => 'Urgent — audio, 30 min', 'mode' => 'audio', 'duration_min' => 30, 'urgent' => true],
+        ['name' => 'Urgent — video, 30 min', 'mode' => 'video', 'duration_min' => 30, 'urgent' => true],
+        ['name' => 'Audio — 1 hour', 'mode' => 'audio', 'duration_min' => 60], ['name' => 'Video — 1 hour', 'mode' => 'video', 'duration_min' => 60],
+        ['name' => 'Couple — video, 1 hour', 'mode' => 'video', 'duration_min' => 60, 'participants' => 2],
+    ];
+
+    /** Ask an Astrologer: one, two or three questions answered in writing. */
+    private const QUESTION_VARIANTS = [
+        ['name' => 'One question — written answer', 'mode' => 'written'], ['name' => 'Two questions — written answers', 'mode' => 'written'],
+        ['name' => 'Three questions — written answers', 'mode' => 'written'],
+    ];
+
+    /** Online puja packages: the number of names taken in the sankalp. */
+    private const PUJA_PACKAGES = [
+        ['name' => 'Single — sankalp for 1 person', 'mode' => 'puja', 'participants' => 1], ['name' => 'Couple — sankalp for 2 people', 'mode' => 'puja', 'participants' => 2],
+        ['name' => 'Family — sankalp for up to 6 members', 'mode' => 'puja', 'participants' => 6],
+    ];
+
+    private const PUJA_INCLUDES = [
+        'Sankalp in your name and gotra (Single: 1 person, Couple: 2 people, Family: up to 6 family members)',
+        'Performed by an authorised priest or temple on the scheduled date, with full vidhi and mantra',
+        'Date, time and status updates in your account, by email and app notification; our team also messages you on WhatsApp',
+        'Photos of the puja in your account, and a video link where the temple allows it',
+        'Prasad sent by courier within India with the Family package',
+    ];
+
+    private const CHADHAVA_INCLUDES = [
+        'Offering made at the temple in your name and gotra',
+        'Date and status updates in your account, by email and app notification',
+        'Photo of the offering in your account',
+    ];
+
     private const CONSULT_VARIANTS = [
         ['name' => 'In person at Patna office', 'mode' => 'in_person', 'duration_min' => 30],
         ['name' => 'Video call', 'mode' => 'video', 'duration_min' => 30],
@@ -58,8 +93,8 @@ class CatalogueSeeder extends Seeder
             ['name' => 'Urgent — audio, 30 min', 'mode' => 'audio', 'duration_min' => 30, 'urgent' => true], ['name' => 'Urgent — video, 30 min', 'mode' => 'video', 'duration_min' => 30, 'urgent' => true],
         ], 0, true);
         foreach ([['elite-astrologer-consultation', 'Elite Astrologer Consultation'], ['premium-astrologer-consultation', 'Premium Astrologer Consultation'], ['team-astrologer-consultation', 'Team Astrologer Consultation']] as $i => [$slug, $title]) {
-            $this->offering($fam['consultation'], $slug, 'draft', ['title' => $title, 'summary' => 'Consultation with an approved astrologer from our team. Opens when practitioners are approved.'],
-                [['name' => 'Audio — 30 min', 'mode' => 'audio', 'duration_min' => 30], ['name' => 'Video — 30 min', 'mode' => 'video', 'duration_min' => 30], ['name' => 'Chat — 30 min', 'mode' => 'chat', 'duration_min' => 30], ['name' => 'Urgent — audio, 30 min', 'mode' => 'audio', 'duration_min' => 30, 'urgent' => true]], 90 + $i);
+            $this->offering($fam['consultation'], $slug, 'draft', ['title' => $title, 'summary' => 'Consultation with an approved astrologer from our team. Opens when practitioners are approved.'], self::TEAM_VARIANTS, 90 + $i);
+            $this->ensureVariants($slug, self::TEAM_VARIANTS);
         }
         $this->offering($fam['consultation'], 'baby-muhurat-consultation', 'active', [
             'image' => 'images/owner/writing-navy-480.jpg', 'title' => 'Baby Muhurat Consultation',
@@ -77,6 +112,18 @@ class CatalogueSeeder extends Seeder
             'audience' => ['People who do not know their birth time', 'Anyone wanting a second view alongside the horoscope'],
             'disclaimer' => 'Palmistry is a traditional interpretive practice. It is not a medical, legal or financial assessment. Photos are kept private and deleted automatically after the report period.',
         ], [['name' => 'Written report (both palms)', 'mode' => 'report']], 3, true);
+        $ask = [
+            'title' => 'Ask an Astrologer — written answer',
+            'summary' => 'Send your question with your birth details and receive a personal written answer from Acharya Ji\'s team, in Hindi or English.',
+            'body' => "After payment, choose your birth profile and write your question (for two or three questions, write each on a new line). Acharya Ji's team studies your birth chart and writes the answer, with the reasoning and simple guidance.\n\nThe answer appears in your account and we email you when it is ready, usually within 48 working hours of receiving your birth details.",
+            'includes' => ['Answer written by a person after studying your chart', 'Reasoning from your chart', 'Practical advice and simple remedies', 'Hindi or English', 'Answer in your account, with an email when it is ready'],
+            'audience' => ['Anyone with one specific question', 'People who prefer a written answer to a call'],
+            'disclaimer' => 'Guidance is traditional and interpretive. It does not replace medical, legal or financial advice.',
+        ];
+        $this->offering($fam['written_question'], 'ask-one-question', 'draft', $ask, self::QUESTION_VARIANTS, 100);
+        $this->ensureVariants('ask-one-question', self::QUESTION_VARIANTS, ['One written answer' => 'One question — written answer']);
+        $this->fillPlaceholderText('ask-one-question', $ask);
+
         $this->offering($fam['bundle'], 'navratri-guidance-package', 'draft', ['title' => 'Navratri Guidance Package', 'summary' => 'Seasonal package for Navratri — details to be finalised before publication.'], [['name' => 'Package', 'mode' => 'report']], 130);
 
         foreach ($this->activeServices() as $i => $s) {
@@ -88,7 +135,6 @@ class CatalogueSeeder extends Seeder
                 'Dhanyog / Finance Report', 'Love Report', 'Name Analysis and Correction', 'Fortune Report', 'Fortune Plus Report', 'Baby Name Report', 'Lal Kitab Report',
                 'Rahu–Ketu Transit Report', 'Jupiter Transit Report', 'Saturn in Birth Chart Report', 'Sade Sati Report', 'Kaal Sarp and Manglik Dosh Report'],
             'bundle' => ['Career Destiny Bundle', 'Kundli Suraksha Pack', 'Lal Kitab Wisdom Pack', 'Love Compatibility Kit', 'Seasonal Guidance Package'],
-            'written_question' => ['Ask one question'],
             'puja' => array_merge(
                 array_map(fn ($g) => "$g Grah Shanti Puja", ['Surya', 'Chandra', 'Mangal', 'Budh', 'Guru', 'Shukra', 'Shani', 'Rahu', 'Ketu']),
                 ['Navgrah Shanti Puja'],
@@ -101,8 +147,9 @@ class CatalogueSeeder extends Seeder
             'chadhava' => ['Shani Grah Chadhava', 'Hanuman Garhi / Bajrangbali Chadhava', 'Mahamrityunjaya Chadhava', 'Rahu Grah Chadhava', 'Maa Baglamukhi Chadhava',
                 'Diwali Lakshmi Ganesh Chadhava', 'Karwa Chauth Sindoor Shringar Chadhava'],
         ];
-        $variantFor = ['report' => ['name' => 'PDF report', 'mode' => 'report'], 'bundle' => ['name' => 'Bundle', 'mode' => 'report'],
-            'written_question' => ['name' => 'One written answer', 'mode' => 'written'], 'puja' => ['name' => 'Standard', 'mode' => 'puja'], 'chadhava' => ['name' => 'Standard', 'mode' => 'puja']];
+        $variantsFor = ['report' => [['name' => 'PDF report', 'mode' => 'report']], 'bundle' => [['name' => 'Bundle', 'mode' => 'report']],
+            'puja' => self::PUJA_PACKAGES, 'chadhava' => [['name' => 'Standard', 'mode' => 'puja']]];
+        $includes = ['puja' => self::PUJA_INCLUDES, 'chadhava' => self::CHADHAVA_INCLUDES];
         $disclaimer = [
             'puja' => 'Rituals are performed as a spiritual practice. They are not a guaranteed outcome and do not replace medical, psychological, addiction or legal help.',
             'chadhava' => 'Offerings are a spiritual practice and do not guarantee any outcome.',
@@ -112,8 +159,15 @@ class CatalogueSeeder extends Seeder
                 $slug = \Illuminate\Support\Str::slug(str_replace(['–', '/'], ' ', $title));
                 $this->offering($fam[$family], $slug, 'draft', [
                     'title' => $title, 'summary' => $title.' — details to be finalised before publication.',
-                    'disclaimer' => $disclaimer[$family] ?? null,
-                ], [$variantFor[$family]], 100 + $i);
+                    'includes' => $includes[$family] ?? null, 'disclaimer' => $disclaimer[$family] ?? null,
+                ], $variantsFor[$family], 100 + $i);
+                if ($family === 'puja') {
+                    // older installs: the single "Standard" variant becomes the Single package
+                    $this->ensureVariants($slug, self::PUJA_PACKAGES, ['Standard' => self::PUJA_PACKAGES[0]['name']]);
+                }
+                if (isset($includes[$family])) {
+                    $this->fillPlaceholderText($slug, ['includes' => $includes[$family]]);
+                }
             }
         }
 
@@ -151,6 +205,48 @@ class CatalogueSeeder extends Seeder
         foreach ($variants as $i => $v) {
             $o->variants()->create($v + ['sort' => $i, 'participants' => $v['participants'] ?? 1]);
         }
+    }
+
+    /**
+     * Adds variants missing (by name) from an existing offering, so catalogue additions reach
+     * databases seeded earlier. $rename maps an old variant name to a new one when the old
+     * variant is otherwise unchanged; prices and owner-added variants are left alone.
+     */
+    private function ensureVariants(string $slug, array $variants, array $rename = []): void
+    {
+        $o = Offering::where('slug', $slug)->first();
+        if (! $o) {
+            return;
+        }
+        foreach ($rename as $old => $new) {
+            if (! $o->variants()->where('name', $new)->exists()) {
+                $target = collect($variants)->firstWhere('name', $new);
+                $o->variants()->where('name', $old)->update(['name' => $new, 'participants' => $target['participants'] ?? 1]);
+            }
+        }
+        $sort = (int) $o->variants()->max('sort');
+        foreach ($variants as $v) {
+            if (! $o->variants()->where('name', $v['name'])->exists()) {
+                $o->variants()->create($v + ['sort' => ++$sort, 'participants' => $v['participants'] ?? 1]);
+            }
+        }
+    }
+
+    /** Fills English text that is still the seeded placeholder (never overwrites owner text). */
+    private function fillPlaceholderText(string $slug, array $t): void
+    {
+        $o = Offering::where('slug', $slug)->first();
+        $tr = $o?->translations()->where('locale', 'en')->first();
+        if (! $tr || ! str_ends_with((string) $tr->summary, '— details to be finalised before publication.')) {
+            return;
+        }
+        $fields = array_intersect_key($t, array_flip(['title', 'summary', 'body', 'includes', 'audience', 'disclaimer']));
+        if (isset($fields['summary'])) {
+            $fields['meta_description'] = $fields['summary'];
+        } elseif ($tr->includes) {
+            unset($fields['includes']);
+        }
+        $tr->fill($fields)->save();
     }
 
     private function activeServices(): array

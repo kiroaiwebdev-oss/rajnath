@@ -1,7 +1,7 @@
-<x-layouts.public title="Vrat calendar" description="Monthly vrat and festival calendar: Ekadashi, Pradosh, Purnima, Amavasya, Chaturthi and Sankranti for your city.">
+<x-layouts.public title="Vrat calendar" description="Monthly vrat and festival calendar: Ekadashi, Pradosh, Purnima, Amavasya, Chaturthi, Sankranti and major festivals for your city.">
     <div class="container-page py-10">
         <p class="eyebrow">Calendar</p>
-        <h1 class="mt-2 text-3xl">{{ $month->format('F Y') }} — vrat dates</h1>
+        <h1 class="mt-2 text-3xl">{{ $month->format('F Y') }} — vrat and festival dates</h1>
         <p class="mt-1 text-ink-600">{{ $placeLabel }}</p>
         <nav class="mt-4 flex flex-wrap gap-2" aria-label="Month">
             <a class="btn-outline" href="{{ route('calendar', array_filter(['month' => $month->subMonth()->format('Y-m'), 'place_id' => $place->id])) }}"><svg aria-hidden="true" class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg> <span class="sr-only">Previous month:</span> {{ $month->subMonth()->format('M') }}</a>
@@ -19,7 +19,7 @@
                     </li>
                 @endforeach
             </ul>
-            <p class="mt-6 text-xs text-ink-600">Dates use the tithi at local sunrise (udaya tithi) with Swiss Ephemeris and Lahiri ayanamsha. Regional rules (e.g. Ekadashi when Dashami overlaps, Pradosh at dusk) are not applied, so observance in your tradition may differ by a day. Major festival dates should be confirmed with Acharya Ji.</p>
+            <p class="mt-6 text-xs text-ink-600">Dates use the tithi at local sunrise (udaya tithi) with Swiss Ephemeris and Lahiri ayanamsha. Regional rules (e.g. Ekadashi when Dashami overlaps, Pradosh at dusk) are not applied, so observance in your tradition may differ by a day. Festival dates follow the rules on the <a href="{{ route('festivals') }}">festival calendar</a> page. Major festival dates should be confirmed with Acharya Ji.</p>
         @endif
     </div>
 </x-layouts.public>

@@ -6,9 +6,12 @@
         ['Vastu', route('services.index', ['family' => 'vastu']), null, false],
         ['Puja', route('services.index', ['family' => 'puja']), null],
         ['Gems', route('store.index'), 'store.*'],
-        ['Rashifal', route('rashifal'), 'rashifal'],
+        ['Rashifal', route('rashifal'), 'rashifal*'],
         ['Calculators', route('tools.index'), 'tools.*', false],
         ['Panchang', route('panchang'), 'panchang'],
+        ['Gochar', route('gochar'), 'gochar*', false],
+        ['Muhurat', route('muhurat.index'), 'muhurat.*', false],
+        ['Festivals', route('festivals'), 'festivals', false],
         ['About', route('about'), 'about', false],
         ['Contact', route('contact'), 'contact'],
     ];
@@ -74,6 +77,10 @@
                     <li><a href="{{ route('panchang') }}">Today's Panchang</a></li>
                     <li><a href="{{ route('calendar') }}">Vrat calendar</a></li>
                     <li><a href="{{ route('rashifal') }}">Rashifal</a></li>
+                    <li><a href="{{ route('gochar') }}">Grah gochar (transits)</a></li>
+                    <li><a href="{{ route('navagraha') }}">The nine planets</a></li>
+                    <li><a href="{{ route('muhurat.index') }}">Shubh muhurat</a></li>
+                    <li><a href="{{ route('festivals') }}">Festivals and holidays</a></li>
                     <li><a href="{{ route('assistant') }}">Ask our assistant</a></li>
                     <li><a href="{{ route('faq') }}">Questions & answers</a></li>
                     <li><a href="{{ route('contact') }}">Contact & timings</a></li>

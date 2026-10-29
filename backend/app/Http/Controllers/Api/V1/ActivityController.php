@@ -126,7 +126,7 @@ class ActivityController extends Controller
         $j = $this->own('report_jobs', $ref, $r);
         $two = ReportJobs::needsTwo($j->offering_slug);
         $d = $r->validate(['profile_a' => ['required', 'string', 'size:26'], 'profile_b' => [$two ? 'required' : 'nullable', 'string', 'size:26', 'different:profile_a'],
-            'language' => ['required', Rule::in(['en', 'hi'])], 'question' => ['nullable', 'string', 'max:1000']]);
+            'language' => ['required', Rule::in(['en', 'hi'])], 'question' => ['nullable', 'string', 'max:2000']]);
         $jobs->submitDetails($j, $r->user(), array_values(array_filter([$d['profile_a'], $two ? $d['profile_b'] : null])), $d['language'], $d['question'] ?? null);
 
         return response()->json(['data' => $this->report(DB::table('report_jobs')->find($j->id))]);

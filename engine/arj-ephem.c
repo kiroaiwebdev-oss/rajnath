@@ -12,6 +12,8 @@
  *   panchang <jd_ut_from> <jd_ut_to>                  angas at jd_from + all transitions in (from,to]
  *   cross   <planet> <target_deg> <jd_from> <jd_to>   times when sidereal longitude crosses target
  *   signs   <planet> <jd_from> <jd_to>                sign ingresses (incl. retrograde re-entries)
+ *   lunations <jd_from> <jd_to>                       new/full moons + Sun's sidereal sign (window <= 1200 days)
+ *   stations <planet> <jd_from> <jd_to>               retrograde/direct stations (Mercury..Saturn; window <= 1200 days)
  */
 #include <math.h>
 #include <stdio.h>
@@ -178,6 +180,63 @@ static void crossings(int ipl, double target, double from, double to, int signs)
     printf("],\"ephemeris\":\"%s\"}\n", g_used_moshier ? "moshier" : "swiss");
 }
 
+/* New and full moons (Moon–Sun elongation crossing 0 / 180 deg) with the Sun's sidereal sign at
+ * that instant; used for lunar months (amanta masa, adhik masa) and festival dates. */
+static double elong(double jd) { return norm(lon_of(SE_MOON, jd, NULL) - lon_of(SE_SUN, jd, NULL)); }
+
+static void cmd_lunations(double from, double to) {
+    double step = 0.5; /* elongation moves ~12 deg/day: 6 deg per step */
+    int first = 1;
+    printf("{\"ok\":true,\"events\":[");
+    double prev = elong(from);
+    for (double t = from; t < to; t += step) {
+        double b = t + step > to ? to : t + step;
+        double e = elong(b);
+        int type = -1; /* 0 = new, 1 = full */
+        if (prev > 300 && e < 60) type = 0;
+        else if (prev < 180 && e >= 180) type = 1;
+        if (type >= 0) {
+            double a = t, c = b, target = type ? 180.0 : 0.0;
+            for (int i = 0; i < 60 && c - a > 1e-7; i++) {
+                double mid = (a + c) / 2, em = elong(mid);
+                int past = type ? em >= 180.0 : em < 60.0;
+                if (past) c = mid; else a = mid;
+            }
+            (void)target;
+            printf("%s{\"jd\":%.8f,\"type\":\"%s\",\"sun_sign\":%d}", first ? "" : ",", c, type ? "full" : "new", (int)(lon_of(SE_SUN, c, NULL) / 30));
+            first = 0;
+        }
+        prev = e;
+    }
+    printf("],\"ephemeris\":\"%s\"}\n", g_used_moshier ? "moshier" : "swiss");
+}
+
+/* Stations: instants where the planet's longitudinal speed changes sign (retrograde / direct). */
+static void cmd_stations(int ipl, double from, double to) {
+    double step = 1.0;
+    int first = 1;
+    printf("{\"ok\":true,\"events\":[");
+    double sp0;
+    lon_of(ipl, from, &sp0);
+    for (double t = from; t < to; t += step) {
+        double b = t + step > to ? to : t + step, sp1;
+        lon_of(ipl, b, &sp1);
+        if ((sp0 < 0) != (sp1 < 0)) {
+            double a = t, c = b, sa = sp0;
+            for (int i = 0; i < 60 && c - a > 1e-7; i++) {
+                double mid = (a + c) / 2, sm;
+                lon_of(ipl, mid, &sm);
+                if ((sm < 0) == (sa < 0)) { a = mid; sa = sm; } else c = mid;
+            }
+            double l = lon_of(ipl, c, NULL);
+            printf("%s{\"jd\":%.8f,\"retro\":%s,\"lon\":%.6f,\"sign\":%d}", first ? "" : ",", c, sp1 < 0 ? "true" : "false", l, (int)(l / 30));
+            first = 0;
+        }
+        sp0 = sp1;
+    }
+    printf("],\"ephemeris\":\"%s\"}\n", g_used_moshier ? "moshier" : "swiss");
+}
+
 int main(int argc, char **argv) {
     const char *path = getenv("SE_EPHE_PATH");
     swe_set_ephe_path(path ? (char *)path : "./ephe");
@@ -196,6 +255,18 @@ int main(int argc, char **argv) {
         double from = atof(argv[3]), to = atof(argv[4]);
         if (!(to > from) || to - from > 40000) fail("invalid window");
         crossings(planet_id(argv[2]), 0, from, to, 1);
+    } else if (strcmp(argv[1], "lunations") == 0) {
+        if (argc < 4) fail("usage: lunations from to");
+        double from = atof(argv[2]), to = atof(argv[3]);
+        if (!(to > from) || to - from > 1200) fail("invalid window");
+        cmd_lunations(from, to);
+    } else if (strcmp(argv[1], "stations") == 0) {
+        if (argc < 5) fail("usage: stations planet from to");
+        int ipl = planet_id(argv[2]);
+        if (ipl != SE_MERCURY && ipl != SE_VENUS && ipl != SE_MARS && ipl != SE_JUPITER && ipl != SE_SATURN) fail("stations: planet must be mercury, venus, mars, jupiter or saturn");
+        double from = atof(argv[3]), to = atof(argv[4]);
+        if (!(to > from) || to - from > 1200) fail("invalid window");
+        cmd_stations(ipl, from, to);
     } else fail("unknown command");
     swe_close();
     return 0;

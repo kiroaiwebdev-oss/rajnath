@@ -17,6 +17,8 @@ Astrology and spiritual-services platform for **astrorajnathjha.com**: Laravel 1
 - catalogue and public website/PWA
 - Email/SMS provider setup
 - 26 calculators and daily Panchang
+- muhurat finder, festival and holiday calendars (6 religions), Grah Gochar for 9 planets
+- Rashifal publishing: daily to yearly, love/career/finance/health/education, nakshatra, Chinese, numerology, tarot
 - Razorpay checkout, wallet, ledger, refunds and reconciliation
 - gemstone store (stock, shipping, dispatch) and paid palmistry report from palm photos
 - Android app (core screens) with a release-signed APK and AAB
@@ -26,11 +28,11 @@ Astrology and spiritual-services platform for **astrorajnathjha.com**: Laravel 1
 - consultation booking and audio/video calling (LiveKit)
 - report generation and PDFs
 - puja/chadhava fulfilment and suppliers
-- horoscope publishing
 - support tickets, push notifications, AI assistant
 - practitioner portal and payouts
 - data export and deletion
 - Hindi and other languages
+- Choghadiya and Hora
 
 See `docs/04-traceability-matrix.md`.
 

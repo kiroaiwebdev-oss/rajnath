@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Domain\Booking\Slots;
+use App\Domain\Content\HoroscopeTypes;
 use App\Domain\Puja\PujaBookings;
 use App\Domain\Reports\ReportJobs;
 use App\Domain\Support\Tickets;
@@ -234,11 +235,25 @@ class OperationsController extends Controller
     public function saveHoroscope(Request $request): RedirectResponse
     {
         $this->authorize('content.author');
-        $d = $request->validate(['period' => ['required', Rule::in(['daily', 'weekly', 'monthly', 'yearly'])], 'sign' => ['required', 'integer', 'between:0,11'],
+        if (is_string($request->input('subject')) && str_contains($request->input('subject'), ':')) {
+            [$kind, $sign] = explode(':', $request->input('subject'), 2);       // "nakshatra:4" from the admin form
+            $request->merge(['kind' => $kind, 'sign' => $sign]);
+        }
+        $kind = in_array($request->input('kind'), array_keys(HoroscopeTypes::KINDS), true) ? $request->input('kind') : 'rashi';
+        if (! in_array($kind, ['rashi', 'gochar'], true)) {
+            $request->merge(['topic' => 'general']);                            // topics are for Rashifal and gochar only
+        }
+        $d = $request->validate(['kind' => ['nullable', Rule::in(array_keys(HoroscopeTypes::KINDS))],
+            'topic' => [$kind === 'gochar' ? 'required' : 'nullable', Rule::in(HoroscopeTypes::topics($kind))],
+            'period' => ['required', Rule::in(array_keys(HoroscopeTypes::PERIODS))], 'sign' => ['required', 'integer', 'between:0,'.(count(HoroscopeTypes::subjects($kind)) - 1)],
             'starts_on' => ['required', 'date_format:Y-m-d'], 'locale' => ['required', Rule::in(['hi', 'en'])], 'body' => ['required', 'string', 'min:40', 'max:5000']]);
+        $d['kind'] = $kind;
+        $d['topic'] = $d['topic'] ?? 'general';
+        $d['sign'] = (int) $d['sign'];
         $start = \Carbon\CarbonImmutable::parse($d['starts_on']);
-        $end = match ($d['period']) { 'daily' => $start, 'weekly' => $start->addDays(6), 'monthly' => $start->endOfMonth(), 'yearly' => $start->endOfYear() };
-        $existing = DB::table('horoscopes')->where(['period' => $d['period'], 'sign' => $d['sign'], 'starts_on' => $d['starts_on'], 'locale' => $d['locale']])->first();
+        $end = HoroscopeTypes::endOf($d['period'], $start);
+        $key = ['kind' => $d['kind'], 'topic' => $d['topic'], 'period' => $d['period'], 'sign' => $d['sign'], 'starts_on' => $d['starts_on'], 'locale' => $d['locale']];
+        $existing = DB::table('horoscopes')->where($key)->first();
         if ($existing && $existing->status === 'published' && ! $request->user()->can('content.publish')) {
             throw ValidationException::withMessages(['body' => 'This entry is published; ask a publisher to change it.']);
         }
@@ -246,9 +261,9 @@ class OperationsController extends Controller
         if ($existing) {
             DB::table('horoscopes')->where('id', $existing->id)->update($row + ['version' => $existing->version + 1]);
         } else {
-            DB::table('horoscopes')->insert($row + ['period' => $d['period'], 'sign' => $d['sign'], 'starts_on' => $d['starts_on'], 'locale' => $d['locale'], 'created_at' => now()]);
+            DB::table('horoscopes')->insert($row + $key + ['created_at' => now()]);
         }
-        $this->audit->record('content.horoscope_saved', null, ['period' => $d['period'], 'sign' => $d['sign'], 'starts_on' => $d['starts_on']]);
+        $this->audit->record('content.horoscope_saved', null, ['kind' => $d['kind'], 'topic' => $d['topic'], 'period' => $d['period'], 'sign' => $d['sign'], 'starts_on' => $d['starts_on']]);
 
         return back()->with('status', 'Saved as draft. A reviewer must approve it before it is published.');
     }

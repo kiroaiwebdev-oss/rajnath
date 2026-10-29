@@ -26,16 +26,16 @@ class MarketPriceSeeder extends Seeder
         'love-marriage-compatibility' => ['in person' => 3100, 'video' => 3100],
         'vastu-consultation' => ['Online' => 5100, 'On-site' => 11000],
         // Team astrologers (bookable only after an astrologer is approved)
-        'team-astrologer-consultation' => ['Urgent' => 1799, '*' => 899],
-        'premium-astrologer-consultation' => ['Urgent' => 4999, '*' => 2499],
-        'elite-astrologer-consultation' => ['Urgent' => 9999, '*' => 4999],
+        'team-astrologer-consultation' => ['Urgent' => 1799, '1 hour' => 1599, '*' => 899],
+        'premium-astrologer-consultation' => ['Urgent' => 4999, '1 hour' => 4499, '*' => 2499],
+        'elite-astrologer-consultation' => ['Urgent' => 9999, '1 hour' => 8999, '*' => 4999],
         // Expert-prepared reports
         'premium-personalized-kundli' => 499, 'fortune-report' => 499, 'fortune-plus-report' => 1300, 'love-report' => 499,
         'couple-kundli-compatibility-report' => 511, 'dhanyog-finance-report' => 460, 'career-report' => 999, 'sade-sati-report' => 499,
         'saturn-in-birth-chart-report' => 1170, 'jupiter-transit-report' => 999, 'rahu-ketu-transit-report' => 994, 'kaal-sarp-and-manglik-dosh-report' => 549,
         'lal-kitab-report' => 1699, 'yearly-horoscope-report' => 299, 'varshphal-yearly-report' => 999, 'baby-name-report' => 999,
         'name-analysis-and-correction' => 1100, 'soul-purpose-report' => 799, 'palmistry-photo-report' => 1100,
-        'ask-one-question' => 699,
+        'ask-one-question' => ['Three' => 1699, 'Two' => 999, '*' => 699],
         // Bundles
         'career-destiny-bundle' => 1999, 'kundli-suraksha-pack' => 1499, 'lal-kitab-wisdom-pack' => 2499, 'love-compatibility-kit' => 1299,
         'navratri-guidance-package' => 1100, 'seasonal-guidance-package' => 999,
@@ -59,15 +59,28 @@ class MarketPriceSeeder extends Seeder
         'maa-baglamukhi-chadhava' => 251, 'diwali-lakshmi-ganesh-chadhava' => 251, 'karwa-chauth-sindoor-shringar-chadhava' => 251,
     ];
 
+    /** Puja packages: Single price => [Couple, Family]. Other single prices use ×1.5 and ×2. */
+    public const PUJA_TIERS = [501 => [851, 1101], 899 => [1499, 2100], 5100 => [7100, 11000], 11000 => [15100, 21000], 21000 => [31000, 51000]];
+
+    /**
+     * Bump when PRICES gains entries for variants added to existing catalogues. On an upgrade only
+     * variants created after the first pricing run that still have no price are filled.
+     */
+    public const VERSION = 2;
+
     /** Families published automatically once priced (fulfilment needs no outside partner). */
     public const AUTO_PUBLISH = ['report', 'bundle', 'written_question'];
 
     public function run(): void
     {
         $settings = app(\App\Support\Settings\SettingsRepository::class);
-        if ($settings->get('catalogue.market_prices_applied')) {
-            return; // applied once; later changes belong to the owner
+        $applied = $settings->get('catalogue.market_prices_applied');
+        $version = (int) $settings->get('catalogue.market_prices_version', $applied ? 1 : 0);
+        if ($version >= self::VERSION) {
+            return; // applied; later changes belong to the owner
         }
+        // Upgrade: only variants added after the first run (new catalogue options) are priced.
+        $since = $applied ? DB::table('settings')->where('key', 'catalogue.market_prices_applied')->value('updated_at') : null;
         $offerings = DB::table('offerings as o')->join('service_families as f', 'f.id', '=', 'o.family_id')->get(['o.id', 'o.slug', 'o.status', 'f.code']);
         $priced = 0;
         $published = 0;
@@ -76,8 +89,9 @@ class MarketPriceSeeder extends Seeder
             if ($rule === null) {
                 continue;
             }
-            foreach (DB::table('offering_variants')->where('offering_id', $o->id)->whereNull('price_minor')->get() as $v) {
-                $rupees = $this->priceFor($rule, $v);
+            $variants = DB::table('offering_variants')->where('offering_id', $o->id)->whereNull('price_minor')->when($since, fn ($q) => $q->where('created_at', '>', $since))->get();
+            foreach ($variants as $v) {
+                $rupees = $this->priceFor($rule, $v, $o->code);
                 if ($rupees) {
                     DB::table('offering_variants')->where('id', $v->id)->update(['price_minor' => $rupees * 100, 'updated_at' => now()]);
                     $priced++;
@@ -85,18 +99,27 @@ class MarketPriceSeeder extends Seeder
             }
             $hasTitle = DB::table('offering_translations')->where('offering_id', $o->id)->where('locale', 'en')->whereNotNull('summary')->exists();
             $allPriced = ! DB::table('offering_variants')->where('offering_id', $o->id)->where('active', true)->whereNull('price_minor')->exists();
-            if ($o->status === 'draft' && in_array($o->code, self::AUTO_PUBLISH, true) && $hasTitle && $allPriced && ! DB::table('offerings')->where('id', $o->id)->whereNotNull('activated_at')->exists()) {
+            if (! $applied && $o->status === 'draft' && in_array($o->code, self::AUTO_PUBLISH, true) && $hasTitle && $allPriced && ! DB::table('offerings')->where('id', $o->id)->whereNotNull('activated_at')->exists()) {
                 DB::table('offerings')->where('id', $o->id)->update(['status' => 'active', 'activated_at' => now(), 'updated_at' => now()]);
                 $published++;
             }
         }
-        $settings->set('catalogue.market_prices_applied', now()->toDateString());
+        if (! $applied) {
+            $settings->set('catalogue.market_prices_applied', now()->toDateString());
+        }
+        $settings->set('catalogue.market_prices_version', self::VERSION);
         $this->command?->info("Market prices: $priced variants priced, $published services published.");
     }
 
-    private function priceFor(string|int|array $rule, object $v): ?int
+    private function priceFor(string|int|array $rule, object $v, string $family = ''): ?int
     {
         if (is_int($rule)) {
+            if ($family === 'puja' && preg_match('/^(Couple|Family)/', $v->name, $m)) {
+                $tier = self::PUJA_TIERS[$rule] ?? [(int) round($rule * 1.5), $rule * 2];
+
+                return $m[1] === 'Couple' ? $tier[0] : $tier[1];
+            }
+
             return $rule;
         }
         if ($rule === 'consult') {

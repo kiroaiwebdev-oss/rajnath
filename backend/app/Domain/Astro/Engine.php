@@ -54,6 +54,22 @@ class Engine
         return $this->run(['signs', $planet, self::f($from), self::f($to)])['events'];
     }
 
+    /** New and full moons in the window: [{jd, type: new|full, sun_sign}]. Window at most 1200 days. */
+    public function lunations(float $from, float $to): array
+    {
+        return $this->run(['lunations', self::f($from), self::f($to)])['events'];
+    }
+
+    /** Retrograde/direct stations of Mercury..Saturn: [{jd, retro, lon, sign}]. Window at most 1200 days. */
+    public function stations(string $planet, float $from, float $to): array
+    {
+        if (! in_array($planet, ['mars', 'mercury', 'jupiter', 'venus', 'saturn'], true)) {
+            throw new RuntimeException('Stations are only computed for Mercury, Venus, Mars, Jupiter and Saturn');
+        }
+
+        return $this->run(['stations', $planet, self::f($from), self::f($to)])['events'];
+    }
+
     public function available(): bool
     {
         return is_executable((string) $this->binary) && is_file($this->ephePath.'/sepl_18.se1');
