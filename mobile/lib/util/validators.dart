@@ -35,3 +35,20 @@ String humanize(Object? code) {
 /// API objects are usually wrapped as `{ "data": {...} }`; accept both shapes.
 Map<String, dynamic> unwrap(Map<String, dynamic> r) => r['data'] is Map ? (r['data'] as Map).cast<String, dynamic>() : r;
 List<Map<String, dynamic>> unwrapList(Map<String, dynamic> r) => ((r['data'] as List?) ?? const []).whereType<Map>().map((m) => m.cast<String, dynamic>()).toList();
+
+/// Formats an ISO-8601 date-time in the UTC offset it carries (e.g. `+05:30`), so the
+/// wall-clock time shown is the one the server meant. `Z` / UTC values are shown in IST.
+/// Values without an offset are shown as given. Returns the raw text if unparseable.
+String formatAtOffset(Object? iso, {String pattern = 'd MMM yyyy, h:mm a'}) {
+  final s = '${iso ?? ''}'.trim();
+  final d = DateTime.tryParse(s);
+  if (d == null) return s;
+  if (!d.isUtc) return DateFormat(pattern).format(d);
+  var offset = const Duration(hours: 5, minutes: 30);
+  final m = s.contains('T') ? RegExp(r'([+-])(\d{2}):?(\d{2})$').firstMatch(s) : null;
+  if (m != null) {
+    final o = Duration(hours: int.parse(m[2]!), minutes: int.parse(m[3]!));
+    offset = m[1] == '-' ? -o : o;
+  }
+  return DateFormat(pattern).format(d.add(offset));
+}

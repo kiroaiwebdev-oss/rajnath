@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
 
@@ -39,11 +38,12 @@ class StoreController extends Controller
             'quantity' => ['required', 'integer', 'min:1', 'max:10'],
             'key' => ['required', 'string', 'max:64'],
             'agree' => ['accepted'],
+            'coupon' => ['nullable', 'string', 'max:32'],
         ], ['ship_pincode.regex' => 'Enter a valid 6-digit PIN code.', 'ship_phone.regex' => 'Enter a 10-digit Indian mobile number.', 'agree.accepted' => 'Please confirm you have read the gemstone note.']);
         $address = ['name' => $d['ship_name'], 'phone' => $d['ship_phone'], 'line1' => $d['ship_line1'], 'line2' => $d['ship_line2'] ?? null,
             'city' => $d['ship_city'], 'state' => $d['ship_state'], 'pincode' => $d['ship_pincode'], 'country' => 'India'];
         try {
-            $r = $store->buy($request->user(), $d['product'], (int) $d['quantity'], $address, $d['key']);
+            $r = $store->buy($request->user(), $d['product'], (int) $d['quantity'], $address, $d['key'], $d['coupon'] ?? null);
         } catch (RuntimeException $e) {
             report($e);
 

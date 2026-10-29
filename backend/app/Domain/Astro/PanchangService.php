@@ -15,10 +15,66 @@ class PanchangService
 {
     // Day-part (1..8) of Rahu Kaal, Yamaganda, Gulika for Sunday..Saturday.
     private const RAHU = [8, 2, 7, 5, 6, 4, 3];
+
     private const YAMA = [5, 4, 3, 2, 1, 7, 6];
+
     private const GULIKA = [7, 6, 5, 4, 3, 2, 1];
 
+    /** Choghadiya cycle; day and night each have 8 parts. */
+    public const CHOGHADIYA = ['Udveg', 'Char', 'Labh', 'Amrit', 'Kaal', 'Shubh', 'Rog'];
+
+    public const CHOGHADIYA_QUALITY = ['Udveg' => 'bad', 'Char' => 'neutral', 'Labh' => 'good', 'Amrit' => 'good', 'Kaal' => 'bad', 'Shubh' => 'good', 'Rog' => 'bad'];
+
+    /** Index in CHOGHADIYA of the first day / night part, Sunday..Saturday. Day steps +1, night steps −2 (mod 7). */
+    private const CHOG_DAY = [0, 3, 6, 2, 5, 1, 4];
+
+    private const CHOG_NIGHT = [5, 1, 4, 0, 3, 6, 2];
+
+    /** Chaldean order of hora lords; each hour's lord is the next in this list. */
+    public const HORA_ORDER = ['saturn', 'jupiter', 'mars', 'sun', 'venus', 'mercury', 'moon'];
+
+    private const WEEKDAY_LORD = ['sun', 'moon', 'mars', 'mercury', 'jupiter', 'venus', 'saturn'];
+
     public function __construct(private Engine $engine) {}
+
+    /**
+     * Choghadiya: daytime (sunrise→sunset) and night (sunset→next sunrise) each split into 8 equal parts.
+     *
+     * @return list<array{name: string, quality: string, period: string, start: string, end: string}>
+     */
+    public static function choghadiya(int $weekday, float $sunrise, float $sunset, float $next, callable $fmt): array
+    {
+        $out = [];
+        foreach ([['day', $sunrise, $sunset, self::CHOG_DAY[$weekday], 1], ['night', $sunset, $next, self::CHOG_NIGHT[$weekday], 5]] as [$period, $a, $b, $first, $step]) {
+            $part = ($b - $a) / 8;
+            for ($i = 0; $i < 8; $i++) {
+                $name = self::CHOGHADIYA[($first + $i * $step) % 7];
+                $out[] = ['name' => $name, 'quality' => self::CHOGHADIYA_QUALITY[$name], 'period' => $period,
+                    'start' => $fmt($a + $i * $part)->format(DATE_ATOM), 'end' => $fmt($a + ($i + 1) * $part)->format(DATE_ATOM)];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Hora: 12 day and 12 night planetary hours; the first day hora belongs to the weekday's lord.
+     *
+     * @return list<array{lord: string, period: string, start: string, end: string}>
+     */
+    public static function hora(int $weekday, float $sunrise, float $sunset, float $next, callable $fmt): array
+    {
+        $out = [];
+        $k = array_search(self::WEEKDAY_LORD[$weekday], self::HORA_ORDER, true);
+        foreach ([['day', $sunrise, $sunset], ['night', $sunset, $next]] as [$period, $a, $b]) {
+            $part = ($b - $a) / 12;
+            for ($i = 0; $i < 12; $i++, $k++) {
+                $out[] = ['lord' => self::HORA_ORDER[$k % 7], 'period' => $period, 'start' => $fmt($a + $i * $part)->format(DATE_ATOM), 'end' => $fmt($a + ($i + 1) * $part)->format(DATE_ATOM)];
+            }
+        }
+
+        return $out;
+    }
 
     public function day(string $date, float $lat, float $lng, string $tzName): array
     {
@@ -77,8 +133,11 @@ class PanchangService
             ];
         }
 
+        [$choghadiya, $hora] = $polar ? [[], []] : [self::choghadiya($weekday, $sunrise, $sunset, $next, $fmt), self::hora($weekday, $sunrise, $sunset, $next, $fmt)];
+
         return [
             'date' => $date, 'place' => ['lat' => $lat, 'lng' => $lng, 'tz' => $tzName, 'utc_offset' => $localMidnight->format('P')],
+            'choghadiya' => $choghadiya, 'hora' => $hora,
             'vara' => Vedic::VARAS[$weekday],
             'sunrise' => $fmt($sunrise)?->format(DATE_ATOM), 'sunset' => $fmt($sunset)?->format(DATE_ATOM),
             'moonrise' => $fmt($moonEv['moonrise'])?->format(DATE_ATOM), 'moonset' => $fmt($moonEv['moonset'])?->format(DATE_ATOM),

@@ -31,7 +31,8 @@ class RouteAuditTest extends TestCase
     public function test_sensitive_admin_mutations_require_step_up(): void
     {
         $mustStepUp = ['admin/team/', 'admin/settings', 'admin/providers', 'admin/payments', 'admin/catalogue/{ref}/variants', 'admin/finance/refunds',
-            'admin/push', 'admin/calling', 'admin/commission', 'admin/payouts', 'admin/practitioners/invite'];
+            'admin/push', 'admin/calling', 'admin/commission', 'admin/payouts', 'admin/practitioners/invite', 'admin/coupons', 'admin/practitioner-applications/',
+            'admin/privacy/{ref}/delete', 'admin/privacy/{ref}/hold'];
         foreach (Route::getRoutes() as $r) {
             $uri = $r->uri();
             if (array_intersect($r->methods(), ['POST', 'PUT', 'DELETE']) && collect($mustStepUp)->contains(fn ($p) => str_starts_with($uri, $p))) {
@@ -60,7 +61,7 @@ class RouteAuditTest extends TestCase
                 continue;
             }
             $excluded = in_array(ValidateCsrfToken::class, $r->excludedMiddleware(), true);
-            $this->assertSame($r->uri() === 'webhooks/razorpay', $excluded, $r->uri());
+            $this->assertSame(in_array($r->uri(), ['webhooks/razorpay', 'webhooks/razorpayx', 'webhooks/courier-tracking'], true), $excluded, $r->uri());
         }
     }
 
@@ -68,7 +69,8 @@ class RouteAuditTest extends TestCase
     {
         $open = ['api/v1/meta', 'api/v1/auth/otp/start', 'api/v1/auth/otp/resend', 'api/v1/auth/otp/verify', 'api/v1/catalogue/families', 'api/v1/catalogue/offerings',
             'api/v1/catalogue/offerings/{slug}', 'api/v1/places', 'api/v1/tools', 'api/v1/tools/{slug}', 'api/v1/panchang', 'api/v1/enquiries',
-            'api/v1/store/products', 'api/v1/store/products/{slug}', 'api/v1/practitioners'];
+            'api/v1/store/products', 'api/v1/store/products/{slug}', 'api/v1/practitioners', 'api/v1/horoscopes', 'api/v1/horoscopes/types',
+            'api/v1/gochar', 'api/v1/gochar/{planet}', 'api/v1/muhurat', 'api/v1/muhurat/{event}', 'api/v1/festivals'];
         foreach (Route::getRoutes() as $r) {
             if (! str_starts_with($r->uri(), 'api/') || in_array($r->uri(), $open, true)) {
                 continue;

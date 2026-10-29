@@ -2,7 +2,14 @@
 
 namespace App\Domain\Payments;
 
+use App\Domain\Booking\Slots;
+use App\Domain\Identity\CustomerAuth;
 use App\Domain\Ledger\Ledger;
+use App\Domain\Notify\Notifier;
+use App\Domain\Palmistry\PalmReadings;
+use App\Domain\Puja\PujaBookings;
+use App\Domain\Reports\ReportJobs;
+use App\Domain\Store\Store;
 use App\Models\Offering;
 use App\Models\OfferingVariant;
 use App\Models\User;
@@ -21,30 +28,30 @@ use Illuminate\Validation\ValidationException;
  */
 class Checkout
 {
-    public function __construct(private Razorpay $rzp, private Ledger $ledger, private AuditLogger $audit) {}
+    public function __construct(private Razorpay $rzp, private Ledger $ledger, private AuditLogger $audit, private Coupons $coupons, private Invoices $invoices) {}
 
-    public function startServiceOrder(User $user, OfferingVariant $variant, bool $useWallet, string $idempotencyKey, array $extra = []): array
+    public function startServiceOrder(User $user, OfferingVariant $variant, bool $useWallet, string $idempotencyKey, array $extra = [], ?string $couponCode = null): array
     {
         $o = Offering::with(['translations', 'family'])->findOrFail($variant->offering_id);
         if ($o->status !== 'active' || ! $variant->active || $variant->price_minor === null || $variant->price_minor <= 0) {
             throw ValidationException::withMessages(['variant' => 'This option cannot be bought online yet.']);
         }
-        if (\App\Domain\Booking\Slots::bookable($variant) && ! isset($extra['booking_ref'])) {
+        if (Slots::bookable($variant) && ! isset($extra['booking_ref'])) {
             throw ValidationException::withMessages(['variant' => 'Choose a consultation time first.']);
         }
         $snapshot = [
             'offering' => ['ref' => $o->ref, 'slug' => $o->slug, 'title' => $o->t('en')?->title, 'family' => $o->family->code],
             'variant' => ['ref' => $variant->ref, 'name' => $variant->name, 'mode' => $variant->mode, 'duration_min' => $variant->duration_min, 'participants' => $variant->participants, 'urgent' => $variant->urgent],
-            'price_minor' => $variant->price_minor, 'currency' => 'INR', 'terms_version' => \App\Domain\Identity\CustomerAuth::TERMS_VERSION,
+            'price_minor' => $variant->price_minor, 'currency' => 'INR', 'terms_version' => CustomerAuth::TERMS_VERSION,
             'disclaimer' => $o->t('en')?->disclaimer,
         ] + $extra;
 
-        return $this->start($user, 'service', $variant->price_minor, $snapshot, $useWallet, $idempotencyKey);
+        return $this->start($user, 'service', $variant->price_minor, $snapshot, $useWallet, $idempotencyKey, $couponCode);
     }
 
-    public function startProductOrder(User $user, array $snapshot, string $idempotencyKey): array
+    public function startProductOrder(User $user, array $snapshot, string $idempotencyKey, ?string $couponCode = null): array
     {
-        return $this->start($user, 'product', (int) $snapshot['price_minor'], $snapshot, false, $idempotencyKey);
+        return $this->start($user, 'product', (int) $snapshot['price_minor'], $snapshot, false, $idempotencyKey, $couponCode);
     }
 
     public function startRecharge(User $user, object $package, string $idempotencyKey): array
@@ -52,7 +59,7 @@ class Checkout
         return $this->start($user, 'recharge', (int) $package->amount_minor, ['package_id' => $package->id, 'amount_minor' => (int) $package->amount_minor, 'bonus_minor' => (int) $package->bonus_minor], false, $idempotencyKey);
     }
 
-    private function start(User $user, string $kind, int $amount, array $snapshot, bool $useWallet, string $key): array
+    private function start(User $user, string $kind, int $amount, array $snapshot, bool $useWallet, string $key, ?string $couponCode = null): array
     {
         $key = 'u'.$user->id.':'.$key;
         $existing = DB::table('orders')->where('idempotency_key', $key)->first();
@@ -60,7 +67,20 @@ class Checkout
             return $this->checkoutPayload($existing);
         }
 
-        $order = DB::transaction(function () use ($user, $kind, $amount, $snapshot, $useWallet, $key) {
+        $couponCode = $kind === 'recharge' ? null : (Coupons::normalise($couponCode) ?: null);
+        $order = DB::transaction(function () use ($user, $kind, $amount, $snapshot, $useWallet, $key, $couponCode) {
+            $list = $amount;
+            $coupon = null;
+            $discount = 0;
+            if ($couponCode !== null) {
+                $scope = $kind === 'product' ? 'product' : ($snapshot['offering']['family'] ?? 'service');
+                ['coupon' => $coupon, 'discount' => $discount] = $this->coupons->quote($user, $couponCode, $scope, $amount, lock: true);
+                if ($kind === 'product') {
+                    $discount = min($discount, $amount - 100);   // gem orders always go through the gateway (delivery address checks)
+                }
+                $amount -= $discount;
+                $snapshot['coupon'] = ['code' => $coupon->code, 'discount_minor' => $discount, 'description' => Coupons::describe($coupon)];
+            }
             $walletApplied = 0;
             if ($useWallet && $kind === 'service') {
                 $this->ledger->wallet($user->id);
@@ -68,14 +88,19 @@ class Checkout
             }
             $id = DB::table('orders')->insertGetId([
                 'ref' => (string) Str::ulid(), 'user_id' => $user->id, 'kind' => $kind, 'status' => 'pending_payment',
-                'subtotal_minor' => $amount, 'wallet_applied_minor' => $walletApplied, 'payable_minor' => $amount - $walletApplied,
+                'subtotal_minor' => $amount, 'list_minor' => $list, 'discount_minor' => $discount, 'coupon_id' => $coupon?->id,
+                'wallet_applied_minor' => $walletApplied, 'payable_minor' => $amount - $walletApplied,
                 'currency' => 'INR', 'snapshot' => json_encode($snapshot), 'idempotency_key' => $key, 'created_at' => now(), 'updated_at' => now(),
             ]);
+
+            if ($coupon) {
+                DB::table('coupon_redemptions')->insert(['coupon_id' => $coupon->id, 'order_id' => $id, 'user_id' => $user->id, 'discount_minor' => $discount, 'created_at' => now()]);
+            }
 
             return DB::table('orders')->find($id);
         });
 
-        if ($order->payable_minor === 0) {
+        if ((int) $order->payable_minor === 0) {
             // Fully paid from wallet: consume immediately.
             $this->markPaid($order, null);
 
@@ -160,12 +185,25 @@ class Checkout
             if ($order->wallet_applied_minor > 0) {
                 $lines[] = [$wallet, 'debit', (int) $order->wallet_applied_minor];
             }
-            $lines[] = [$this->ledger->account('revenue', 'revenue'), 'credit', (int) $order->subtotal_minor];
+            // GST included in the price is a liability, not revenue (only when the owner has turned GST on).
+            $tax = $this->invoices->enabled() ? Invoices::taxIncluded((int) $order->subtotal_minor, $this->invoices->rateFor($order->kind)) : 0;
+            $lines[] = [$this->ledger->account('revenue', 'revenue'), 'credit', (int) $order->subtotal_minor - $tax];
+            if ($tax > 0) {
+                $lines[] = [$this->ledger->account('gst_output', 'liability'), 'credit', $tax];
+            }
+            DB::table('orders')->where('id', $order->id)->update(['tax_minor' => $tax]);
+            $order->tax_minor = $tax;
         }
         $kind = ['recharge' => 'wallet_recharge', 'product' => 'product_sale'][$order->kind] ?? 'service_purchase';
         $memo = $snap['offering']['title'] ?? ($snap['product']['name'] ?? 'Wallet recharge');
-        $this->ledger->post($kind, 'order-paid:'.$order->ref, $lines, $memo, 'order', $order->id);
+        $lines = array_values(array_filter($lines, fn ($l) => $l[2] > 0));   // a fully discounted order moves no money
+        if ($lines) {
+            $this->ledger->post($kind, 'order-paid:'.$order->ref, $lines, $memo, 'order', $order->id);
+        }
         DB::table('orders')->where('id', $order->id)->update(['status' => 'paid', 'paid_at' => now(), 'updated_at' => now()]);
+        if (in_array($order->kind, ['service', 'product'], true)) {
+            $this->invoices->issueForOrder(DB::table('orders')->find($order->id));
+        }
         $this->audit->record('order.paid', null, ['order' => $order->ref, 'payment' => $paymentId], null, 'system');
         $this->fulfil(DB::table('orders')->find($order->id), $snap);
     }
@@ -174,7 +212,7 @@ class Checkout
     private function fulfil(object $order, array $snap): void
     {
         if ($order->kind === 'product') {
-            app(\App\Domain\Store\Store::class)->onPaid($order);
+            app(Store::class)->onPaid($order);
 
             return;
         }
@@ -183,14 +221,14 @@ class Checkout
         }
         $slug = $snap['offering']['slug'] ?? null;
         $family = $snap['offering']['family'] ?? null;
-        if ($slug === \App\Domain\Palmistry\PalmReadings::OFFERING_SLUG) {
-            app(\App\Domain\Palmistry\PalmReadings::class)->onOrderPaid($order);
+        if ($slug === PalmReadings::OFFERING_SLUG) {
+            app(PalmReadings::class)->onOrderPaid($order);
         } elseif (isset($snap['booking_ref'])) {
-            app(\App\Domain\Booking\Slots::class)->onOrderPaid($order);
+            app(Slots::class)->onOrderPaid($order);
         } elseif (in_array($family, ['puja', 'chadhava'], true)) {
-            app(\App\Domain\Puja\PujaBookings::class)->onOrderPaid($order, $snap);
+            app(PujaBookings::class)->onOrderPaid($order, $snap);
         } elseif (in_array($family, ['report', 'bundle', 'written_question'], true)) {
-            app(\App\Domain\Reports\ReportJobs::class)->onOrderPaid($order, $snap);
+            app(ReportJobs::class)->onOrderPaid($order, $snap);
         }
         $this->paidNotice($order, $snap);
     }
@@ -209,7 +247,7 @@ class Checkout
             'shipment' => ' We will email you when it is dispatched.',
             default => '',
         };
-        app(\App\Domain\Notify\Notifier::class)->send((int) $order->user_id, 'order', 'Payment received',
+        app(Notifier::class)->send((int) $order->user_id, 'order', 'Payment received',
             'We received ₹'.number_format($order->subtotal_minor / 100, 2).' for '.self::label($order->kind, $snap).'.'.$step, $order->ref, route('account.receipt', $order->ref));
     }
 
@@ -246,10 +284,10 @@ class Checkout
     {
         $n = DB::table('orders')->where('id', $order->id)->where('status', 'pending_payment')->update(['status' => 'cancelled', 'updated_at' => now()]);
         if ($n && $order->kind === 'product') {
-            app(\App\Domain\Store\Store::class)->release($order->id);
+            app(Store::class)->release($order->id);
         }
         if ($n && $order->kind === 'service') {
-            app(\App\Domain\Booking\Slots::class)->onOrderCancelled($order);
+            app(Slots::class)->onOrderCancelled($order);
         }
     }
 }

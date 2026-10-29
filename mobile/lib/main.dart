@@ -7,6 +7,7 @@ import 'push/push_service.dart';
 import 'screens/account_screens.dart';
 import 'screens/assistant_screen.dart';
 import 'screens/astro_screens.dart';
+import 'screens/content_screens.dart';
 import 'screens/purchase_screens.dart';
 import 'screens/routing.dart';
 import 'screens/services_screens.dart';
@@ -105,6 +106,8 @@ class HomeTab extends StatelessWidget {
         const SizedBox(height: 8),
         OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PanchangScreen(state: state))), child: const Text("Today's Panchang")),
         const SizedBox(height: 8),
+        OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => HoroscopeScreen(state: state))), child: const Text('Rashifal')),
+        const SizedBox(height: 8),
         OutlinedButton.icon(
           onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => StoreScreen(state: state))),
           icon: const Icon(Icons.diamond_outlined),
@@ -135,7 +138,11 @@ class ToolsTab extends StatelessWidget {
         for (final t in [
           ('Free Kundli', 'Birth chart, planets and dasha', () => KundliScreen(state: state)),
           ('Kundli Matching', '36-guna milan', () => KundliScreen(state: state, matching: true)),
-          ('Panchang', 'Tithi, nakshatra, Rahu Kaal', () => PanchangScreen(state: state)),
+          ('Panchang', 'Tithi, nakshatra, Rahu Kaal, Choghadiya', () => PanchangScreen(state: state)),
+          ('Rashifal', 'Daily to yearly horoscope by sign', () => HoroscopeScreen(state: state)),
+          ('Grah Gochar', 'Planetary transits and their effects', () => GocharScreen(state: state)),
+          ('Muhurat', 'Auspicious dates for samskaras', () => MuhuratScreen(state: state)),
+          ('Festivals', 'Festival calendar by year', () => FestivalsScreen(state: state)),
         ])
           Card(child: ListTile(title: Text(t.$1), subtitle: Text(t.$2), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => t.$3())))),
         const Padding(padding: EdgeInsets.all(8), child: Text('All 26 calculators are also on the website.', style: TextStyle(color: ArjColors.ink600))),

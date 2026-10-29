@@ -11,7 +11,18 @@ class ServiceFamily extends Model
 
     protected function casts(): array
     {
-        return ['requires_supplier' => 'boolean'];
+        return ['requires_supplier' => 'boolean', 'translations' => 'array'];
+    }
+
+    /** Name in the current language (falls back to English). */
+    public function label(?string $locale = null): string
+    {
+        return $this->translations[$locale ?? app()->getLocale()]['name'] ?? $this->name;
+    }
+
+    public function blurb(?string $locale = null): ?string
+    {
+        return $this->translations[$locale ?? app()->getLocale()]['summary'] ?? $this->summary;
     }
 
     public function offerings(): HasMany

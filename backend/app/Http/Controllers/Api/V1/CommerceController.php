@@ -5,16 +5,18 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Booking\Slots;
 use App\Domain\Ledger\Ledger;
 use App\Domain\Payments\Checkout;
+use App\Domain\Payments\Coupons;
 use App\Domain\Payments\Razorpay;
 use App\Domain\Practitioners\Practitioners;
 use App\Domain\Store\Store;
 use App\Http\Controllers\Controller;
 use App\Models\BirthProfile;
+use App\Models\Offering;
 use App\Models\OfferingVariant;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -28,14 +30,17 @@ class CommerceController extends Controller
         $snap = json_decode($o->snapshot, true) ?: [];
 
         return ['ref' => $o->ref, 'kind' => $o->kind, 'status' => $o->status, 'label' => Checkout::label($o->kind, $snap),
-            'subtotal_minor' => (int) $o->subtotal_minor, 'wallet_applied_minor' => (int) $o->wallet_applied_minor, 'payable_minor' => (int) $o->payable_minor,
+            'subtotal_minor' => (int) $o->subtotal_minor, 'list_minor' => (int) ($o->list_minor ?? $o->subtotal_minor), 'discount_minor' => (int) ($o->discount_minor ?? 0),
+            'coupon' => $snap['coupon']['code'] ?? null, 'tax_minor' => (int) ($o->tax_minor ?? 0),
+            'wallet_applied_minor' => (int) $o->wallet_applied_minor, 'payable_minor' => (int) $o->payable_minor,
             'refunded_minor' => (int) $o->refunded_minor, 'created_at' => self::iso($o->created_at), 'paid_at' => self::iso($o->paid_at ?? null),
-            'next' => in_array($o->status, ['paid', 'partially_refunded'], true) ? Checkout::next($o) : null];
+            'next' => in_array($o->status, ['paid', 'partially_refunded'], true) ? Checkout::next($o) : null,
+            'invoices' => DocumentApiController::invoicesFor($o)];
     }
 
     public static function iso(?string $t): ?string
     {
-        return $t ? \Carbon\CarbonImmutable::parse($t, 'UTC')->toIso8601ZuluString() : null;
+        return $t ? CarbonImmutable::parse($t, 'UTC')->toIso8601ZuluString() : null;
     }
 
     private function payload(array $r, Request $request): array
@@ -79,9 +84,9 @@ class CommerceController extends Controller
 
     public function service(Request $request): JsonResponse
     {
-        $d = $request->validate(['variant' => ['required', 'string', 'size:26'], 'use_wallet' => ['nullable', 'boolean'], 'key' => ['required', 'string', 'max:64']]);
+        $d = $request->validate(['variant' => ['required', 'string', 'size:26'], 'use_wallet' => ['nullable', 'boolean'], 'key' => ['required', 'string', 'max:64'], 'coupon' => ['nullable', 'string', 'max:32']]);
         try {
-            return response()->json($this->payload($this->checkout->startServiceOrder($request->user(), $this->variant($d['variant']), (bool) ($d['use_wallet'] ?? false), $d['key']), $request));
+            return response()->json($this->payload($this->checkout->startServiceOrder($request->user(), $this->variant($d['variant']), (bool) ($d['use_wallet'] ?? false), $d['key'], [], $d['coupon'] ?? null), $request));
         } catch (RuntimeException $e) {
             return $this->unavailable($e);
         }
@@ -100,7 +105,7 @@ class CommerceController extends Controller
     public function booking(Request $request, Slots $slots): JsonResponse
     {
         $d = $request->validate(['variant' => ['required', 'string', 'size:26'], 'start' => ['required', 'string', 'regex:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z$/'], 'practitioner' => ['nullable', 'string', 'size:26'],
-            'birth_profile' => ['nullable', 'string', 'size:26'], 'topic' => ['nullable', 'string', 'max:1000'], 'use_wallet' => ['nullable', 'boolean'], 'key' => ['required', 'string', 'max:64']]);
+            'birth_profile' => ['nullable', 'string', 'size:26'], 'topic' => ['nullable', 'string', 'max:1000'], 'use_wallet' => ['nullable', 'boolean'], 'key' => ['required', 'string', 'max:64'], 'coupon' => ['nullable', 'string', 'max:32']]);
         $v = $this->variant($d['variant']);
         $o = DB::table('offerings')->find($v->offering_id);
         if (! $o || $o->status !== 'active' || ! $v->active) {
@@ -108,7 +113,7 @@ class CommerceController extends Controller
         }
         $bp = ! empty($d['birth_profile']) ? BirthProfile::where('user_id', $request->user()->id)->where('ref', $d['birth_profile'])->value('id') : null;
         try {
-            [$b, $r] = $slots->hold($request->user(), $v, $d['start'], $bp, $d['topic'] ?? null, $d['key'], (bool) ($d['use_wallet'] ?? false), $d['practitioner'] ?? null);
+            [$b, $r] = $slots->hold($request->user(), $v, $d['start'], $bp, $d['topic'] ?? null, $d['key'], (bool) ($d['use_wallet'] ?? false), $d['practitioner'] ?? null, $d['coupon'] ?? null);
         } catch (RuntimeException $e) {
             return $this->unavailable($e);
         }
@@ -136,15 +141,41 @@ class CommerceController extends Controller
         $d = $request->validate(['product' => ['required', 'string', 'size:26'], 'quantity' => ['required', 'integer', 'min:1', 'max:10'], 'key' => ['required', 'string', 'max:64'],
             'address' => ['required', 'array'], 'address.name' => ['required', 'string', 'max:120'], 'address.phone' => ['required', 'regex:/^(?:\+?91)?[6-9]\d{9}$/'],
             'address.line1' => ['required', 'string', 'max:200'], 'address.line2' => ['nullable', 'string', 'max:200'], 'address.city' => ['required', 'string', 'max:100'],
-            'address.state' => ['required', 'string', 'max:100'], 'address.pincode' => ['required', 'regex:/^[1-9]\d{5}$/']],
+            'address.state' => ['required', 'string', 'max:100'], 'address.pincode' => ['required', 'regex:/^[1-9]\d{5}$/'], 'coupon' => ['nullable', 'string', 'max:32']],
             ['address.phone.regex' => 'Enter a 10-digit Indian mobile number.', 'address.pincode.regex' => 'Enter a 6-digit PIN code.']);
         $a = $d['address'];
         $address = ['name' => $a['name'], 'phone' => $a['phone'], 'line1' => $a['line1'], 'line2' => $a['line2'] ?? null, 'city' => $a['city'], 'state' => $a['state'], 'pincode' => $a['pincode']];
         try {
-            return response()->json($this->payload($store->buy($request->user(), $d['product'], (int) $d['quantity'], $address, $d['key']), $request));
+            return response()->json($this->payload($store->buy($request->user(), $d['product'], (int) $d['quantity'], $address, $d['key'], $d['coupon'] ?? null), $request));
         } catch (RuntimeException $e) {
             return $this->unavailable($e);
         }
+    }
+
+    /** Preview a coupon before paying. The order applies it again (and locks it) at checkout. */
+    public function checkCoupon(Request $request, Coupons $coupons): JsonResponse
+    {
+        $d = $request->validate(['code' => ['required', 'string', 'max:32'], 'variant' => ['required_without:product', 'nullable', 'string', 'size:26'],
+            'product' => ['required_without:variant', 'nullable', 'string', 'size:26'], 'quantity' => ['nullable', 'integer', 'min:1', 'max:10']]);
+        if (! empty($d['variant'])) {
+            $v = $this->variant($d['variant']);
+            $o = Offering::with('family')->find($v->offering_id);
+            if (! $o || $o->status !== 'active' || ! $v->active || ! $v->price_minor) {
+                throw ValidationException::withMessages(['variant' => 'This option is not available.']);
+            }
+            [$scope, $amount] = [$o->family->code, (int) $v->price_minor];
+        } else {
+            $p = DB::table('products')->where('ref', $d['product'])->where('active', true)->first();
+            if (! $p) {
+                throw ValidationException::withMessages(['product' => 'This item is not available.']);
+            }
+            [$scope, $amount] = ['product', (int) $p->price_minor * (int) ($d['quantity'] ?? 1)];
+        }
+        $q = $coupons->quote($request->user(), $d['code'], $scope, $amount);
+        $discount = $scope === 'product' ? min($q['discount'], $amount - 100) : $q['discount'];
+
+        return response()->json(['data' => ['code' => $q['coupon']->code, 'description' => Coupons::describe($q['coupon']),
+            'list_minor' => $amount, 'discount_minor' => $discount, 'total_minor' => $amount - $discount]]);
     }
 
     private function mine(Request $request, string $ref): object

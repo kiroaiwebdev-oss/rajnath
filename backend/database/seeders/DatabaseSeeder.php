@@ -13,5 +13,6 @@ class DatabaseSeeder extends Seeder
         $this->command?->call('arj:import-places');
         $this->call(CatalogueSeeder::class);
         $this->call(MarketPriceSeeder::class);
+        $this->call(HindiCatalogueSeeder::class);
     }
 }

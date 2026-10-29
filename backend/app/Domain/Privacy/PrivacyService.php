@@ -2,6 +2,7 @@
 
 namespace App\Domain\Privacy;
 
+use App\Models\BirthProfile;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
 use Illuminate\Support\Facades\Crypt;
@@ -30,7 +31,7 @@ class PrivacyService
             'generated_at' => now()->toIso8601ZuluString(),
             'account' => ['name' => $u->name, 'email' => $u->email, 'phone' => $u->phone_e164, 'locale' => $u->locale, 'created_at' => $u->created_at?->toIso8601ZuluString(), 'notification_prefs' => $u->notification_prefs ? json_decode($u->notification_prefs, true) : null],
             'consents' => DB::table('consents')->where('user_id', $u->id)->get(['type', 'version', 'granted_at', 'withdrawn_at']),
-            'birth_profiles' => \App\Models\BirthProfile::where('user_id', $u->id)->get()->map->toApi(),
+            'birth_profiles' => BirthProfile::where('user_id', $u->id)->get()->map->toApi(),
             'orders' => DB::table('orders')->where('user_id', $u->id)->get(['ref', 'kind', 'status', 'subtotal_minor', 'refunded_minor', 'snapshot', 'created_at', 'paid_at'])
                 ->map(fn ($o) => array_merge((array) $o, ['snapshot' => json_decode($o->snapshot, true)])),
             'wallet_balance_minor' => (int) (DB::table('ledger_accounts')->where('code', 'customer_wallet:'.$u->id)->value('balance_minor') ?? 0),
@@ -46,7 +47,7 @@ class PrivacyService
             'app_devices_for_push' => DB::table('push_tokens')->where('user_id', $u->id)->count(),
             'puja_bookings' => DB::table('puja_bookings')->where('user_id', $u->id)->get()->map(fn ($b) => ['ref' => $b->ref, 'status' => $b->status, 'sankalp' => $b->sankalp ? json_decode(Crypt::decryptString($b->sankalp), true) : null, 'scheduled_at' => $b->scheduled_at]),
         ];
-        DB::table('privacy_requests')->insert(['ref' => (string) Str::ulid(), 'user_id' => $u->id, 'type' => 'export', 'status' => 'completed', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('privacy_requests')->insert(['ref' => (string) Str::ulid(), 'user_id' => $u->id, 'type' => 'export', 'status' => 'completed', 'case_status' => 'closed', 'closed_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
         $this->audit->record('privacy.exported', $u, [], $u);
 
         return $data;
@@ -56,6 +57,9 @@ class PrivacyService
     public function blockers(User $u): array
     {
         $r = [];
+        if ($u->privacy_hold_reason) {
+            $r[] = 'Your account is on hold for a legal or accounting reason. Our privacy team will contact you.';
+        }
         if (DB::table('orders')->where('user_id', $u->id)->where('status', 'pending_payment')->exists()) {
             $r[] = 'You have an unpaid order. Pay or cancel it first.';
         }
@@ -81,11 +85,23 @@ class PrivacyService
         return $r;
     }
 
-    public function delete(User $u): object
+    /**
+     * Deletes (anonymises) the account. If something blocks it, the request is recorded and opens
+     * a case in the staff privacy queue (Admin › Privacy requests); a repeat request updates the
+     * open case. $by = staff member running the deletion for the customer.
+     */
+    public function delete(User $u, ?User $by = null): object
     {
         $ref = (string) Str::ulid();
         if ($b = $this->blockers($u)) {
-            DB::table('privacy_requests')->insert(['ref' => $ref, 'user_id' => $u->id, 'type' => 'delete', 'status' => 'blocked', 'blocked_reason' => implode(' ', $b), 'created_at' => now(), 'updated_at' => now()]);
+            $open = DB::table('privacy_requests')->where('user_id', $u->id)->where('type', 'delete')->whereIn('case_status', ['open', 'in_progress'])->first();
+            if ($open) {
+                DB::table('privacy_requests')->where('id', $open->id)->update(['blocked_reason' => mb_substr(implode(' ', $b), 0, 255), 'updated_at' => now()]);
+
+                return DB::table('privacy_requests')->find($open->id);
+            }
+            DB::table('privacy_requests')->insert(['ref' => $ref, 'user_id' => $u->id, 'type' => 'delete', 'status' => 'blocked', 'case_status' => 'open',
+                'blocked_reason' => mb_substr(implode(' ', $b), 0, 255), 'created_at' => now(), 'updated_at' => now()]);
 
             return DB::table('privacy_requests')->where('ref', $ref)->first();
         }
@@ -126,8 +142,12 @@ class PrivacyService
             $steps[] = 'name, email and mobile erased';
             $steps[] = 'kept for tax/accounting law: order amounts, dates and payment references (no name or contact)';
         });
-        DB::table('privacy_requests')->insert(['ref' => $ref, 'user_id' => null, 'type' => 'delete', 'status' => 'completed', 'steps' => json_encode($steps), 'created_at' => now(), 'updated_at' => now()]);
-        $this->audit->record('privacy.deleted', null, ['request' => $ref, 'steps' => count($steps)], null, 'system');
+        DB::table('privacy_requests')->insert(['ref' => $ref, 'user_id' => null, 'type' => 'delete', 'status' => 'completed', 'case_status' => 'closed', 'closed_at' => now(),
+            'steps' => json_encode($steps), 'created_at' => now(), 'updated_at' => now()]);
+        // an open case for this person is closed and unlinked (the person no longer exists)
+        DB::table('privacy_requests')->where('user_id', $u->id)->whereIn('case_status', ['open', 'in_progress'])
+            ->update(['user_id' => null, 'status' => 'completed', 'case_status' => 'closed', 'closed_at' => now(), 'updated_at' => now()]);
+        $this->audit->record('privacy.deleted', null, ['request' => $ref, 'steps' => count($steps)], $by, $by ? null : 'system');
 
         return DB::table('privacy_requests')->where('ref', $ref)->first();
     }

@@ -6,6 +6,7 @@ import '../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import 'activity_screens.dart';
+import 'apply_screens.dart';
 import 'astro_screens.dart';
 import 'palm_screens.dart';
 import 'wallet_screen.dart';
@@ -50,6 +51,16 @@ class AccountScreen extends StatelessWidget {
       _tile(context, Icons.people_outline, 'Birth profiles', () => BirthProfilesScreen(state: state)),
       _tile(context, Icons.devices_outlined, 'Signed-in devices', () => DevicesScreen(state: state)),
       _tile(context, Icons.tune, 'Notification settings', () => NotificationPrefsScreen(state: state)),
+      const SectionTitle('Work with us'),
+      Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        child: ListTile(
+          leading: const Icon(Icons.workspace_premium_outlined),
+          title: const Text('Apply as astrologer'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => openAstrologerApplication(context, state),
+        ),
+      ),
       const SizedBox(height: 16),
       OutlinedButton(onPressed: () => state.signOut(), child: const Text('Sign out')),
       const SizedBox(height: 24),

@@ -60,6 +60,87 @@ class _WalletSwitchState extends State<WalletSwitch> {
       );
 }
 
+/// Optional coupon code with Apply. Checks it via POST /coupons/check with [target]
+/// (`{'variant': ref}` or `{'product': ref, 'quantity': n}`) and reports the quote
+/// (`{code, description, list_minor, discount_minor, total_minor}`) or null when removed / invalid.
+class CouponField extends StatefulWidget {
+  const CouponField({super.key, required this.api, required this.target, required this.onChanged});
+  final ApiClient api;
+  final Map<String, dynamic> target;
+  final ValueChanged<Map<String, dynamic>?> onChanged;
+  @override
+  State<CouponField> createState() => _CouponFieldState();
+}
+
+class _CouponFieldState extends State<CouponField> {
+  final _code = TextEditingController();
+  Map<String, dynamic>? _quote;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _code.dispose();
+    super.dispose();
+  }
+
+  Future<void> _apply() async {
+    final code = _code.text.trim();
+    if (code.isEmpty) return setState(() => _error = 'Enter a coupon code.');
+    setState(() { _busy = true; _error = null; });
+    try {
+      final q = unwrap(await widget.api.post('/coupons/check', {'code': code, ...widget.target}));
+      if (!mounted) return;
+      setState(() => _quote = q);
+      widget.onChanged(q);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() { _quote = null; _error = e.fieldErrors['coupon'] ?? e.fieldErrors['code'] ?? e.message; });
+      widget.onChanged(null);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _remove() {
+    setState(() { _quote = null; _error = null; _code.clear(); });
+    widget.onChanged(null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final q = _quote;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(
+          child: TextField(
+            controller: _code,
+            enabled: q == null && !_busy,
+            textCapitalization: TextCapitalization.characters,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _apply(),
+            decoration: InputDecoration(labelText: 'Coupon code', helperText: q == null ? 'Optional' : null, errorText: _error, errorMaxLines: 2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: q == null
+              ? OutlinedButton(onPressed: _busy ? null : _apply, child: Text(_busy ? 'Checking…' : 'Apply'))
+              : TextButton(onPressed: _remove, child: const Text('Remove')),
+        ),
+      ]),
+      if (q != null) ...[
+        const SizedBox(height: 8),
+        Text('${q['code']} applied: you save ${formatPaise((q['discount_minor'] as num?)?.toInt() ?? 0)}',
+            style: const TextStyle(color: ArjColors.success700, fontWeight: FontWeight.w600)),
+        if (q['description'] != null) Text('${q['description']}', style: const TextStyle(fontSize: 12, color: ArjColors.ink600)),
+        Text('New total ${formatPaise((q['total_minor'] as num?)?.toInt())}'),
+      ],
+    ]);
+  }
+}
+
 /// Confirm-and-pay screen for priced, non-slot variants (reports, puja, chadhava, palmistry).
 class ServiceBuyScreen extends StatefulWidget {
   const ServiceBuyScreen({super.key, required this.state, required this.title, required this.variant});
@@ -74,12 +155,19 @@ class _ServiceBuyScreenState extends State<ServiceBuyScreen> {
   final _attempt = PurchaseAttempt();
   bool _useWallet = true, _busy = false;
   String? _error;
+  Map<String, dynamic>? _coupon;
 
   Future<void> _buy() async {
     setState(() { _busy = true; _error = null; });
     try {
       final ref = '${widget.variant['ref']}';
-      final r = await widget.state.api.post('/checkout/service', {'variant': ref, 'use_wallet': _useWallet, 'key': _attempt.keyFor('$ref|$_useWallet')});
+      final coupon = _coupon?['code'] as String?;
+      final r = await widget.state.api.post('/checkout/service', {
+        'variant': ref,
+        'use_wallet': _useWallet,
+        'coupon': ?coupon,
+        'key': _attempt.keyFor('$ref|$_useWallet|${coupon ?? ''}'),
+      });
       if (!mounted) return;
       final order = await runCheckout(context, widget.state.api, r);
       if (!mounted) return;
@@ -103,7 +191,13 @@ class _ServiceBuyScreenState extends State<ServiceBuyScreen> {
           const SizedBox(height: 4),
           Text('${v['name']}', style: const TextStyle(color: ArjColors.ink600)),
           const SizedBox(height: 16),
-          _PriceRow(label: 'Price', minor: (v['price_minor'] as num?)?.toInt()),
+          // One child, so the coupon field below keeps its state when the total row appears.
+          Column(children: [
+            _PriceRow(label: 'Price', minor: (v['price_minor'] as num?)?.toInt()),
+            if (_coupon != null) _PriceRow(label: 'To pay after coupon', minor: (_coupon!['total_minor'] as num?)?.toInt()),
+          ]),
+          const SizedBox(height: 16),
+          CouponField(key: const ValueKey('coupon'), api: widget.state.api, target: {'variant': '${v['ref']}'}, onChanged: (q) => setState(() => _coupon = q)),
           const Divider(height: 32),
           WalletSwitch(api: widget.state.api, value: _useWallet, onChanged: (x) => setState(() => _useWallet = x)),
           if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
@@ -207,6 +301,7 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
   String? _profile;
   bool _useWallet = true, _busy = false;
   String? _error;
+  Map<String, dynamic>? _coupon;
 
   @override
   void dispose() {
@@ -241,6 +336,7 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
       }
       final practitioner = widget.practitioner?['ref'];
       final topic = _topic.text.trim();
+      final coupon = _coupon?['code'] as String?;
       final r = await api.post('/checkout/booking', {
         'variant': widget.variantRef,
         'start': slot.start,
@@ -248,7 +344,8 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
         'birth_profile': ?_profile,
         if (topic.isNotEmpty) 'topic': topic,
         'use_wallet': _useWallet,
-        'key': _attempt.keyFor('${widget.variantRef}|${slot.start}|$practitioner|$_useWallet'),
+        'coupon': ?coupon,
+        'key': _attempt.keyFor('${widget.variantRef}|${slot.start}|$practitioner|$_useWallet|${coupon ?? ''}'),
       });
       if (!mounted) return;
       final order = await runCheckout(context, api, r);
@@ -258,7 +355,7 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
         await afterPurchase(context, widget.state, {...order!, 'next': order['next'] ?? {'type': 'booking', 'ref': (r['booking'] as Map?)?['ref']}}, replace: true);
       }
     } on ApiException catch (e) {
-      setState(() => _error = e.fieldErrors['start'] ?? e.message);
+      setState(() => _error = e.fieldErrors['start'] ?? e.fieldErrors['coupon'] ?? e.message);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -307,6 +404,8 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                   ),
                 const SizedBox(height: 12),
                 TextField(controller: _topic, maxLines: 2, maxLength: 300, decoration: const InputDecoration(labelText: 'What would you like to discuss?')),
+                CouponField(key: const ValueKey('coupon'), api: widget.state.api, target: {'variant': widget.variantRef}, onChanged: (q) => setState(() => _coupon = q)),
+                const SizedBox(height: 8),
                 WalletSwitch(api: widget.state.api, value: _useWallet, onChanged: (x) => setState(() => _useWallet = x)),
               ],
               if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Domain\Booking\Slots;
 use App\Domain\Ledger\Ledger;
 use App\Domain\Payments\Checkout;
 use App\Domain\Payments\Razorpay;
@@ -48,13 +49,13 @@ class PaymentController extends Controller
 
     public function buy(Request $request): RedirectResponse
     {
-        $d = $request->validate(['variant' => ['required', 'string', 'size:26'], 'use_wallet' => ['nullable', 'boolean'], 'key' => ['required', 'string', 'max:64']]);
+        $d = $request->validate(['variant' => ['required', 'string', 'size:26'], 'use_wallet' => ['nullable', 'boolean'], 'key' => ['required', 'string', 'max:64'], 'coupon' => ['nullable', 'string', 'max:32']]);
         $v = OfferingVariant::where('ref', $d['variant'])->firstOrFail();
-        if (\App\Domain\Booking\Slots::bookable($v) && $v->active && $v->price_minor > 0 && $v->offering?->status === 'active') {
+        if (Slots::bookable($v) && $v->active && $v->price_minor > 0 && $v->offering?->status === 'active') {
             return redirect()->route('account.book', $v->ref); // choose a time first
         }
         try {
-            $r = $this->checkout->startServiceOrder($request->user(), $v, (bool) ($d['use_wallet'] ?? false), $d['key']);
+            $r = $this->checkout->startServiceOrder($request->user(), $v, (bool) ($d['use_wallet'] ?? false), $d['key'], [], $d['coupon'] ?? null);
         } catch (RuntimeException $e) {
             report($e);
 

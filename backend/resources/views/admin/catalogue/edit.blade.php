@@ -1,5 +1,6 @@
 <x-layouts.admin :title="$o->exists ? ($t?->title ?? 'Service') : 'New service'">
     <div class="grid gap-6 2xl:grid-cols-[1fr_28rem]">
+        <div class="min-w-0 space-y-6">
         <form method="POST" action="{{ $o->exists ? route('admin.catalogue.update', $o->ref) : route('admin.catalogue.store') }}" class="card min-w-0 space-y-5 p-5 sm:p-6">
             @csrf @if ($o->exists) @method('PUT') @endif
             <h2 class="text-lg">Details (English)</h2>
@@ -19,6 +20,28 @@
             <label class="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" name="featured" value="1" class="size-4 accent-ink-900" @checked(old('featured', $o->featured))> Feature on the home page</label>
             @can('catalogue.manage')<button class="btn-primary">{{ $o->exists ? 'Save details' : 'Create draft' }}</button>@endcan
         </form>
+        @if ($o->exists)
+            <form method="POST" action="{{ route('admin.catalogue.translation', [$o->ref, $lang]) }}" class="card min-w-0 space-y-4 p-5 sm:p-6">
+                @csrf @method('PUT')
+                <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="text-lg">Other languages</h2>
+                    <nav class="flex flex-wrap gap-1" aria-label="Language">@foreach ($langs as $code => $name)<a href="{{ route('admin.catalogue.edit', [$o->ref, 'locale' => $code]) }}" @class(['btn px-3 text-sm', 'bg-ink-900 text-white' => $lang === $code, 'border border-ink-200 bg-white' => $lang !== $code]) lang="{{ $code }}" @if ($lang === $code) aria-current="true" @endif>{{ $name }}@if ($o->translations->firstWhere('locale', $code)?->title) ✓@endif</a>@endforeach</nav></div>
+                <p class="text-xs text-ink-600">Text shown when a visitor chooses {{ $langs[$lang] }}. Fields left empty show the English text. Empty title removes this language. Languages appear on the website only when switched on (SITE_LOCALES); currently on: {{ implode(', ', \App\Http\Middleware\SetLocale::enabled()) }}.</p>
+                <div lang="{{ $lang }}" class="space-y-4">
+                    <x-field name="title" label="Title" :value="$tl?->title" :id="'tl-title'" />
+                    <x-field name="summary" label="Short summary" :value="$tl?->summary" maxlength="300" :id="'tl-summary'" />
+                    @foreach ([['body', 'Description', $tl?->body, 5], ['includes', "What's included (one per line)", implode("\n", $tl?->includes ?? []), 4], ['audience', 'Who it is for (one per line)', implode("\n", $tl?->audience ?? []), 3], ['exclusions', 'Not included', $tl?->exclusions, 2], ['disclaimer', 'Disclaimer', $tl?->disclaimer, 2]] as [$n, $l, $v, $rows])
+                        <div><label for="tl-{{ $n }}" class="field-label">{{ $l }}</label><textarea id="tl-{{ $n }}" name="{{ $n }}" rows="{{ $rows }}" class="input">{{ $v }}</textarea></div>
+                    @endforeach
+                    @if ($o->variants->isNotEmpty())
+                        <fieldset class="space-y-2"><legend class="field-label">Option names</legend>
+                            @foreach ($o->variants as $v)<div class="grid items-center gap-2 sm:grid-cols-2"><label for="tl-v-{{ $v->ref }}" class="text-sm text-ink-600" lang="en">{{ $v->name }}</label><input id="tl-v-{{ $v->ref }}" name="variant_names[{{ $v->ref }}]" value="{{ $v->translations[$lang]['name'] ?? '' }}" class="input"></div>@endforeach
+                        </fieldset>
+                    @endif
+                </div>
+                @can('catalogue.manage')<button class="btn-primary">Save {{ $langs[$lang] }} text</button>@endcan
+            </form>
+        @endif
+        </div>
 
         @if ($o->exists)
         <div class="space-y-6">

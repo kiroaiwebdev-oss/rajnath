@@ -76,7 +76,7 @@ class Payouts
             }
             if (! in_array($e->status, ['pending', 'available'], true)) {
                 DB::table('reconciliation_findings')->insert(['check' => 'refund_after_payout', 'severity' => 'warning', 'subject' => 'earning:'.$e->id,
-                    'detail' => "Order refunded after the practitioner share was paid out; recover ₹".number_format($delta / 100, 2).' manually.', 'created_at' => now(), 'updated_at' => now()]);
+                    'detail' => 'Order refunded after the practitioner share was paid out; recover ₹'.number_format($delta / 100, 2).' manually.', 'created_at' => now(), 'updated_at' => now()]);
 
                 continue;
             }
@@ -120,17 +120,25 @@ class Payouts
         $this->audit->record('payout.approved', null, ['payout' => $payout->ref], $by);
     }
 
-    public function markPaid(object $payout, string $utr, User $by): void
+    /**
+     * Records the bank transfer. Staff enter the UTR for manual transfers (status approved);
+     * RazorpayX settles its own payouts (status processing, $by = null, actor "system").
+     */
+    public function markPaid(object $payout, string $utr, ?User $by, string $from = 'approved'): void
     {
-        DB::transaction(function () use ($payout, $utr, $by) {
-            if (! DB::table('payouts')->where('id', $payout->id)->where('status', 'approved')->update(['status' => 'paid', 'utr' => $utr, 'paid_by' => $by->id, 'paid_at' => now(), 'updated_at' => now()])) {
+        DB::transaction(function () use ($payout, $utr, $by, $from) {
+            $q = DB::table('payouts')->where('id', $payout->id)->where('status', $from);
+            if ($from === 'approved') {
+                $q->whereNull('provider_payout_id');   // a payout sent through RazorpayX is settled by RazorpayX
+            }
+            if (! $q->update(['status' => 'paid', 'utr' => $utr, 'paid_by' => $by?->id, 'paid_at' => now(), 'updated_at' => now()])) {
                 throw ValidationException::withMessages(['utr' => 'Only approved payouts can be marked paid.']);
             }
             $this->ledger->post('practitioner_payout', 'payout:'.$payout->ref, [[$this->payable($payout->practitioner_id), 'debit', (int) $payout->amount_minor], [$this->ledger->account('payout_bank', 'asset'), 'credit', (int) $payout->amount_minor]],
                 'Payout '.$payout->ref.' UTR '.$utr, 'payout', $payout->id);
             DB::table('practitioner_earnings')->where('payout_id', $payout->id)->update(['status' => 'paid', 'updated_at' => now()]);
         });
-        $this->audit->record('payout.paid', null, ['payout' => $payout->ref, 'utr' => $utr], $by);
+        $this->audit->record('payout.paid', null, ['payout' => $payout->ref, 'utr' => $utr], $by, $by ? null : 'system');
         $user = User::find(DB::table('practitioners')->where('id', $payout->practitioner_id)->value('user_id'));
         if ($user?->email) {
             try {

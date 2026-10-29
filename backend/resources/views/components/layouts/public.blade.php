@@ -1,22 +1,23 @@
 @props(['title' => null, 'description' => null, 'image' => null])
 @php
     $nav = [
-        ['Services', route('services.index'), 'services.*'],
-        ['Consultations', route('services.index', ['family' => 'consultations']), null],
-        ['Vastu', route('services.index', ['family' => 'vastu']), null, false],
-        ['Puja', route('services.index', ['family' => 'puja']), null],
-        ['Gems', route('store.index'), 'store.*'],
-        ['Rashifal', route('rashifal'), 'rashifal*'],
-        ['Calculators', route('tools.index'), 'tools.*', false],
-        ['Panchang', route('panchang'), 'panchang'],
-        ['Gochar', route('gochar'), 'gochar*', false],
-        ['Muhurat', route('muhurat.index'), 'muhurat.*', false],
-        ['Festivals', route('festivals'), 'festivals', false],
-        ['About', route('about'), 'about', false],
-        ['Contact', route('contact'), 'contact'],
+        [__('Services'), route('services.index'), 'services.*'],
+        [__('Consultations'), route('services.index', ['family' => 'consultations']), null],
+        [__('Vastu'), route('services.index', ['family' => 'vastu']), null, false],
+        [__('Puja'), route('services.index', ['family' => 'puja']), null],
+        [__('Gems'), route('store.index'), 'store.*'],
+        [__('Rashifal'), route('rashifal'), 'rashifal*'],
+        [__('Calculators'), route('tools.index'), 'tools.*', false],
+        [__('Panchang'), route('panchang'), 'panchang'],
+        [__('Gochar'), route('gochar'), 'gochar*', false],
+        [__('Muhurat'), route('muhurat.index'), 'muhurat.*', false],
+        [__('Festivals'), route('festivals'), 'festivals', false],
+        [__('About'), route('about'), 'about', false],
+        [__('Contact'), route('contact'), 'contact'],
     ];
     $me = auth()->user();
     $accountUrl = $me ? ($me->isStaff() ? route('admin.dashboard') : route('account.dashboard')) : route('account.sign-in');
+    $langs = collect(\App\Http\Middleware\SetLocale::enabled())->reject(fn ($l) => $l === app()->getLocale());
 @endphp
 <x-layouts.base :title="$title" :description="$description" :image="$image">
     <header class="sticky top-0 z-40 border-b border-ink-200/60 bg-ivory-50/90 backdrop-blur pt-[env(safe-area-inset-top)]" x-data="disclosure">
@@ -34,9 +35,10 @@
                 </ul>
             </nav>
             <div class="flex items-center gap-2">
-                <a href="{{ $accountUrl }}" class="btn-ghost hidden whitespace-nowrap px-3 sm:inline-flex">{{ $me ? 'My account' : 'Sign in' }}</a>
-                <a href="{{ route('services.index', ['family' => 'consultations']) }}" class="btn-primary hidden whitespace-nowrap sm:inline-flex">Book consultation</a>
-                <button type="button" class="btn-ghost xl:hidden" @click="toggle" :aria-expanded="expanded" aria-controls="mobile-nav" aria-label="Menu">
+                @foreach ($langs as $l)<a href="{{ request()->fullUrlWithQuery(['lang' => $l]) }}" lang="{{ $l }}" hreflang="{{ $l }}" class="btn-ghost px-2 text-sm" aria-label="{{ config('locales.available')[$l] }}">{{ config('locales.available')[$l] }}</a>@endforeach
+                <a href="{{ $accountUrl }}" class="btn-ghost hidden whitespace-nowrap px-3 sm:inline-flex">{{ $me ? __('My account') : __('Sign in') }}</a>
+                <a href="{{ route('services.index', ['family' => 'consultations']) }}" class="btn-primary hidden whitespace-nowrap sm:inline-flex">{{ __('Book consultation') }}</a>
+                <button type="button" class="btn-ghost xl:hidden" @click="toggle" :aria-expanded="expanded" aria-controls="mobile-nav" aria-label="{{ __('Menu') }}">
                     <svg aria-hidden="true" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
                 </button>
             </div>
@@ -46,8 +48,8 @@
                 @foreach ($nav as [$label, $href])
                     <li><a href="{{ $href }}" class="btn-ghost w-full justify-start">{{ $label }}</a></li>
                 @endforeach
-                <li><a href="{{ $accountUrl }}" class="btn-outline mt-2 w-full">{{ $me ? 'My account' : 'Sign in' }}</a></li>
-                <li><a href="{{ route('services.index', ['family' => 'consultations']) }}" class="btn-primary w-full">Book consultation</a></li>
+                <li><a href="{{ $accountUrl }}" class="btn-outline mt-2 w-full">{{ $me ? __('My account') : __('Sign in') }}</a></li>
+                <li><a href="{{ route('services.index', ['family' => 'consultations']) }}" class="btn-primary w-full">{{ __('Book consultation') }}</a></li>
             </ul>
         </nav>
     </header>
@@ -67,27 +69,27 @@
                 <p class="mt-3">B-Block, 1st Floor, Chanakya Plaza, Kankarbagh Main Road, Patna, Bihar 800020</p>
             </div>
             <div>
-                <p class="font-semibold text-ink-900">Explore</p>
+                <p class="font-semibold text-ink-900">{{ __('Explore') }}</p>
                 <ul class="mt-2 space-y-1.5">
-                    <li><a href="{{ route('services.index') }}">All services</a></li>
-                    <li><a href="{{ route('about') }}">About Acharya Ji</a></li>
-                    <li><a href="{{ route('store.index') }}">Gemstone store</a></li>
-                    <li><a href="{{ route('services.show', 'palmistry-photo-report') }}">Palmistry report from photos</a></li>
-                    <li><a href="{{ route('tools.index') }}">Free calculators</a></li>
-                    <li><a href="{{ route('panchang') }}">Today's Panchang</a></li>
-                    <li><a href="{{ route('calendar') }}">Vrat calendar</a></li>
-                    <li><a href="{{ route('rashifal') }}">Rashifal</a></li>
-                    <li><a href="{{ route('gochar') }}">Grah gochar (transits)</a></li>
-                    <li><a href="{{ route('navagraha') }}">The nine planets</a></li>
-                    <li><a href="{{ route('muhurat.index') }}">Shubh muhurat</a></li>
-                    <li><a href="{{ route('festivals') }}">Festivals and holidays</a></li>
-                    <li><a href="{{ route('assistant') }}">Ask our assistant</a></li>
-                    <li><a href="{{ route('faq') }}">Questions & answers</a></li>
-                    <li><a href="{{ route('contact') }}">Contact & timings</a></li>
+                    <li><a href="{{ route('services.index') }}">{{ __('All services') }}</a></li>
+                    <li><a href="{{ route('about') }}">{{ __('About Acharya Ji') }}</a></li>
+                    <li><a href="{{ route('store.index') }}">{{ __('Gemstone store') }}</a></li>
+                    <li><a href="{{ route('services.show', 'palmistry-photo-report') }}">{{ __('Palmistry report from photos') }}</a></li>
+                    <li><a href="{{ route('tools.index') }}">{{ __('Free calculators') }}</a></li>
+                    <li><a href="{{ route('panchang') }}">{{ __('Today\'s Panchang') }}</a></li>
+                    <li><a href="{{ route('calendar') }}">{{ __('Vrat calendar') }}</a></li>
+                    <li><a href="{{ route('rashifal') }}">{{ __('Rashifal') }}</a></li>
+                    <li><a href="{{ route('gochar') }}">{{ __('Grah gochar (transits)') }}</a></li>
+                    <li><a href="{{ route('navagraha') }}">{{ __('The nine planets') }}</a></li>
+                    <li><a href="{{ route('muhurat.index') }}">{{ __('Shubh muhurat') }}</a></li>
+                    <li><a href="{{ route('festivals') }}">{{ __('Festivals and holidays') }}</a></li>
+                    <li><a href="{{ route('assistant') }}">{{ __('Ask our assistant') }}</a></li>
+                    <li><a href="{{ route('faq') }}">{{ __('Questions & answers') }}</a></li>
+                    <li><a href="{{ route('contact') }}">{{ __('Contact & timings') }}</a></li>
                 </ul>
             </div>
             <div>
-                <p class="font-semibold text-ink-900">Contact</p>
+                <p class="font-semibold text-ink-900">{{ __('Contact') }}</p>
                 <ul class="mt-2 space-y-1.5">
                     @if ($site('contact.phone'))<li><a href="tel:{{ $site('contact.phone') }}">{{ $site('contact.phone') }}</a></li>@endif
                     @if ($site('contact.whatsapp'))<li><a href="https://wa.me/{{ ltrim($site('contact.whatsapp'), '+') }}" rel="noopener">WhatsApp</a></li>@endif
@@ -95,12 +97,12 @@
                 </ul>
             </div>
             <div>
-                <p class="font-semibold text-ink-900">Important</p>
-                <p class="mt-2">Astrological guidance is traditional and interpretive. It does not replace medical, legal or financial advice.</p>
+                <p class="font-semibold text-ink-900">{{ __('Important') }}</p>
+                <p class="mt-2">{{ __('Astrological guidance is traditional and interpretive. It does not replace medical, legal or financial advice.') }}</p>
                 <ul class="mt-3 space-y-1.5">
-                    <li><a href="{{ route('privacy') }}">Privacy policy</a></li>
-                    <li><a href="{{ route('terms') }}">Terms of use</a></li>
-                    <li><a href="{{ $site('source.repository_url') }}" rel="noopener">Source code (AGPL-3.0)</a></li>
+                    <li><a href="{{ route('privacy') }}">{{ __('Privacy policy') }}</a></li>
+                    <li><a href="{{ route('terms') }}">{{ __('Terms of use') }}</a></li>
+                    <li><a href="{{ $site('source.repository_url') }}" rel="noopener">{{ __('Source code (AGPL-3.0)') }}</a></li>
                 </ul>
             </div>
         </div>

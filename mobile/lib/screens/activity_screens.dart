@@ -99,10 +99,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 _kv('Placed', formatWhen(o['created_at'])),
                 if (o['paid_at'] != null) _kv('Paid', formatWhen(o['paid_at'])),
                 const Divider(height: 24),
+                if ((m('discount_minor') ?? 0) > 0) ...[
+                  if (m('list_minor') != null) _kv('Price', formatPaise(m('list_minor'))),
+                  _kv(o['coupon'] != null ? 'Coupon ${o['coupon']}' : 'Coupon discount', '− ${formatPaise(m('discount_minor'))}'),
+                ],
                 _kv('Subtotal', formatPaise(m('subtotal_minor') ?? 0)),
                 if ((m('wallet_applied_minor') ?? 0) > 0) _kv('From wallet', '− ${formatPaise(m('wallet_applied_minor'))}'),
                 _kv('Paid online', formatPaise(m('payable_minor') ?? 0), bold: true),
                 if ((m('refunded_minor') ?? 0) > 0) _kv('Refunded', formatPaise(m('refunded_minor'))),
+                if ((m('tax_minor') ?? 0) > 0)
+                  Text('Includes GST ${formatPaise(m('tax_minor'))}', style: const TextStyle(fontSize: 12, color: ArjColors.ink600)),
+                if (o['invoices'] is List && (o['invoices'] as List).isNotEmpty) ...[
+                  const SectionTitle('Invoices'),
+                  for (final inv in (o['invoices'] as List).whereType<Map>())
+                    _kv('${inv['type'] == 'credit_note' ? 'Credit note' : 'Invoice'} ${inv['number'] ?? ''}'.trim(), formatPaise((inv['total_minor'] as num?)?.toInt() ?? 0)),
+                ],
                 const SizedBox(height: 8),
                 Text('Reference ${o['ref']}', style: const TextStyle(fontSize: 12, color: ArjColors.ink600)),
                 const SizedBox(height: 20),

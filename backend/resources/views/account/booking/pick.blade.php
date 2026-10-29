@@ -29,6 +29,7 @@
                         @if (($wallet ?? 0) > 0)
                             <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="use_wallet" value="1" class="size-4 accent-ink-900"> Use wallet balance first ({{ \App\Support\Money::format($wallet) }} available)</label>
                         @endif
+                        <div class="max-w-xs"><x-field name="coupon" label="Coupon code (optional)" :value="old('coupon')" autocomplete="off" maxlength="32" class="input uppercase" /></div>
                         <div><label for="f-topic" class="field-label">What would you like to discuss? (optional)</label><textarea id="f-topic" name="topic" rows="3" maxlength="1000" class="input"></textarea></div>
                     @endunless
                     <button class="btn-primary">{{ $reschedule ? 'Move booking' : 'Continue to pay '.\App\Support\Money::format($v->price_minor) }}</button>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 class OfferingVariant extends Model
@@ -11,7 +12,7 @@ class OfferingVariant extends Model
 
     protected $fillable = ['name', 'mode', 'duration_min', 'participants', 'urgent', 'price_minor', 'currency', 'active', 'sort'];
 
-    public function offering(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function offering(): BelongsTo
     {
         return $this->belongsTo(Offering::class);
     }
@@ -23,6 +24,12 @@ class OfferingVariant extends Model
 
     protected function casts(): array
     {
-        return ['urgent' => 'boolean', 'active' => 'boolean', 'price_minor' => 'integer'];
+        return ['urgent' => 'boolean', 'active' => 'boolean', 'price_minor' => 'integer', 'translations' => 'array'];
+    }
+
+    /** Name in the current language (falls back to English). */
+    public function label(?string $locale = null): string
+    {
+        return $this->translations[$locale ?? app()->getLocale()]['name'] ?? $this->name;
     }
 }

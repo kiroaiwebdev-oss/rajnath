@@ -1,9 +1,14 @@
 <?php
 
+use App\Domain\Astro\Gochar;
+use App\Domain\Astro\Muhurat;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\ProviderWebhookController;
+use App\Http\Controllers\RazorpayWebhookController;
 use App\Http\Controllers\Staff\StaffAuthController;
 use App\Http\Controllers\Web;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 // ---- Public website ----
@@ -17,10 +22,10 @@ Route::get('/rashifal', [Web\ContentController::class, 'rashifal'])->name('rashi
 Route::get('/rashifal/{kind}', [Web\ContentController::class, 'rashifal'])->whereIn('kind', ['nakshatra', 'chinese', 'numerology', 'tarot'])->name('rashifal.kind');
 Route::get('/rashi/{sign}', [Web\ContentController::class, 'rashi'])->middleware('throttle:tools')->name('rashi');
 Route::get('/gochar', [Web\JyotishController::class, 'gochar'])->middleware('throttle:tools')->name('gochar');
-Route::get('/gochar/{planet}', [Web\JyotishController::class, 'planet'])->whereIn('planet', \App\Domain\Astro\Gochar::PLANETS)->middleware('throttle:tools')->name('gochar.planet');
+Route::get('/gochar/{planet}', [Web\JyotishController::class, 'planet'])->whereIn('planet', Gochar::PLANETS)->middleware('throttle:tools')->name('gochar.planet');
 Route::get('/navagraha', [Web\JyotishController::class, 'navagraha'])->middleware('throttle:tools')->name('navagraha');
 Route::get('/muhurat', [Web\JyotishController::class, 'muhuratIndex'])->name('muhurat.index');
-Route::get('/muhurat/{event}', [Web\JyotishController::class, 'muhurat'])->whereIn('event', array_keys(\App\Domain\Astro\Muhurat::EVENTS))->middleware('throttle:tools')->name('muhurat.show');
+Route::get('/muhurat/{event}', [Web\JyotishController::class, 'muhurat'])->whereIn('event', array_keys(Muhurat::EVENTS))->middleware('throttle:tools')->name('muhurat.show');
 Route::get('/festivals', [Web\JyotishController::class, 'festivals'])->middleware('throttle:tools')->name('festivals');
 Route::get('/assistant', [Web\AssistantController::class, 'page'])->name('assistant');
 Route::post('/assistant/chat', [Web\AssistantController::class, 'chat'])->middleware('throttle:assistant')->name('assistant.chat');
@@ -88,10 +93,17 @@ Route::prefix('account')->name('account.')->group(function () {
         Route::post('notifications/read-all', [Web\CustomerOpsController::class, 'readAllNotifications'])->name('notifications.read-all');
         Route::post('privacy/export', [Web\CustomerOpsController::class, 'export'])->middleware('throttle:checkout')->name('privacy.export');
         Route::post('privacy/delete', [Web\CustomerOpsController::class, 'destroy'])->middleware('throttle:checkout')->name('privacy.delete');
+        Route::get('apply-astrologer', [Web\ApplyController::class, 'show'])->name('apply');
+        Route::post('apply-astrologer', [Web\ApplyController::class, 'store'])->middleware('throttle:checkout');
+        Route::post('apply-astrologer/{ref}/withdraw', [Web\ApplyController::class, 'withdraw'])->name('apply.withdraw');
         Route::get('wallet', [Web\PaymentController::class, 'wallet'])->name('wallet');
         Route::post('wallet/recharge', [Web\PaymentController::class, 'recharge'])->middleware('throttle:checkout')->name('wallet.recharge');
         Route::get('orders', [Web\PaymentController::class, 'orders'])->name('orders');
         Route::get('orders/{ref}', [Web\PaymentController::class, 'receipt'])->name('receipt');
+        Route::get('invoices/{ref}', [Web\DocumentController::class, 'invoice'])->name('invoice');
+        Route::get('invoices/{ref}/pdf', [Web\DocumentController::class, 'invoicePdf'])->middleware('throttle:checkout')->name('invoice.pdf');
+        Route::get('reports/{ref}/pdf', [Web\DocumentController::class, 'reportPdf'])->middleware('throttle:checkout')->name('reports.pdf');
+        Route::get('palmistry/{ref}/pdf', [Web\DocumentController::class, 'palmPdf'])->middleware('throttle:checkout')->name('palm.pdf');
     });
 });
 
@@ -111,7 +123,9 @@ Route::middleware('customer')->prefix('checkout')->name('checkout.')->group(func
     Route::post('{ref}/verify', [Web\PaymentController::class, 'verify'])->name('verify');
     Route::post('{ref}/cancel', [Web\PaymentController::class, 'cancel'])->name('cancel');
 });
-Route::post('/webhooks/razorpay', \App\Http\Controllers\RazorpayWebhookController::class)->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])->name('webhooks.razorpay');
+Route::post('/webhooks/razorpay', RazorpayWebhookController::class)->withoutMiddleware([ValidateCsrfToken::class])->name('webhooks.razorpay');
+Route::post('/webhooks/razorpayx', [ProviderWebhookController::class, 'razorpayx'])->withoutMiddleware([ValidateCsrfToken::class])->middleware('throttle:60,1')->name('webhooks.razorpayx');
+Route::post('/webhooks/courier-tracking', [ProviderWebhookController::class, 'courier'])->withoutMiddleware([ValidateCsrfToken::class])->middleware('throttle:120,1')->name('webhooks.courier');
 
 // ---- Staff authentication ----
 Route::prefix('staff')->name('staff.')->controller(StaffAuthController::class)->group(function () {
@@ -143,6 +157,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::get('assistant', [Admin\IntegrationsController::class, 'assistant'])->name('assistant.edit');
     Route::post('assistant/knowledge', [Admin\IntegrationsController::class, 'saveKnowledge'])->name('assistant.knowledge');
     Route::get('assistant/conversations/{ref}', [Admin\IntegrationsController::class, 'conversation'])->name('assistant.conversation');
+    Route::get('health', Admin\HealthController::class)->name('health');
+    Route::get('privacy', [Admin\PrivacyController::class, 'index'])->name('privacy.index');
+    Route::get('privacy/{ref}', [Admin\PrivacyController::class, 'show'])->name('privacy.show');
+    Route::post('privacy/{ref}', [Admin\PrivacyController::class, 'update'])->name('privacy.update');
+    Route::get('privacy/{ref}/export', [Admin\PrivacyController::class, 'export'])->name('privacy.export');
+    Route::get('practitioner-applications', [Admin\ApplicationController::class, 'index'])->name('applications.index');
+    Route::get('coupons', [Admin\FinanceController::class, 'coupons'])->name('coupons.index');
+    Route::get('finance/invoices/{ref}', [Admin\FinanceController::class, 'invoice'])->name('finance.invoice');
+    Route::post('store/orders/{ref}/courier', [Admin\StoreAdminController::class, 'bookCourier'])->name('store.courier');
     Route::get('practitioners', [Admin\PractitionerController::class, 'index'])->name('practitioners.index');
     Route::get('practitioners/{ref}', [Admin\PractitionerController::class, 'show'])->name('practitioners.show');
     Route::post('practitioners/{ref}/review', [Admin\PractitionerController::class, 'review'])->name('practitioners.review');
@@ -165,6 +188,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::get('catalogue/{ref}', [Admin\CatalogueController::class, 'edit'])->name('catalogue.edit');
     Route::put('catalogue/{ref}', [Admin\CatalogueController::class, 'update'])->name('catalogue.update');
     Route::put('catalogue/{ref}/status', [Admin\CatalogueController::class, 'setStatus'])->name('catalogue.status');
+    Route::put('catalogue/{ref}/translations/{locale}', [Admin\CatalogueController::class, 'saveTranslation'])->name('catalogue.translation');
 
     Route::get('enquiries', [Admin\EnquiryController::class, 'index'])->name('enquiries.index');
     Route::get('enquiries/export', [Admin\EnquiryController::class, 'export'])->name('enquiries.export');
@@ -244,6 +268,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
         Route::post('finance/refunds/{ref}/decision', [Admin\FinanceController::class, 'decideRefund'])->name('finance.refund.decide');
         Route::put('payments', [Admin\FinanceController::class, 'saveSettings'])->name('payments.save');
         Route::post('payments/packages', [Admin\FinanceController::class, 'savePackage'])->name('payments.package');
+        Route::put('payments/tax', [Admin\FinanceController::class, 'saveTax'])->name('payments.tax');
+        Route::put('payments/payouts', [Admin\FinanceController::class, 'savePayouts'])->name('payments.payouts');
+        Route::put('payments/courier', [Admin\FinanceController::class, 'saveCourier'])->name('payments.courier');
+        Route::post('coupons', [Admin\FinanceController::class, 'saveCoupon'])->name('coupons.save');
+        Route::post('practitioner-applications/{ref}/decision', [Admin\ApplicationController::class, 'decide'])->name('applications.decide');
+        Route::post('privacy/{ref}/delete', [Admin\PrivacyController::class, 'runDeletion'])->name('privacy.delete');
+        Route::post('privacy/{ref}/hold', [Admin\PrivacyController::class, 'hold'])->name('privacy.hold');
     });
 });
 

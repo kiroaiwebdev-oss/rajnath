@@ -2,9 +2,13 @@
 
 namespace App\Domain\Payments;
 
+use App\Domain\Ledger\InsufficientFunds;
 use App\Domain\Ledger\Ledger;
+use App\Domain\Notify\Notifier;
+use App\Domain\Practitioners\Payouts;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -30,7 +34,7 @@ class Refunds
         $pending = (int) DB::table('refunds')->where('order_id', $order->id)->whereIn('status', ['requested', 'approved', 'processing', 'processed'])->sum('amount_minor');
         $max = (int) $order->subtotal_minor - $pending;
         if ($amount <= 0 || $amount > $max) {
-            throw ValidationException::withMessages(['amount' => 'Amount must be between ₹0.01 and the refundable balance ('.\App\Support\Money::format($max).').']);
+            throw ValidationException::withMessages(['amount' => 'Amount must be between ₹0.01 and the refundable balance ('.Money::format($max).').']);
         }
         if ($destination === 'source' && $amount > (int) $order->payable_minor - $this->sourceRefunded($order)) {
             throw ValidationException::withMessages(['destination' => 'Card/UPI refund cannot exceed the amount paid online; refund the rest to wallet.']);
@@ -94,12 +98,33 @@ class Refunds
         return DB::table('refunds')->find($r->id);
     }
 
+    /**
+     * Ledger lines that take $amount back out of the sale: revenue, plus the GST share when the
+     * order carried GST (reversed against the output tax liability; a credit note is issued).
+     */
+    private function saleLines(object $order, string $direction, int $amount): array
+    {
+        if ($order->kind === 'recharge') {
+            return [[$this->ledger->account("customer_wallet:{$order->user_id}", 'liability', $order->user_id), $direction, $amount]];
+        }
+        $gst = Invoices::taxShare($order, $amount);
+        $lines = [];
+        if ($amount - $gst > 0) {
+            $lines[] = [$this->ledger->account('revenue', 'revenue'), $direction, $amount - $gst];
+        }
+        if ($gst > 0) {
+            $lines[] = [$this->ledger->account('gst_output', 'liability'), $direction, $gst];
+        }
+
+        return $lines;
+    }
+
     public function execute(object $r): void
     {
         $order = DB::table('orders')->find($r->order_id);
-        $revenue = $this->ledger->account($order->kind === 'recharge' ? "customer_wallet:{$order->user_id}" : 'revenue', $order->kind === 'recharge' ? 'liability' : 'revenue', $order->kind === 'recharge' ? $order->user_id : null);
+        $amount = (int) $r->amount_minor;
         if ($r->destination === 'wallet') {
-            $this->ledger->post('refund_to_wallet', 'refund:'.$r->ref, [[$revenue, 'debit', (int) $r->amount_minor], [$this->ledger->wallet($order->user_id), 'credit', (int) $r->amount_minor]], 'Refund to wallet', 'refund', $r->id);
+            $this->ledger->post('refund_to_wallet', 'refund:'.$r->ref, [...$this->saleLines($order, 'debit', $amount), [$this->ledger->wallet($order->user_id), 'credit', $amount]], 'Refund to wallet', 'refund', $r->id);
             $this->finish($r, $order, null);
 
             return;
@@ -109,8 +134,8 @@ class Refunds
         // 1) Hold: move the amount out of revenue (or the recharge wallet) before calling the gateway,
         //    so a wallet cannot be spent while its refund is in flight.
         try {
-            $this->ledger->post('refund_hold', 'refund-hold:'.$r->ref, [[$revenue, 'debit', (int) $r->amount_minor], [$hold, 'credit', (int) $r->amount_minor]], 'Refund hold', 'refund', $r->id);
-        } catch (\App\Domain\Ledger\InsufficientFunds) {
+            $this->ledger->post('refund_hold', 'refund-hold:'.$r->ref, [...$this->saleLines($order, 'debit', $amount), [$hold, 'credit', $amount]], 'Refund hold', 'refund', $r->id);
+        } catch (InsufficientFunds) {
             DB::table('refunds')->where('id', $r->id)->update(['status' => 'failed', 'error' => 'Wallet balance already spent; cannot refund this recharge to source.', 'updated_at' => now()]);
 
             return;
@@ -120,7 +145,7 @@ class Refunds
             $res = $this->rzp->refund($payment->provider_payment_id, (int) $r->amount_minor, $r->ref);
         } catch (Throwable $e) {
             // 2a) Gateway refused: release the hold back.
-            $this->ledger->post('refund_release', 'refund-release:'.$r->ref, [[$hold, 'debit', (int) $r->amount_minor], [$revenue, 'credit', (int) $r->amount_minor]], 'Refund failed — hold released', 'refund', $r->id);
+            $this->ledger->post('refund_release', 'refund-release:'.$r->ref, [[$hold, 'debit', $amount], ...$this->saleLines($order, 'credit', $amount)], 'Refund failed — hold released', 'refund', $r->id);
             DB::table('refunds')->where('id', $r->id)->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 300), 'updated_at' => now()]);
             $this->audit->record('refund.failed', null, ['refund' => $r->ref]);
 
@@ -137,9 +162,10 @@ class Refunds
             DB::table('refunds')->where('id', $r->id)->update(['status' => 'processed', 'provider_refund_id' => $providerId, 'updated_at' => now()]);
             $total = (int) $order->refunded_minor + (int) $r->amount_minor;
             DB::table('orders')->where('id', $order->id)->update(['refunded_minor' => $total, 'status' => $total >= (int) $order->subtotal_minor ? 'refunded' : 'partially_refunded', 'updated_at' => now()]);
+            app(Invoices::class)->issueCreditNote($order, DB::table('refunds')->find($r->id));
         });
-        app(\App\Domain\Practitioners\Payouts::class)->onRefund($order);
-        app(\App\Domain\Notify\Notifier::class)->send((int) $order->user_id, 'order', 'Refund processed',
+        app(Payouts::class)->onRefund($order);
+        app(Notifier::class)->send((int) $order->user_id, 'order', 'Refund processed',
             'A refund of ₹'.number_format($r->amount_minor / 100, 2).' was processed '.($r->destination === 'wallet' ? 'to your wallet.' : 'to your original payment method. Banks usually take 5–7 working days.'),
             $order->ref, route('account.receipt', $order->ref));
         $this->audit->record('refund.processed', null, ['refund' => $r->ref, 'provider_refund' => $providerId], null, 'system');

@@ -137,6 +137,13 @@ class _ProductBuyScreenState extends State<ProductBuyScreen> {
   int _qty = 1;
   bool _busy = false;
   Map<String, String> _errors = {};
+  Map<String, dynamic>? _coupon;
+
+  /// A coupon quote is for one quantity; changing it clears the coupon so it is checked again.
+  void _setQty(int q) => setState(() {
+        _qty = q;
+        _coupon = null;
+      });
 
   int get _max => ((widget.product['max_per_order'] as num?)?.toInt() ?? 1).clamp(1, 99);
   int get _price => (widget.product['price_minor'] as num?)?.toInt() ?? 0;
@@ -177,7 +184,14 @@ class _ProductBuyScreenState extends State<ProductBuyScreen> {
     };
     try {
       final ref = '${widget.product['ref']}';
-      final r = await widget.state.api.post('/checkout/product', {'product': ref, 'quantity': _qty, 'address': address, 'key': _attempt.keyFor('$ref|$_qty|${address.values.join('|')}')});
+      final coupon = _coupon?['code'] as String?;
+      final r = await widget.state.api.post('/checkout/product', {
+        'product': ref,
+        'quantity': _qty,
+        'address': address,
+        'coupon': ?coupon,
+        'key': _attempt.keyFor('$ref|$_qty|${coupon ?? ''}|${address.values.join('|')}'),
+      });
       if (!mounted) return;
       final order = await runCheckout(context, widget.state.api, r);
       if (!mounted) return;
@@ -213,9 +227,9 @@ class _ProductBuyScreenState extends State<ProductBuyScreen> {
           const SizedBox(height: 8),
           Row(children: [
             const Expanded(child: Text('Quantity')),
-            IconButton(tooltip: 'Decrease quantity', onPressed: _qty > 1 ? () => setState(() => _qty--) : null, icon: const Icon(Icons.remove_circle_outline)),
+            IconButton(tooltip: 'Decrease quantity', onPressed: _qty > 1 ? () => _setQty(_qty - 1) : null, icon: const Icon(Icons.remove_circle_outline)),
             Semantics(label: 'Quantity $_qty', child: ExcludeSemantics(child: Text('$_qty', style: Theme.of(context).textTheme.titleMedium))),
-            IconButton(tooltip: 'Increase quantity', onPressed: _qty < _max ? () => setState(() => _qty++) : null, icon: const Icon(Icons.add_circle_outline)),
+            IconButton(tooltip: 'Increase quantity', onPressed: _qty < _max ? () => _setQty(_qty + 1) : null, icon: const Icon(Icons.add_circle_outline)),
           ]),
           if (_max > 1) Text('Up to $_max per order.', style: const TextStyle(fontSize: 12, color: ArjColors.ink600)),
           FormError(_errors['quantity'] ?? _errors['product']),
@@ -231,7 +245,18 @@ class _ProductBuyScreenState extends State<ProductBuyScreen> {
           ]),
           _field(_pincode, 'Pincode', 'address.pincode', type: TextInputType.number, maxLength: 6, fmt: [FilteringTextInputFormatter.digitsOnly]),
           const Divider(height: 24),
-          Row(children: [const Expanded(child: Text('Total')), Text(formatPaise(_price * _qty), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600))]),
+          CouponField(
+            key: ValueKey('coupon-$_qty'),
+            api: widget.state.api,
+            target: {'product': '${p['ref']}', 'quantity': _qty},
+            onChanged: (q) => setState(() => _coupon = q),
+          ),
+          FormError(_errors['coupon']),
+          const SizedBox(height: 12),
+          Row(children: [
+            const Expanded(child: Text('Total')),
+            Text(formatPaise((_coupon?['total_minor'] as num?)?.toInt() ?? _price * _qty), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+          ]),
           FormError(_errors['_']),
           const SizedBox(height: 16),
           FilledButton(onPressed: _busy ? null : _buy, child: Text(_busy ? 'Please wait…' : 'Pay securely')),

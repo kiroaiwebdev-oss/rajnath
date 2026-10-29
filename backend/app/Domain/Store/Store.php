@@ -33,7 +33,7 @@ class Store
         ];
     }
 
-    public function buy(User $user, string $productRef, int $qty, array $address, string $key): array
+    public function buy(User $user, string $productRef, int $qty, array $address, string $key, ?string $coupon = null): array
     {
         $existing = DB::table('orders')->where('idempotency_key', 'u'.$user->id.':'.$key)->first();
         if ($existing) {
@@ -58,7 +58,7 @@ class Store
         });
 
         try {
-            $r = $this->checkout->startProductOrder($user, $snapshot, $key);
+            $r = $this->checkout->startProductOrder($user, $snapshot, $key, $coupon);
         } catch (\Throwable $e) {
             DB::table('products')->where('id', $snapshot['product']['id'])->increment('stock', $qty); // give the stock back
             throw $e;

@@ -13,6 +13,10 @@
             <x-field name="stock" label="Stock" type="number" min="0" :value="$p?->stock ?? 1" required />
             <x-field name="max_per_order" label="Max per order" type="number" min="1" max="10" :value="$p?->max_per_order ?? 1" required />
             <x-field name="sort" label="Order" type="number" :value="$p?->sort ?? 0" />
+            <x-field name="ship_weight_g" label="Packed parcel weight (g)" type="number" min="10" :value="$p?->ship_weight_g ?? 200" hint="Used to book the courier." />
+            <x-field name="ship_length_cm" label="Parcel length (cm)" type="number" min="1" :value="$p?->ship_length_cm ?? 12" />
+            <x-field name="ship_breadth_cm" label="Parcel breadth (cm)" type="number" min="1" :value="$p?->ship_breadth_cm ?? 10" />
+            <x-field name="ship_height_cm" label="Parcel height (cm)" type="number" min="1" :value="$p?->ship_height_cm ?? 6" />
         </div>
         <div><label for="f-description" class="field-label">Description</label><textarea id="f-description" name="description" rows="5" class="input">{{ old('description', $p?->description) }}</textarea></div>
         <div><label for="f-image" class="field-label">Photo (JPG/PNG/WebP, re-encoded on upload)</label><input id="f-image" name="image" type="file" accept="image/jpeg,image/png,image/webp" class="input">

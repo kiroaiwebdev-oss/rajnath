@@ -107,9 +107,9 @@ class StatusChip extends StatelessWidget {
   final Object? status;
 
   static Color colorFor(String s) => switch (s) {
-        'paid' || 'completed' || 'confirmed' || 'performed' || 'scheduled' => ArjColors.success700,
-        'cancelled' || 'failed' || 'needs_new_photos' || 'no_show' => ArjColors.danger700,
-        'pending_payment' || 'awaiting_details' || 'awaiting_photos' => ArjColors.gold700,
+        'paid' || 'completed' || 'confirmed' || 'performed' || 'scheduled' || 'accepted' => ArjColors.success700,
+        'cancelled' || 'failed' || 'needs_new_photos' || 'no_show' || 'rejected' => ArjColors.danger700,
+        'pending_payment' || 'awaiting_details' || 'awaiting_photos' || 'submitted' => ArjColors.gold700,
         _ => ArjColors.ink600,
       };
 
@@ -124,6 +124,33 @@ class StatusChip extends StatelessWidget {
       child: Text(label.isEmpty ? '' : label[0].toUpperCase() + label.substring(1), style: TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w600)),
     );
   }
+}
+
+/// Small coloured pill with a fixed label (e.g. "Favourable", "Good").
+class ToneChip extends StatelessWidget {
+  const ToneChip(this.text, this.color, {super.key});
+  final String text;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(99), border: Border.all(color: color.withValues(alpha: 0.4))),
+        child: Text(text, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+      );
+}
+
+/// Previous / label / next row for stepping through years or months.
+class PeriodStepper extends StatelessWidget {
+  const PeriodStepper({super.key, required this.label, required this.onPrevious, required this.onNext, this.unit = 'year'});
+  final String label;
+  final VoidCallback? onPrevious, onNext;
+  final String unit;
+  @override
+  Widget build(BuildContext context) => Row(children: [
+        IconButton(tooltip: 'Previous $unit', onPressed: onPrevious, icon: const Icon(Icons.chevron_left)),
+        Expanded(child: Text(label, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600))),
+        IconButton(tooltip: 'Next $unit', onPressed: onNext, icon: const Icon(Icons.chevron_right)),
+      ]);
 }
 
 /// Titled body sections (reports, palmistry readings).

@@ -12,31 +12,25 @@ Astrology and spiritual-services platform for **astrorajnathjha.com**: Laravel 1
 
 ## Status (honest)
 **Implemented and tested:**
-- accounts with email/mobile OTP and staff MFA
-- roles and audit log
-- catalogue and public website/PWA
+- accounts with email/mobile OTP and staff MFA; roles, audit log, operational health screen
+- catalogue and public website/PWA in English and Hindi (more languages switch on per `SITE_LOCALES`)
 - Email/SMS provider setup
-- 26 calculators and daily Panchang
-- muhurat finder, festival and holiday calendars (6 religions), Grah Gochar for 9 planets
+- 26 calculators; Panchang with Choghadiya and Hora; muhurat finder; festival calendars (6 religions); Grah Gochar for 9 planets
 - Rashifal publishing: daily to yearly, love/career/finance/health/education, nakshatra, Chinese, numerology, tarot
-- Razorpay checkout, wallet, ledger, refunds and reconciliation
-- gemstone store (stock, shipping, dispatch) and paid palmistry report from palm photos
-- Android app (core screens) with a release-signed APK and AAB
-- internal security review (`docs/security/security-review.md`)
-
-**Not yet built:**
-- consultation booking and audio/video calling (LiveKit)
-- report generation and PDFs
-- puja/chadhava fulfilment and suppliers
+- Razorpay checkout, wallet, ledger, refunds, reconciliation, coupons, GST tax invoices and credit notes
+- consultation booking with in-app calls (LiveKit), Zoom and Google Meet links
+- reports (expert-written) with server-printed PDFs; puja/chadhava fulfilment with suppliers
+- gemstone store with Shiprocket courier booking and tracking; paid palmistry report from palm photos
 - support tickets, push notifications, AI assistant
-- practitioner portal and payouts
-- data export and deletion
-- Hindi and other languages
-- Choghadiya and Hora
+- practitioner portal, astrologer applications, commission and payouts (RazorpayX or manual UTR)
+- data export and deletion with a staff privacy queue and legal hold
+- Android app (1.3.0 source) and an internal security review (`docs/security/security-review.md`)
+
+**Not built:** purnimanta month names; reviewed text for languages other than English and Hindi.
 
 See `docs/04-traceability-matrix.md`.
 
-**Owner acceptance pending:** VPS deployment, live providers, physical phones, independent security review.
+**Owner acceptance pending:** VPS deployment, live providers (Razorpay live, RazorpayX, Shiprocket, SMS, Firebase, LiveKit), GSTIN and tax rates checked by an accountant, review of the Hindi text and muhurat rules, a signed 1.3.0 APK on physical phones, independent security review.
 
 ## Quick start (development)
 ```

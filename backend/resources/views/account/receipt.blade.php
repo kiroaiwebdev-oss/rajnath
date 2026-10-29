@@ -10,13 +10,21 @@
         <dl class="mt-5 space-y-2 text-sm">
             <div class="flex justify-between gap-3"><dt class="text-ink-600">Item</dt><dd class="text-right font-medium">{{ \App\Domain\Payments\Checkout::label($o->kind, $snap) }}</dd></div>
             <div class="flex justify-between gap-3"><dt class="text-ink-600">Date</dt><dd>{{ \Illuminate\Support\Carbon::parse($o->created_at)->tz(auth()->user()->display_timezone)->format('d M Y, g:i A') }}</dd></div>
-            <div class="flex justify-between gap-3"><dt class="text-ink-600">Amount</dt><dd>{{ \App\Support\Money::format((int) $o->subtotal_minor) }}</dd></div>
+            @if ((int) $o->discount_minor > 0)
+                <div class="flex justify-between gap-3"><dt class="text-ink-600">Price</dt><dd>{{ \App\Support\Money::format((int) $o->list_minor) }}</dd></div>
+                <div class="flex justify-between gap-3 text-success-700"><dt>Coupon {{ $snap['coupon']['code'] ?? '' }}</dt><dd>−{{ \App\Support\Money::format((int) $o->discount_minor) }}</dd></div>
+            @endif
+            <div class="flex justify-between gap-3"><dt class="text-ink-600">Amount</dt><dd>{{ \App\Support\Money::format((int) $o->subtotal_minor) }}@if ((int) $o->tax_minor > 0) <span class="block text-xs text-ink-600">includes GST {{ \App\Support\Money::format((int) $o->tax_minor) }}</span>@endif</dd></div>
             @if ($o->wallet_applied_minor)<div class="flex justify-between gap-3"><dt class="text-ink-600">Paid from wallet</dt><dd>{{ \App\Support\Money::format((int) $o->wallet_applied_minor) }}</dd></div>@endif
             <div class="flex justify-between gap-3"><dt class="text-ink-600">Paid online</dt><dd>{{ \App\Support\Money::format((int) $o->payable_minor) }}{{ $payment ? ' ('.($payment->method ?? 'Razorpay').')' : '' }}</dd></div>
             @if (($snap['bonus_minor'] ?? 0) > 0)<div class="flex justify-between gap-3"><dt class="text-ink-600">Bonus credit</dt><dd>{{ \App\Support\Money::format((int) $snap['bonus_minor']) }}</dd></div>@endif
             @foreach ($refunds as $r)<div class="flex justify-between gap-3 text-success-700"><dt>Refunded ({{ $r->destination === 'wallet' ? 'to wallet' : 'to original payment' }})</dt><dd>−{{ \App\Support\Money::format((int) $r->amount_minor) }}</dd></div>@endforeach
         </dl>
         @if ($payment)<p class="mt-4 text-xs text-ink-600">Payment reference: {{ $payment->provider_payment_id }}</p>@endif
+        @foreach (\Illuminate\Support\Facades\DB::table('invoices')->where('order_id', $o->id)->orderBy('id')->get() as $inv)
+            <p class="mt-3 text-sm">{{ $inv->type === 'invoice' ? 'Tax invoice' : 'Credit note' }} {{ $inv->number }} ·
+                <a href="{{ route('account.invoice', $inv->ref) }}">View</a> · <a href="{{ route('account.invoice.pdf', $inv->ref) }}">Download PDF</a></p>
+        @endforeach
         @php $pj = $o->status === 'paid' ? \Illuminate\Support\Facades\DB::table('puja_bookings')->where('order_id', $o->id)->first() : null; $rj = $o->status === 'paid' ? \Illuminate\Support\Facades\DB::table('report_jobs')->where('order_id', $o->id)->first() : null; $bk = \Illuminate\Support\Facades\DB::table('bookings')->where('order_id', $o->id)->first(); @endphp
         @if ($pj)<a href="{{ route('account.puja.show', $pj->ref) }}" class="btn-primary mt-5">{{ $pj->status === 'awaiting_details' ? 'Add sankalp details' : 'Open your puja booking' }}</a>@endif
         @if ($rj)<a href="{{ route('account.reports.show', $rj->ref) }}" class="btn-primary mt-5">{{ $rj->status === 'awaiting_details' ? 'Choose birth details for your report' : 'Open your report' }}</a>@endif

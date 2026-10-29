@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Domain\Identity\StaffInvitations;
 use App\Domain\Practitioners\Payouts;
 use App\Domain\Practitioners\Practitioners;
+use App\Domain\Practitioners\RazorpayX;
 use App\Http\Controllers\Controller;
+use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -57,7 +59,7 @@ class PractitionerController extends Controller
 
         return view('admin.practitioners.show', [
             'p' => $p, 'user' => DB::table('users')->find($p->user_id), 'share' => Practitioners::currentShareBps($p->id),
-            'payout' => Practitioners::maskedPayout(Practitioners::payoutDetails($p)),
+            'payout' => Practitioners::maskedPayout(Practitioners::payoutDetails($p)), 'rzxReady' => app(RazorpayX::class)->configured(),
             'rules' => DB::table('commission_rules')->where('practitioner_id', $p->id)->orderByDesc('id')->get(),
             'balances' => $this->payouts->balances($p->id),
             'payoutRows' => DB::table('payouts')->where('practitioner_id', $p->id)->orderByDesc('id')->limit(20)->get(),
@@ -98,14 +100,20 @@ class PractitionerController extends Controller
         $this->authorize('payouts.propose');
         $po = $this->payouts->propose($this->find($ref), $request->user());
 
-        return back()->with('status', 'Payout of '.\App\Support\Money::format((int) $po->amount_minor).' proposed. A different person must approve it before you transfer the money.');
+        return back()->with('status', 'Payout of '.Money::format((int) $po->amount_minor).' proposed. A different person must approve it before you transfer the money.');
     }
 
     public function payoutAction(Request $request, string $payoutRef): RedirectResponse
     {
         $po = DB::table('payouts')->where('ref', $payoutRef)->first();
         abort_unless($po, 404);
-        $a = $request->validate(['action' => ['required', Rule::in(['approve', 'paid', 'cancel'])]])['action'];
+        $a = $request->validate(['action' => ['required', Rule::in(['approve', 'paid', 'cancel', 'send'])]])['action'];
+        if ($a === 'send') {
+            $this->authorize('payouts.propose');
+            $sent = app(RazorpayX::class)->send($po, $request->user());
+
+            return back()->with('status', $sent->status === 'paid' ? 'Payout sent and confirmed by RazorpayX (UTR '.$sent->utr.').' : 'Payout sent to RazorpayX ('.$sent->provider_status.'). It is marked paid automatically when the bank confirms.');
+        }
         if ($a === 'approve') {
             $this->authorize('payouts.approve');
             $this->payouts->approve($po, $request->user());

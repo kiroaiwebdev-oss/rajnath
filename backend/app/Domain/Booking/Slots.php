@@ -3,7 +3,13 @@
 namespace App\Domain\Booking;
 
 use App\Domain\Ledger\Ledger;
+use App\Domain\Meetings\Meetings;
+use App\Domain\Notify\Notifier;
 use App\Domain\Payments\Checkout;
+use App\Domain\Payments\Refunds;
+use App\Domain\Practitioners\Payouts;
+use App\Domain\Practitioners\Practitioners;
+use App\Jobs\SyncMeeting;
 use App\Models\OfferingVariant;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
@@ -23,6 +29,7 @@ use Illuminate\Validation\ValidationException;
 class Slots
 {
     public const TZ = 'Asia/Kolkata';
+
     public const SLOT_MODES = ['audio', 'video', 'in_person', 'chat'];
 
     public function __construct(private Checkout $checkout, private Ledger $ledger, private AuditLogger $audit) {}
@@ -69,12 +76,12 @@ class Slots
     }
 
     /** Holds the slot and creates the order. Returns [booking, checkout payload]. */
-    public function hold(User $user, OfferingVariant $v, string $startIso, ?int $birthProfileId, ?string $topic, string $key, bool $useWallet = false, ?string $practitionerRef = null): array
+    public function hold(User $user, OfferingVariant $v, string $startIso, ?int $birthProfileId, ?string $topic, string $key, bool $useWallet = false, ?string $practitionerRef = null, ?string $coupon = null): array
     {
         if (! self::bookable($v)) {
             throw ValidationException::withMessages(['start' => 'This option is not booked by time slot.']);
         }
-        $practitioner = \App\Domain\Practitioners\Practitioners::forBooking($v, $practitionerRef);
+        $practitioner = Practitioners::forBooking($v, $practitionerRef);
         $resource = (int) ($practitioner->id ?? 0);
         if (DB::table('bookings')->where('user_id', $user->id)->where('status', 'held')->where('hold_expires_at', '>', now())->count() >= 2) {
             throw ValidationException::withMessages(['start' => 'You already have unpaid bookings on hold. Complete or wait for them to expire first.']);
@@ -106,7 +113,7 @@ class Slots
             throw $e;
         }
         try {
-            $r = $this->checkout->startServiceOrder($user, $v, $useWallet, $key, ['booking_ref' => $booking->ref, 'start_utc' => $start->format('Y-m-d\TH:i\Z')] + ($practitioner ? ['practitioner' => ['ref' => $practitioner->ref, 'name' => $practitioner->display_name]] : []));
+            $r = $this->checkout->startServiceOrder($user, $v, $useWallet, $key, ['booking_ref' => $booking->ref, 'start_utc' => $start->format('Y-m-d\TH:i\Z')] + ($practitioner ? ['practitioner' => ['ref' => $practitioner->ref, 'name' => $practitioner->display_name]] : []), $coupon);
         } catch (\Throwable $e) {
             $this->release($booking->id, 'cancelled');
             throw $e;
@@ -131,9 +138,9 @@ class Slots
             ->update(['status' => 'confirmed', 'order_id' => $order->id, 'hold_expires_at' => null, 'updated_at' => now()]);
         if ($n) {
             $b = DB::table('bookings')->where('ref', $ref)->first();
-            $online = in_array($b->mode, \App\Domain\Meetings\Meetings::ONLINE_MODES, true);
+            $online = in_array($b->mode, Meetings::ONLINE_MODES, true);
             $this->notify($b, 'Consultation confirmed', 'Your consultation is confirmed for '.self::when($b).'.'.($online ? ' Your call link is in My bookings and will also be sent to you.' : ' Please come to the office on time.'));
-            \App\Jobs\SyncMeeting::dispatch($b->id, 'confirm')->afterCommit();
+            SyncMeeting::dispatch($b->id, 'confirm')->afterCommit();
         }
     }
 
@@ -192,10 +199,10 @@ class Slots
                 throw ValidationException::withMessages(['booking' => 'This booking was already changed.']);
             }
             $order = DB::table('orders')->where('id', $b->order_id)->lockForUpdate()->first();
-            app(\App\Domain\Payments\Refunds::class)->policyRefundToWallet($order, (int) $order->subtotal_minor - (int) $order->refunded_minor, 'Cancelled by customer within policy');
+            app(Refunds::class)->policyRefundToWallet($order, (int) $order->subtotal_minor - (int) $order->refunded_minor, 'Cancelled by customer within policy');
         });
         $this->audit->record('booking.cancelled', null, ['booking' => $b->ref], $u);
-        \App\Jobs\SyncMeeting::dispatch($b->id, 'cancel')->afterCommit();
+        SyncMeeting::dispatch($b->id, 'cancel')->afterCommit();
         $this->notify($b, 'Booking cancelled', 'Your consultation on '.self::when($b).' was cancelled and the full amount was added to your wallet.');
     }
 
@@ -224,7 +231,7 @@ class Slots
             throw ValidationException::withMessages(['start' => 'Someone just booked this time. Please choose another slot.']);
         }
         $this->audit->record('booking.rescheduled', null, ['booking' => $b->ref], $u);
-        \App\Jobs\SyncMeeting::dispatch($b->id, 'reschedule')->afterCommit();
+        SyncMeeting::dispatch($b->id, 'reschedule')->afterCommit();
         $this->notify(DB::table('bookings')->find($b->id), 'Booking moved', 'Your consultation is now on '.self::when(DB::table('bookings')->find($b->id)).'.');
     }
 
@@ -232,7 +239,7 @@ class Slots
     {
         $data = ['updated_at' => now()];
         if ($link !== null && $link !== $b->meeting_link) {
-            app(\App\Domain\Meetings\Meetings::class)->setManual($b, $link);
+            app(Meetings::class)->setManual($b, $link);
         }
         if (in_array($status, ['completed', 'no_show'], true)) {
             if ($b->status !== 'confirmed') {
@@ -243,7 +250,7 @@ class Slots
         DB::transaction(function () use ($b, $data, $status) {
             DB::table('bookings')->where('id', $b->id)->update($data);
             if ($status === 'completed' && $b->practitioner_id) {
-                app(\App\Domain\Practitioners\Payouts::class)->accrue(DB::table('bookings')->find($b->id));
+                app(Payouts::class)->accrue(DB::table('bookings')->find($b->id));
             }
         });
         $this->audit->record('booking.updated', null, ['booking' => $b->ref, 'status' => $status], $staff);
@@ -264,7 +271,7 @@ class Slots
 
     private function notify(object $b, string $title, string $body): void
     {
-        app(\App\Domain\Notify\Notifier::class)->send((int) $b->user_id, 'booking', $title, $body, $b->ref, route('account.bookings'));
+        app(Notifier::class)->send((int) $b->user_id, 'booking', $title, $body, $b->ref, route('account.bookings'));
     }
 
     /** Scheduled every 10 minutes: reminders 24 hours and 1 hour before a confirmed consultation. */

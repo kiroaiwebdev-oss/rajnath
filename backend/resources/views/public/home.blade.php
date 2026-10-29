@@ -1,18 +1,18 @@
-<x-layouts.public description="Vedic astrology consultations, Kundli, Vastu and remedies with Acharya Dr. Rajnath Jha, Ph.D. in Astrology, Director of Jyotirveda Vigyan Sansthan, Patna.">
+<x-layouts.public :description="__('Vedic astrology consultations, Kundli, Vastu and remedies with Acharya Dr. Rajnath Jha, Ph.D. in Astrology, Director of Jyotirveda Vigyan Sansthan, Patna.')">
     {{-- Hero --}}
     <section class="container-page grid items-center gap-10 pt-10 pb-16 md:grid-cols-[1.1fr_0.9fr] md:pt-16">
         <div>
-            <p class="eyebrow">Vedic astrology · Vastu · Remedies</p>
-            <h1 class="mt-3 text-4xl leading-tight sm:text-5xl">Clear, practical guidance from {{ $site('brand.practitioner_name') }}</h1>
-            <p class="mt-5 max-w-xl text-lg text-ink-600">Ph.D. in Astrology and Director of Jyotirveda Vigyan Sansthan, Patna, with more than 30 years of practice in Jyotish, Vastu, numerology and palmistry.</p>
+            <p class="eyebrow">{{ __('Vedic astrology · Vastu · Remedies') }}</p>
+            <h1 class="mt-3 text-4xl leading-tight sm:text-5xl">{{ __('Clear, practical guidance from :name', ['name' => $site('brand.practitioner_name')]) }}</h1>
+            <p class="mt-5 max-w-xl text-lg text-ink-600">{{ __('Ph.D. in Astrology and Director of Jyotirveda Vigyan Sansthan, Patna, with more than 30 years of practice in Jyotish, Vastu, numerology and palmistry.') }}</p>
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a href="{{ route('services.index', ['family' => 'consultations']) }}" class="btn-primary">Book a consultation</a>
-                <a href="{{ route('services.index') }}" class="btn-outline">Browse all services</a>
+                <a href="{{ route('services.index', ['family' => 'consultations']) }}" class="btn-primary">{{ __('Book a consultation') }}</a>
+                <a href="{{ route('services.index') }}" class="btn-outline">{{ __('Browse all services') }}</a>
             </div>
             <dl class="mt-10 grid max-w-lg grid-cols-3 gap-3 sm:gap-4">
-                <div class="card p-4"><dt class="text-xs text-ink-600">Years of practice</dt><dd class="mt-1 text-xl font-semibold sm:text-2xl">30+</dd></div>
-                <div class="card p-4"><dt class="text-xs text-ink-600">Clients guided</dt><dd class="mt-1 text-xl font-semibold sm:text-2xl">1,00,000+</dd></div>
-                <div class="card p-4"><dt class="text-xs text-ink-600">Awards</dt><dd class="mt-1 text-xl font-semibold sm:text-2xl">13+</dd></div>
+                <div class="card p-4"><dt class="text-xs text-ink-600">{{ __('Years of practice') }}</dt><dd class="mt-1 text-xl font-semibold sm:text-2xl">30+</dd></div>
+                <div class="card p-4"><dt class="text-xs text-ink-600">{{ __('Clients guided') }}</dt><dd class="mt-1 text-xl font-semibold sm:text-2xl">1,00,000+</dd></div>
+                <div class="card p-4"><dt class="text-xs text-ink-600">{{ __('Awards') }}</dt><dd class="mt-1 text-xl font-semibold sm:text-2xl">13+</dd></div>
             </dl>
         </div>
         <figure class="relative mx-auto w-full max-w-sm">
@@ -27,10 +27,10 @@
     <section class="container-page pb-16" aria-labelledby="featured-h">
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <p class="eyebrow">Services</p>
-                <h2 id="featured-h" class="mt-2 text-2xl">How Acharya Ji can help</h2>
+                <p class="eyebrow">{{ __('Services') }}</p>
+                <h2 id="featured-h" class="mt-2 text-2xl">{{ __('How Acharya Ji can help') }}</h2>
             </div>
-            <a href="{{ route('services.index') }}" class="btn-outline">All services</a>
+            <a href="{{ route('services.index') }}" class="btn-outline">{{ __('All services') }}</a>
         </div>
         <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($featured as $o)<div class="relative"><x-service-card :o="$o" /></div>@endforeach
@@ -42,15 +42,15 @@
     <section class="bg-ivory-100 py-16" aria-labelledby="rec-h">
         <div class="container-page grid items-center gap-10 lg:grid-cols-2">
             <div>
-                <p class="eyebrow">Recognition</p>
-                <h2 id="rec-h" class="mt-2 text-2xl">Honoured in India and abroad</h2>
+                <p class="eyebrow">{{ __('Recognition') }}</p>
+                <h2 id="rec-h" class="mt-2 text-2xl">{{ __('Honoured in India and abroad') }}</h2>
                 <ul class="mt-6 space-y-3 text-sm">
                     <li class="card p-4"><strong>Professor Award 2026</strong> — IVAF International Vedic Astrology Federation, in recognition of his participation in the Sri Lanka Sacred Astrological Symposium, Kandy, 8 September 2026 (Astrology, Vastu &amp; Gemstone).</li>
                     <li class="card p-4"><strong>Global Astrological Iconic Award, Malaysia 2025</strong> — Subramanyam Astrological &amp; Spiritual Convocation.</li>
                     <li class="card p-4"><strong>Ph.D. in Astrology (2014)</strong> and <strong>Acharya (Ganit Jyotish), Gold Medalist</strong> — K.S.D.S.U., Darbhanga.</li>
                     <li class="card p-4"><strong>17 years</strong> as Jyotish &amp; Karmkand consultant, Jyotish Mandap, Mahavir Mandir Trust, Patna.</li>
                 </ul>
-                <a href="{{ route('about') }}" class="btn-outline mt-6">Full biography & awards</a>
+                <a href="{{ route('about') }}" class="btn-outline mt-6">{{ __('Full biography & awards') }}</a>
             </div>
             <div class="grid grid-cols-[1fr_0.75fr] gap-4">
                 <x-photo src="images/owner/awards-wall-wide-960.jpg" alt="Acharya Ji in front of his awards and trophies" class="h-full w-full rounded-[var(--radius-card)] object-cover" />
@@ -61,14 +61,14 @@
 
     {{-- Families --}}
     <section class="container-page py-16" aria-labelledby="fam-h">
-        <p class="eyebrow">Find what you need</p>
-        <h2 id="fam-h" class="mt-2 text-2xl">Browse by category</h2>
+        <p class="eyebrow">{{ __('Find what you need') }}</p>
+        <h2 id="fam-h" class="mt-2 text-2xl">{{ __('Browse by category') }}</h2>
         <ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             @foreach ($families as $f)
                 <li class="card relative p-5">
-                    <h3 class="text-base"><a href="{{ route('services.index', ['family' => $f->slug]) }}" class="no-underline after:absolute after:inset-0">{{ $f->name }}</a></h3>
-                    <p class="mt-2 text-sm text-ink-600">{{ $f->summary }}</p>
-                    <p class="mt-3 text-xs font-semibold text-gold-700">{{ $f->offerings_count }} {{ \Illuminate\Support\Str::plural('service', $f->offerings_count) }}</p>
+                    <h3 class="text-base"><a href="{{ route('services.index', ['family' => $f->slug]) }}" class="no-underline after:absolute after:inset-0">{{ $f->label() }}</a></h3>
+                    <p class="mt-2 text-sm text-ink-600">{{ $f->blurb() }}</p>
+                    <p class="mt-3 text-xs font-semibold text-gold-700">{{ trans_choice(':count service|:count services', $f->offerings_count, ['count' => $f->offerings_count]) }}</p>
                 </li>
             @endforeach
         </ul>
@@ -79,13 +79,13 @@
         <div class="card grid overflow-hidden md:grid-cols-2">
             <x-photo src="images/owner/office-wide-960.jpg" alt="Acharya Ji at work in his Kankarbagh office" class="h-full min-h-56 w-full object-cover" />
             <div class="p-6 sm:p-8">
-                <p class="eyebrow">Visit or call</p>
-                <h2 id="visit-h" class="mt-2 text-2xl">Kankarbagh, Patna</h2>
-                <p class="mt-3 text-ink-600">B-Block, 1st Floor, Chanakya Plaza, near Chandan Automobile, Kankarbagh Main Road, Patna 800020.</p>
-                <p class="mt-3 text-sm text-ink-600">Mon–Wed and Fri–Sun: 8 AM–12 PM and 3 PM–7 PM · Thursday closed.<br>Online consultations by video or audio call.</p>
+                <p class="eyebrow">{{ __('Visit or call') }}</p>
+                <h2 id="visit-h" class="mt-2 text-2xl">{{ __('Kankarbagh, Patna') }}</h2>
+                <p class="mt-3 text-ink-600">{{ __('B-Block, 1st Floor, Chanakya Plaza, near Chandan Automobile, Kankarbagh Main Road, Patna 800020.') }}</p>
+                <p class="mt-3 text-sm text-ink-600">{{ __('Mon–Wed and Fri–Sun: 8 AM–12 PM and 3 PM–7 PM · Thursday closed.') }}<br>{{ __('Online consultations by video or audio call.') }}</p>
                 <div class="mt-6 flex flex-col gap-3 sm:flex-row">
-                    <a href="tel:{{ $site('contact.phone') }}" class="btn-primary">Call {{ $site('contact.phone') }}</a>
-                    <a href="{{ route('contact') }}" class="btn-outline">Directions & contact</a>
+                    <a href="tel:{{ $site('contact.phone') }}" class="btn-primary">{{ __('Call :phone', ['phone' => $site('contact.phone')]) }}</a>
+                    <a href="{{ route('contact') }}" class="btn-outline">{{ __('Directions & contact') }}</a>
                 </div>
             </div>
         </div>

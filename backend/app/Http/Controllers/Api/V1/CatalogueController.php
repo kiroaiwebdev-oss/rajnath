@@ -14,7 +14,7 @@ class CatalogueController extends Controller
     public function families(): JsonResponse
     {
         return response()->json(['data' => ServiceFamily::whereHas('offerings', fn ($q) => $q->where('status', 'active'))->orderBy('sort')->get()
-            ->map(fn ($f) => ['code' => $f->code, 'slug' => $f->slug, 'name' => $f->name, 'summary' => $f->summary])]);
+            ->map(fn ($f) => ['code' => $f->code, 'slug' => $f->slug, 'name' => $f->label(), 'summary' => $f->blurb()])]);
     }
 
     public function offerings(Request $request): JsonResponse

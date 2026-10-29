@@ -68,16 +68,17 @@
                             <tr>
                                 <td class="p-2 font-mono text-xs">{{ $po->ref }}</td>
                                 <td class="p-2">{{ $M($po->amount_minor) }}</td>
-                                <td class="p-2">{{ $po->status }}@if ($po->utr) · UTR {{ $po->utr }}@endif</td>
+                                <td class="p-2">{{ $po->status }}@if ($po->utr) · UTR {{ $po->utr }}@endif @if ($po->provider_status)<span class="block text-xs text-ink-600">RazorpayX: {{ $po->provider_status }}</span>@endif @if ($po->provider_error)<span class="block text-xs text-danger-700">{{ $po->provider_error }}</span>@endif</td>
                                 <td class="p-2">{{ \App\Domain\Practitioners\Practitioners::maskedPayout(\App\Domain\Practitioners\Payouts::method($po)) }}</td>
                                 <td class="p-2">
                                     @if ($po->status === 'proposed')
                                         @can('payouts.approve')<form method="POST" action="{{ route('admin.payouts.action', $po->ref) }}" class="inline">@csrf<button name="action" value="approve" class="btn-primary">Approve</button></form>@endcan
                                     @elseif ($po->status === 'approved')
                                         @can('payouts.propose')
+                                            @if ($rzxReady)<form method="POST" action="{{ route('admin.payouts.action', $po->ref) }}" class="mb-2">@csrf<button name="action" value="send" class="btn-primary">Send via RazorpayX</button></form>@endif
                                             <form method="POST" action="{{ route('admin.payouts.action', $po->ref) }}" class="flex flex-wrap items-end gap-2">@csrf
                                                 <input type="hidden" name="action" value="paid"><label class="sr-only" for="utr-{{ $po->id }}">UTR</label>
-                                                <input id="utr-{{ $po->id }}" name="utr" class="input w-40" placeholder="Bank UTR"><button class="btn-primary">Mark paid</button></form>
+                                                <input id="utr-{{ $po->id }}" name="utr" class="input w-40" placeholder="Bank UTR"><button class="btn-outline">Paid by hand — record UTR</button></form>
                                         @endcan
                                     @endif
                                     @if (in_array($po->status, ['proposed', 'approved'], true))
@@ -91,7 +92,7 @@
                     </tbody>
                 </table>
             </div>
-            <p class="mt-3 text-xs text-ink-600">Money is sent from your bank account (NEFT/IMPS/UPI) outside this system; then record the UTR here. Automatic bank payouts (RazorpayX) are not connected.</p>
+            <p class="mt-3 text-xs text-ink-600">@if ($rzxReady)Approved payouts can be sent through RazorpayX; they are marked paid with the bank UTR when RazorpayX confirms (failed or reversed payouts return to approved). You can still pay from your bank and record the UTR.@else Money is sent from your bank account (NEFT/IMPS/UPI); then record the UTR here. To send payouts automatically, add the RazorpayX account in Admin › Payments setup.@endif</p>
         </section>
     </div>
 </x-layouts.admin>

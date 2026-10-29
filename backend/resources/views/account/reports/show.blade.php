@@ -22,7 +22,7 @@
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div><p class="eyebrow">{{ $site('brand.name') }}</p><h2 class="mt-1 text-2xl">{{ $title }}</h2>
                     <p class="text-sm text-ink-600">For {{ collect($subjects)->pluck('name')->implode(' & ') }} · Prepared by Acharya Dr. Rajnath Jha's team · {{ \Illuminate\Support\Carbon::parse($j->completed_at)->tz('Asia/Kolkata')->format('d M Y') }}</p></div>
-                <button type="button" class="btn-outline print:hidden" x-data="printer" @click="print">Print / save as PDF</button>
+                <div class="flex gap-2 print:hidden"><a href="{{ route('account.reports.pdf', $j->ref) }}" class="btn-primary">Download PDF</a><button type="button" class="btn-outline" x-data="printer" @click="print">Print</button></div>
             </div>
             @if ($chart)
                 <div class="mt-6 grid gap-6 md:grid-cols-2">

@@ -10,11 +10,14 @@
         ['Priests & temples', 'admin.ops.suppliers', 'suppliers.manage'],
         ['Reports to write', 'admin.ops.reports', 'reports.fulfil'],
         ['Support', 'admin.ops.tickets', 'support.view'],
+        ['Privacy requests', 'admin.privacy.index', 'privacy.handle'],
         ['Rashifal', 'admin.ops.horoscopes', 'content.author'],
         ['Customers', 'admin.customers.index', 'customers.view'],
         ['Practitioners', 'admin.practitioners.index', 'practitioners.view'],
+        ['Astrologer applications', 'admin.applications.index', 'practitioners.view'],
         ['Catalogue', 'admin.catalogue.index', 'catalogue.view'],
         ['Finance', 'admin.finance.index', 'finance.view'],
+        ['Coupons', 'admin.coupons.index', 'prices.manage'],
         ['Gem store', 'admin.store.products', 'catalogue.view'],
         ['Gem orders', 'admin.store.orders', 'puja.fulfil'],
         ['Palmistry', 'admin.palm.index', 'reports.fulfil'],
@@ -27,6 +30,7 @@
         ['Calling (in-app, Zoom, Meet)', 'admin.calling.edit', 'providers.manage'],
         ['AI assistant', 'admin.assistant.edit', 'assistant.knowledge'],
         ['Audit log', 'admin.audit.index', 'audit.view'],
+        ['Operational health', 'admin.health', 'health.view'],
     ], fn ($i) => $i[2] === null || $u->can($i[2]));
 @endphp
 <x-layouts.base :title="$title" robots="noindex,nofollow" class="bg-ivory-50">

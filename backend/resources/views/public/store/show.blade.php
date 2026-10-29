@@ -38,6 +38,7 @@
                                 <div class="grid grid-cols-2 gap-3"><x-field name="ship_city" label="City" autocomplete="address-level2" required /><x-field name="ship_pincode" label="PIN code" inputmode="numeric" autocomplete="postal-code" required /></div>
                                 <x-field name="ship_state" label="State" autocomplete="address-level1" required />
                             </fieldset>
+                            <x-field name="coupon" label="Coupon code (optional)" :value="old('coupon')" autocomplete="off" maxlength="32" class="input uppercase" />
                             <label class="flex items-start gap-2 text-sm"><input type="checkbox" name="agree" value="1" class="mt-1 size-4 accent-ink-900" @checked(old('agree'))> <span>I have read the note about gemstones and the <a href="{{ route('terms') }}">terms</a>.</span></label>
                             @error('agree')<p class="field-error">{{ $message }}</p>@enderror
                             <button class="btn-primary w-full">Continue to payment</button>

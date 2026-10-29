@@ -55,7 +55,10 @@ class Offering extends Model
         $locale ??= app()->getLocale();
         $all = $this->relationLoaded('translations') ? $this->translations : $this->translations()->get();
 
-        return $all->firstWhere('locale', $locale) ?? $all->firstWhere('locale', 'en');
+        $t = $all->firstWhere('locale', $locale);
+
+        // A translation is used only once it has a title; otherwise English is shown.
+        return $t && $t->title ? $t : $all->firstWhere('locale', 'en');
     }
 
     public function fromPriceMinor(): ?int
@@ -69,7 +72,7 @@ class Offering extends Model
     {
         $t = $this->t();
         $out = [
-            'ref' => $this->ref, 'slug' => $this->slug, 'family' => $this->family?->code,
+            'ref' => $this->ref, 'slug' => $this->slug, 'family' => $this->family?->code, 'family_name' => $this->family?->label(),
             'title' => $t?->title, 'summary' => $t?->summary, 'featured' => $this->featured,
             'image_url' => $this->image_path ? asset($this->image_path) : null,
             'from_price_minor' => $this->fromPriceMinor(), 'currency' => 'INR',
@@ -79,7 +82,7 @@ class Offering extends Model
                 'body' => $t?->body, 'includes' => $t?->includes ?? [], 'audience' => $t?->audience ?? [],
                 'exclusions' => $t?->exclusions, 'disclaimer' => $t?->disclaimer,
                 'variants' => $this->variants->where('active', true)->values()->map(fn ($v) => [
-                    'ref' => $v->ref, 'name' => $v->name, 'mode' => $v->mode, 'duration_min' => $v->duration_min,
+                    'ref' => $v->ref, 'name' => $v->label(), 'mode' => $v->mode, 'duration_min' => $v->duration_min,
                     'participants' => $v->participants, 'urgent' => $v->urgent, 'price_minor' => $v->price_minor, 'currency' => $v->currency,
                 ])->all(),
             ];

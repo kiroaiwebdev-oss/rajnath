@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\Practitioners\Practitioners;
+use App\Domain\Puja\PujaBookings;
 use App\Http\Controllers\Controller;
 use App\Models\Offering;
 use App\Models\OfferingVariant;
@@ -63,7 +65,46 @@ class CatalogueController extends Controller
         $this->authorize('catalogue.view');
         $o = Offering::with(['translations', 'variants', 'family'])->where('ref', $ref)->firstOrFail();
 
-        return view('admin.catalogue.edit', ['o' => $o, 't' => $o->t('en'), 'families' => ServiceFamily::orderBy('sort')->get()]);
+        $langs = array_diff_key(config('locales.available'), ['en' => true]);
+        $lang = array_key_exists((string) request('locale'), $langs) ? request('locale') : array_key_first($langs);
+
+        return view('admin.catalogue.edit', ['o' => $o, 't' => $o->t('en'), 'families' => ServiceFamily::orderBy('sort')->get(),
+            'langs' => $langs, 'lang' => $lang, 'tl' => $o->translations->firstWhere('locale', $lang)]);
+    }
+
+    /**
+     * Text of a service in another language (RP-24). A language without a title is not used,
+     * so the page falls back to English. Empty title removes the translation.
+     */
+    public function saveTranslation(Request $request, string $ref, string $locale): RedirectResponse
+    {
+        $this->authorize('catalogue.manage');
+        abort_unless($locale !== 'en' && array_key_exists($locale, config('locales.available')), 404);
+        $o = Offering::with('variants')->where('ref', $ref)->firstOrFail();
+        $d = $request->validate(['title' => ['nullable', 'string', 'max:160'], 'summary' => ['required_with:title', 'nullable', 'string', 'max:300'],
+            'body' => ['nullable', 'string', 'max:10000'], 'includes' => ['nullable', 'string', 'max:4000'], 'audience' => ['nullable', 'string', 'max:4000'],
+            'exclusions' => ['nullable', 'string', 'max:2000'], 'disclaimer' => ['nullable', 'string', 'max:2000'],
+            'variant_names' => ['nullable', 'array'], 'variant_names.*' => ['nullable', 'string', 'max:120']]);
+        DB::transaction(function () use ($o, $d, $locale) {
+            if (empty($d['title'])) {
+                $o->translations()->where('locale', $locale)->delete();
+            } else {
+                $o->translations()->updateOrCreate(['locale' => $locale], $this->translationData($d));
+            }
+            foreach ($o->variants as $v) {
+                $name = trim((string) ($d['variant_names'][$v->ref] ?? ''));
+                $tr = $v->translations ?? [];
+                if ($name === '') {
+                    unset($tr[$locale]);
+                } else {
+                    $tr[$locale] = ['name' => $name];
+                }
+                $v->forceFill(['translations' => $tr ?: null])->save();
+            }
+        });
+        $this->audit->record('catalogue.translation_saved', $o, ['locale' => $locale, 'removed' => empty($d['title'])]);
+
+        return back()->with('status', empty($d['title']) ? 'Translation removed; English is shown.' : config('locales.available')[$locale].' text saved.');
     }
 
     public function update(Request $request, string $ref): RedirectResponse
@@ -91,10 +132,10 @@ class CatalogueController extends Controller
             if ($o->variants->where('active', true)->isEmpty()) {
                 throw ValidationException::withMessages(['status' => 'Add at least one active variant before activating.']);
             }
-            if (in_array($o->family->code, ['puja', 'chadhava'], true) && ! \App\Domain\Puja\PujaBookings::canPublish($o->id, $o->slug)) {
+            if (in_array($o->family->code, ['puja', 'chadhava'], true) && ! PujaBookings::canPublish($o->id, $o->slug)) {
                 throw ValidationException::withMessages(['status' => 'Link at least one priest/temple with a verified, current authorisation (Admin › Priests & temples) before publishing this puja.']);
             }
-            if (! \App\Domain\Practitioners\Practitioners::canPublish($o->slug)) {
+            if (! Practitioners::canPublish($o->slug)) {
                 throw ValidationException::withMessages(['status' => 'Approve at least one astrologer of this tier, with an approved commission, before publishing (Admin › Practitioners).']);
             }
             if (! $o->t('en')?->title || ! $o->t('en')?->summary) {

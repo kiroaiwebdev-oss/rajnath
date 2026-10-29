@@ -7,7 +7,14 @@
                 <div><dt class="text-ink-600">Item</dt><dd class="font-medium">{{ \App\Domain\Payments\Checkout::label($o->kind, $snap) }}</dd></div>
                 <div><dt class="text-ink-600">Total / wallet / online</dt><dd class="font-medium tabular-nums">{{ \App\Support\Money::format((int) $o->subtotal_minor) }} / {{ \App\Support\Money::format((int) $o->wallet_applied_minor) }} / {{ \App\Support\Money::format((int) $o->payable_minor) }}</dd></div>
                 <div><dt class="text-ink-600">Refunded</dt><dd class="font-medium tabular-nums">{{ \App\Support\Money::format((int) $o->refunded_minor) }}</dd></div>
+                @if ((int) $o->discount_minor > 0)<div><dt class="text-ink-600">Coupon</dt><dd class="font-medium">{{ $snap['coupon']['code'] ?? '' }} · −{{ \App\Support\Money::format((int) $o->discount_minor) }} (price {{ \App\Support\Money::format((int) $o->list_minor) }})</dd></div>@endif
+                @if ((int) $o->tax_minor > 0)<div><dt class="text-ink-600">GST included</dt><dd class="font-medium tabular-nums">{{ \App\Support\Money::format((int) $o->tax_minor) }}</dd></div>@endif
             </dl>
+            @php $invs = \Illuminate\Support\Facades\DB::table('invoices')->where('order_id', $o->id)->orderBy('id')->get(); @endphp
+            @if ($invs->isNotEmpty())
+                <h2 class="mt-6 text-base">Invoices</h2>
+                <ul class="mt-2 space-y-1">@foreach ($invs as $inv)<li>{{ $inv->type === 'invoice' ? 'Tax invoice' : 'Credit note' }} {{ $inv->number }} · {{ \App\Support\Money::format((int) $inv->total_minor) }} · <a href="{{ route('admin.finance.invoice', $inv->ref) }}">View</a> · <a href="{{ route('admin.finance.invoice', [$inv->ref, 'pdf' => 1]) }}">PDF</a></li>@endforeach</ul>
+            @endif
             <h2 class="mt-6 text-base">Payments</h2>
             <ul class="mt-2 space-y-1">@foreach ($payments as $p)<li>{{ $p->provider_order_id }} · {{ $p->provider_payment_id ?? '—' }} · {{ \App\Support\Money::format((int) $p->amount_minor) }} · <strong>{{ $p->status }}</strong> {{ $p->error }}</li>@endforeach</ul>
             <h2 class="mt-6 text-base">Refunds</h2>

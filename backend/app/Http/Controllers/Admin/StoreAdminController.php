@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\Store\Shiprocket;
 use App\Domain\Store\Store;
 use App\Http\Controllers\Controller;
 use App\Support\Audit\AuditLogger;
@@ -44,6 +45,8 @@ class StoreAdminController extends Controller
             'certification' => ['nullable', 'string', 'max:200'], 'price' => ['required', 'string', 'max:20'], 'stock' => ['required', 'integer', 'min:0', 'max:100000'],
             'max_per_order' => ['required', 'integer', 'min:1', 'max:10'], 'active' => ['nullable', 'boolean'], 'sort' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'image' => ['nullable', 'file', 'max:8192'],
+            'ship_weight_g' => ['nullable', 'integer', 'min:10', 'max:30000'], 'ship_length_cm' => ['nullable', 'integer', 'min:1', 'max:150'],
+            'ship_breadth_cm' => ['nullable', 'integer', 'min:1', 'max:150'], 'ship_height_cm' => ['nullable', 'integer', 'min:1', 'max:150'],
         ]);
         try {
             $price = Money::parseRupees($d['price']);
@@ -63,7 +66,9 @@ class StoreAdminController extends Controller
         }
         $row = ['name' => $d['name'], 'slug' => $slug, 'category' => $d['category'], 'summary' => $d['summary'], 'description' => $d['description'] ?? null,
             'weight' => $d['weight'] ?? null, 'origin' => $d['origin'] ?? null, 'certification' => $d['certification'] ?? null, 'price_minor' => $price,
-            'stock' => $d['stock'], 'max_per_order' => $d['max_per_order'], 'active' => (bool) ($d['active'] ?? false), 'sort' => (int) ($d['sort'] ?? 0), 'updated_at' => now()];
+            'stock' => $d['stock'], 'max_per_order' => $d['max_per_order'], 'active' => (bool) ($d['active'] ?? false), 'sort' => (int) ($d['sort'] ?? 0), 'updated_at' => now(),
+            'ship_weight_g' => (int) ($d['ship_weight_g'] ?? $p->ship_weight_g ?? 200), 'ship_length_cm' => (int) ($d['ship_length_cm'] ?? $p->ship_length_cm ?? 12),
+            'ship_breadth_cm' => (int) ($d['ship_breadth_cm'] ?? $p->ship_breadth_cm ?? 10), 'ship_height_cm' => (int) ($d['ship_height_cm'] ?? $p->ship_height_cm ?? 6)];
         if ($request->hasFile('image')) {
             $row['image_path'] = 'uploads/'.SafeImage::store($request->file('image'), 'uploads', 'products', 'image');
         }
@@ -95,7 +100,18 @@ class StoreAdminController extends Controller
         $s = DB::table('shipments')->where('order_id', $o->id)->first();
         $audit->record('store.order_viewed', null, ['order' => $ref]);
 
-        return view('admin.store.order', ['o' => $o, 's' => $s, 'snap' => json_decode($o->snapshot, true), 'address' => Store::address($s)]);
+        return view('admin.store.order', ['o' => $o, 's' => $s, 'snap' => json_decode($o->snapshot, true), 'address' => Store::address($s),
+            'courierReady' => app(Shiprocket::class)->configured()]);
+    }
+
+    public function bookCourier(Request $request, string $ref, Shiprocket $shiprocket): RedirectResponse
+    {
+        $this->authorize('puja.fulfil');
+        $o = DB::table('orders')->where('ref', $ref)->where('kind', 'product')->first();
+        abort_unless($o && in_array($o->status, ['paid', 'partially_refunded'], true), 404);
+        $s = $shiprocket->book($o, $request->user());
+
+        return back()->with('status', 'Courier booked: '.$s->courier.' AWB '.$s->awb.'. Pickup requested.');
     }
 
     public function updateShipment(Request $request, string $ref, Store $store): RedirectResponse

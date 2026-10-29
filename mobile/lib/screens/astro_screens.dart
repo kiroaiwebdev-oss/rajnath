@@ -6,13 +6,24 @@ import '../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
+const planetNames = {'sun': 'Sun', 'moon': 'Moon', 'mars': 'Mars', 'mercury': 'Mercury', 'jupiter': 'Jupiter', 'venus': 'Venus', 'saturn': 'Saturn', 'rahu': 'Rahu', 'ketu': 'Ketu'};
+
+/// "jupiter" → "Jupiter".
+String planetName(Object? key) => planetNames['$key'] ?? humanizeKey(key);
+
+String humanizeKey(Object? key) {
+  final s = '${key ?? ''}';
+  return s.isEmpty ? '' : s[0].toUpperCase() + s.substring(1);
+}
+
 /// Place search field backed by /places (GeoNames).
 class PlaceField extends StatelessWidget {
-  const PlaceField({super.key, required this.api, required this.onSelected, this.initial, this.errorText});
+  const PlaceField({super.key, required this.api, required this.onSelected, this.initial, this.errorText, this.labelText = 'Place of birth'});
   final ApiClient api;
   final void Function(Map<String, dynamic>) onSelected;
   final String? initial;
   final String? errorText;
+  final String labelText;
 
   @override
   Widget build(BuildContext context) => Autocomplete<Map<String, dynamic>>(
@@ -28,7 +39,7 @@ class PlaceField extends StatelessWidget {
         },
         onSelected: onSelected,
         fieldViewBuilder: (context, c, f, _) => TextField(controller: c, focusNode: f,
-            decoration: InputDecoration(labelText: 'Place of birth', helperText: 'Choose from the list. Place data © GeoNames', errorText: errorText)),
+            decoration: InputDecoration(labelText: labelText, helperText: 'Choose from the list. Place data © GeoNames', errorText: errorText)),
       );
 }
 
@@ -176,6 +187,25 @@ class _PanchangScreenState extends State<PanchangScreen> {
 
   String _t(String? iso) => iso == null ? '—' : DateFormat('h:mm a').format(DateTime.parse(iso).toLocal());
 
+  /// Day rows, then night rows, each under a small heading.
+  List<Widget> _byPeriod(Iterable<Map> items, Widget Function(Map) row) => [
+        for (final period in const ['day', 'night']) ...[
+          if (items.any((i) => i['period'] == period))
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(period == 'day' ? 'Day' : 'Night', style: const TextStyle(color: ArjColors.ink600, fontWeight: FontWeight.w600)),
+            ),
+          for (final i in items.where((i) => i['period'] == period)) row(i),
+        ],
+        for (final i in items.where((i) => i['period'] != 'day' && i['period'] != 'night')) row(i),
+      ];
+
+  Widget _quality(Object? q) => switch (q) {
+        'good' => const ToneChip('Good', ArjColors.success700),
+        'bad' => const ToneChip('Avoid', ArjColors.danger700),
+        _ => const ToneChip('Neutral', ArjColors.ink600),
+      };
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -212,6 +242,25 @@ class _PanchangScreenState extends State<PanchangScreen> {
                   const SectionTitle('Timings'),
                   for (final e in {'abhijit': 'Abhijit muhurta', 'rahu_kaal': 'Rahu Kaal', 'yamaganda': 'Yamaganda', 'gulika': 'Gulika'}.entries)
                     ListTile(dense: true, contentPadding: EdgeInsets.zero, title: Text(e.value), trailing: Text('${_t(p['intervals'][e.key]['start'])} – ${_t(p['intervals'][e.key]['end'])}')),
+                ],
+                if (p['choghadiya'] is List && (p['choghadiya'] as List).isNotEmpty) ...[
+                  const SectionTitle('Choghadiya'),
+                  ..._byPeriod((p['choghadiya'] as List).whereType<Map>(), (c) => ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text('${c['name']}'),
+                        subtitle: Text('${_t(c['start'])} – ${_t(c['end'])}'),
+                        trailing: _quality(c['quality']),
+                      )),
+                ],
+                if (p['hora'] is List && (p['hora'] as List).isNotEmpty) ...[
+                  const SectionTitle('Hora'),
+                  ..._byPeriod((p['hora'] as List).whereType<Map>(), (h) => ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(planetName(h['lord'])),
+                        trailing: Text('${_t(h['start'])} – ${_t(h['end'])}'),
+                      )),
                 ],
               ]),
             ),

@@ -5,6 +5,10 @@
         <h2 class="text-lg">{{ \App\Domain\Payments\Checkout::label($o->kind, $snap) }}</h2>
         
         <dl class="mt-4 space-y-2 text-sm">
+            @if ((int) $o->discount_minor > 0)
+                <div class="flex justify-between"><dt>Price</dt><dd>{{ \App\Support\Money::format((int) $o->list_minor) }}</dd></div>
+                <div class="flex justify-between text-success-700"><dt>Coupon {{ $snap['coupon']['code'] ?? '' }}</dt><dd>−{{ \App\Support\Money::format((int) $o->discount_minor) }}</dd></div>
+            @endif
             <div class="flex justify-between"><dt>Total</dt><dd>{{ \App\Support\Money::format((int) $o->subtotal_minor) }}</dd></div>
             @if ($o->wallet_applied_minor)<div class="flex justify-between"><dt>From wallet</dt><dd>−{{ \App\Support\Money::format((int) $o->wallet_applied_minor) }}</dd></div>@endif
             <div class="flex justify-between border-t border-ink-200 pt-2 text-base font-semibold"><dt>To pay now</dt><dd>{{ \App\Support\Money::format((int) $o->payable_minor) }}</dd></div>

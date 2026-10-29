@@ -52,6 +52,38 @@
                 </section>
                 @endif
             </div>
+            @if ($p['choghadiya'])
+                @php $now = now(); $isNow = fn ($r) => $now->between(\Illuminate\Support\Carbon::parse($r['start']), \Illuminate\Support\Carbon::parse($r['end'])); $V = \App\Domain\Astro\Vedic::PLANET_NAMES; @endphp
+                <div class="mt-6 grid gap-6 lg:grid-cols-2">
+                    <section class="card p-5" aria-labelledby="chog-h">
+                        <h2 id="chog-h" class="text-lg">Choghadiya</h2>
+                        @foreach (['day' => 'Day (sunrise to sunset)', 'night' => 'Night (sunset to next sunrise)'] as $per => $label)
+                            <h3 class="mt-3 text-sm font-semibold text-ink-700">{{ $label }}</h3>
+                            <ul class="mt-1 divide-y divide-ink-200/60 text-sm">
+                                @foreach (collect($p['choghadiya'])->where('period', $per) as $c)
+                                    <li @class(['flex justify-between gap-3 py-1.5', 'bg-gold-50 font-semibold' => $isNow($c)])>
+                                        <span><span @class(['badge-success' => $c['quality'] === 'good', 'badge-gold' => $c['quality'] === 'neutral', 'badge-danger' => $c['quality'] === 'bad'])>{{ $c['name'] }}</span>@if ($isNow($c)) <span class="text-xs">now</span>@endif</span>
+                                        <span>{{ $t($c['start']) }} – {{ $t($c['end']) }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endforeach
+                        <p class="mt-2 text-xs text-ink-600">Amrit, Shubh and Labh are auspicious; Char is good for travel; Udveg, Rog and Kaal are avoided for new work.</p>
+                    </section>
+                    <section class="card p-5" aria-labelledby="hora-h">
+                        <h2 id="hora-h" class="text-lg">Hora (planetary hours)</h2>
+                        @foreach (['day' => 'Day', 'night' => 'Night'] as $per => $label)
+                            <h3 class="mt-3 text-sm font-semibold text-ink-700">{{ $label }}</h3>
+                            <ul class="mt-1 grid grid-cols-1 divide-y divide-ink-200/60 text-sm">
+                                @foreach (collect($p['hora'])->where('period', $per) as $h)
+                                    <li @class(['flex justify-between gap-3 py-1.5', 'bg-gold-50 font-semibold' => $isNow($h)])><span>{{ $V[$h['lord']] }}@if ($isNow($h)) <span class="text-xs">now</span>@endif</span><span>{{ $t($h['start']) }} – {{ $t($h['end']) }}</span></li>
+                                @endforeach
+                            </ul>
+                        @endforeach
+                        <p class="mt-2 text-xs text-ink-600">Each hora is 1/12 of the day or night; the first day hora belongs to the lord of the weekday (Chaldean order).</p>
+                    </section>
+                </div>
+            @endif
             <p class="mt-4 text-xs text-ink-600">{{ $p['method'] }} Regional festival rules and Muhurat selection need an astrologer's review; this page shows the astronomical Panchang.</p>
         @endif
     </div>

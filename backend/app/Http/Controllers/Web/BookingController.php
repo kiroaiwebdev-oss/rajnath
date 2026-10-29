@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Domain\Booking\Slots;
+use App\Domain\Ledger\Ledger;
 use App\Domain\Practitioners\Practitioners;
 use App\Http\Controllers\Controller;
 use App\Models\BirthProfile;
@@ -33,16 +34,16 @@ class BookingController extends Controller
 
         return view('account.booking.pick', ['v' => $v, 'o' => $o, 'practitioner' => $practitioner, 'slots' => $this->slots->available((int) $v->duration_min, 21, (int) ($practitioner->id ?? 0)),
             'profiles' => BirthProfile::where('user_id', $request->user()->id)->orderByDesc('is_primary')->get(), 'reschedule' => null,
-            'wallet' => app(\App\Domain\Ledger\Ledger::class)->walletBalance($request->user()->id)]);
+            'wallet' => app(Ledger::class)->walletBalance($request->user()->id)]);
     }
 
     public function hold(Request $request, string $variantRef): RedirectResponse
     {
         $v = OfferingVariant::where('ref', $variantRef)->where('active', true)->firstOrFail();
-        $d = $request->validate(['start' => ['required', 'string', 'regex:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z$/'], 'birth_profile' => ['nullable', 'string', 'size:26'], 'topic' => ['nullable', 'string', 'max:1000'], 'use_wallet' => ['nullable', 'boolean'], 'practitioner' => ['nullable', 'string', 'size:26'], 'key' => ['required', 'string', 'max:64']]);
+        $d = $request->validate(['start' => ['required', 'string', 'regex:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z$/'], 'birth_profile' => ['nullable', 'string', 'size:26'], 'topic' => ['nullable', 'string', 'max:1000'], 'use_wallet' => ['nullable', 'boolean'], 'practitioner' => ['nullable', 'string', 'size:26'], 'key' => ['required', 'string', 'max:64'], 'coupon' => ['nullable', 'string', 'max:32']]);
         $bp = ! empty($d['birth_profile']) ? BirthProfile::where('user_id', $request->user()->id)->where('ref', $d['birth_profile'])->value('id') : null;
         try {
-            [, $r] = $this->slots->hold($request->user(), $v, $d['start'], $bp, $d['topic'] ?? null, $d['key'], (bool) ($d['use_wallet'] ?? false), $d['practitioner'] ?? null);
+            [, $r] = $this->slots->hold($request->user(), $v, $d['start'], $bp, $d['topic'] ?? null, $d['key'], (bool) ($d['use_wallet'] ?? false), $d['practitioner'] ?? null, $d['coupon'] ?? null);
         } catch (RuntimeException $e) {
             report($e);
 
@@ -73,7 +74,7 @@ class BookingController extends Controller
         abort_unless($b && $b->user_id === $request->user()->id, 404);
         $v = OfferingVariant::findOrFail($b->variant_id);
 
-        $p = $b->practitioner_id ? \Illuminate\Support\Facades\DB::table('practitioners')->find($b->practitioner_id) : null;
+        $p = $b->practitioner_id ? DB::table('practitioners')->find($b->practitioner_id) : null;
 
         return view('account.booking.pick', ['v' => $v, 'o' => $v->offering()->with('translations')->first(), 'practitioner' => $p,
             'slots' => $this->slots->available((int) $v->duration_min, 21, (int) ($b->practitioner_id ?? 0)), 'profiles' => collect(), 'reschedule' => $b]);

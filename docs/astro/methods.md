@@ -36,7 +36,9 @@
   - Rahu Kaal, Yamaganda and Gulika use the eight-part daytime division with the standard weekday tables.
   - Abhijit = 8th of 15 day muhurtas.
   - Brahma muhurta = 96 to 48 minutes before sunrise.
-- **Not yet implemented:** Choghadiya and Hora; purnimanta month names (amanta is used).
+- **Choghadiya:** day (sunrise→sunset) and night (sunset→next sunrise) each in 8 equal parts. Cycle Udveg, Char, Labh, Amrit, Kaal, Shubh, Rog; the day starts with the weekday's entry (Sun Udveg, Mon Amrit, Tue Rog, Wed Labh, Thu Shubh, Fri Char, Sat Kaal) and steps +1, the night starts Sun Shubh, Mon Char, Tue Kaal, Wed Udveg, Thu Amrit, Fri Rog, Sat Labh and steps −2. Amrit, Shubh, Labh good; Char neutral; Udveg, Rog, Kaal avoided.
+- **Hora:** 12 day and 12 night planetary hours (1/12 of each); the first day hora belongs to the weekday lord and each next one follows the Chaldean order Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon (so the next sunrise starts with the next weekday's lord).
+- **Not yet implemented:** purnimanta month names (amanta is used).
 
 ## Lunar months (`LunarCalendar`)
 - New and full moons come from the engine (`lunations`: Moon − Sun elongation crossing 0° / 180°, 12-hour scan plus bisection). Checked against published times: full moon 3 Jan 2026 10:03 UT, new moon 18 Jan 2026 19:52 UT.
