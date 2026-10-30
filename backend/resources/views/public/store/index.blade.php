@@ -1,4 +1,4 @@
-<x-layouts.public title="Gemstone store" description="Certified gemstones, Rudraksha and remedies recommended by Acharya Dr. Rajnath Jha, delivered across India.">
+<x-layouts.public :title="__('Gemstone store')" :description="__('Certified gemstones, Rudraksha and remedies recommended by Acharya Dr. Rajnath Jha, delivered across India.')" :jsonld="[\App\Support\Seo\JsonLd::breadcrumbs([[__('Gemstone store'), route('store.index')]])]">
     <div class="container-page py-10">
         <p class="eyebrow">Store</p>
         <h1 class="mt-2 text-3xl">Gemstones & remedies</h1>

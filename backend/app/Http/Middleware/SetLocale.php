@@ -22,7 +22,9 @@ class SetLocale
         if ($request->is('admin', 'admin/*', 'staff/*')) {
             $locale = 'en';                                  // the control centre is English
         } elseif ($request->is('api/*')) {
-            $locale = $wanted ?? $pick(substr((string) $request->getPreferredLanguage($enabled), 0, 2)) ?? 'en';
+            // ?lang, then the app's Accept-Language, then the signed-in customer's saved language
+            $header = $request->headers->has('Accept-Language') ? $pick(substr((string) $request->getPreferredLanguage($enabled), 0, 2)) : null;
+            $locale = $wanted ?? $header ?? $pick(auth('sanctum')->user()?->locale) ?? 'en';
         } else {
             $session = $request->hasSession() ? $request->session() : null;
             if ($wanted && $session && ! $request->is('rashifal*', 'rashi/*', 'gochar*')) {

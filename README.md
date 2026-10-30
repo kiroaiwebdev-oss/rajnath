@@ -24,13 +24,15 @@ Astrology and spiritual-services platform for **astrorajnathjha.com**: Laravel 1
 - support tickets, push notifications, AI assistant
 - practitioner portal, astrologer applications, commission and payouts (RazorpayX or manual UTR)
 - data export and deletion with a staff privacy queue and legal hold
-- Android app (1.3.0 source) and an internal security review (`docs/security/security-review.md`)
+- SEO, AEO and GEO: sitemap with hreflang, robots.txt, llms.txt, canonical/Open Graph/geo tags, schema.org data on every public page
+- one-command VPS install (`deploy/install.sh`); all provider keys are entered in the admin
+- Android app (1.4.0 source) with the same features as the website, and an internal security review (`docs/security/security-review.md`)
 
-**Not built:** purnimanta month names; reviewed text for languages other than English and Hindi.
+**Drafts, need review:** text for Bengali, Gujarati, Kannada, Malayalam, Marathi, Punjabi, Tamil and Telugu (`backend/lang/`). They stay off until a native speaker checks them.
 
 See `docs/04-traceability-matrix.md`.
 
-**Owner acceptance pending:** VPS deployment, live providers (Razorpay live, RazorpayX, Shiprocket, SMS, Firebase, LiveKit), GSTIN and tax rates checked by an accountant, review of the Hindi text and muhurat rules, a signed 1.3.0 APK on physical phones, independent security review.
+**Owner acceptance pending:** VPS deployment, live providers (Razorpay live, RazorpayX, Shiprocket, SMS, Firebase, LiveKit), GSTIN and tax rates checked by an accountant, review of the Hindi text and muhurat rules, a signed 1.4.0 APK on physical phones, independent security review.
 
 ## Quick start (development)
 ```

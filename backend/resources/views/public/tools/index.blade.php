@@ -1,4 +1,4 @@
-<x-layouts.public title="Free calculators" description="Free Kundli, Kundli matching, Panchang, Moon sign, Nakshatra, Sade Sati, numerology and more.">
+<x-layouts.public :title="__('Free calculators')" :description="__('26 free astrology calculators: Kundli, Kundli matching, Moon sign, Nakshatra, Sade Sati, Manglik, numerology, Lo Shu grid, baby names and more.')" :jsonld="[['@type' => 'ItemList', 'name' => __('Free calculators'), 'itemListElement' => collect($tools)->keys()->values()->map(fn ($k, $i) => ['@type' => 'ListItem', 'position' => $i + 1, 'name' => $tools[$k][0], 'url' => route('tools.show', $k)])->all()], \App\Support\Seo\JsonLd::breadcrumbs([[__('Free calculators'), route('tools.index')]])]">
     <div class="container-page py-10">
         <p class="eyebrow">Free tools</p>
         <h1 class="mt-2 text-3xl">Calculators</h1>

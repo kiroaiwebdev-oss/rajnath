@@ -1,4 +1,4 @@
-<x-layouts.public title="Sign in">
+<x-layouts.public :title="__('Sign in')" robots="noindex,follow" :jsonld="false">
     <div class="container-page grid items-center gap-10 py-12 md:grid-cols-2">
         <div class="card mx-auto w-full max-w-md p-6 sm:p-8">
             <h1 class="text-2xl">Sign in or create an account</h1>

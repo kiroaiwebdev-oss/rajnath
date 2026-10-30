@@ -7,6 +7,12 @@
 		header /build/* Cache-Control "public, max-age=31536000, immutable"
 		file_server
 	}
+	# private folders are never served as files
+	@private path /uploads/*.php /storage/* /.env* /.git*
+	respond @private 404
+	header {
+		-Server
+	}
 	php_fastcgi app:9000 {
 		root /var/www/backend/public
 	}
@@ -23,7 +29,8 @@ www.{$DOMAIN} {
 	redir https://{$DOMAIN}{uri} permanent
 }
 
-# In-app calls (LiveKit signalling). Remove if you do not run the "calls" profile.
-rtc.{$DOMAIN} {
+# In-app calls (LiveKit signalling). Set RTC_DOMAIN=rtc.<your domain> in .env.production (and a DNS
+# record) when you run the "calls" profile; the default rtc.localhost needs no certificate.
+{$RTC_DOMAIN} {
 	reverse_proxy host.docker.internal:7880
 }

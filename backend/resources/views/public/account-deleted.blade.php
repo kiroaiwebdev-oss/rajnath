@@ -1,4 +1,4 @@
-<x-layouts.public title="Account deleted">
+<x-layouts.public title="Account deleted" robots="noindex,nofollow" :jsonld="false">
     <div class="container-page max-w-2xl py-16">
         <div class="card p-6 sm:p-8" role="status">
             <h1 class="text-2xl">Your account has been deleted</h1>

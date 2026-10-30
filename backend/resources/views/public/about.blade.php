@@ -1,4 +1,4 @@
-<x-layouts.public title="About Acharya Dr. Rajnath Jha" description="Biography, qualifications, awards, research and media work of Acharya Dr. Rajnath Jha, Director, Jyotirveda Vigyan Sansthan, Patna." image="images/owner/portrait-red-480.jpg">
+<x-layouts.public title="About Acharya Dr. Rajnath Jha" description="Biography, qualifications, awards, research and media work of Acharya Dr. Rajnath Jha, Director, Jyotirveda Vigyan Sansthan, Patna." image="images/owner/portrait-red-480.jpg" type="profile" :jsonld="[['@type' => 'ProfilePage', 'url' => route('about'), 'mainEntity' => ['@id' => \App\Support\Seo\JsonLd::id('founder')], 'dateModified' => '2026-10-28'], \App\Support\Seo\JsonLd::breadcrumbs([['About', route('about')]])]">
     <section class="container-page grid gap-10 py-12 lg:grid-cols-[0.8fr_1.2fr]">
         <figure class="mx-auto w-full max-w-sm">
             <x-photo src="images/owner/portrait-red-480.jpg" alt="Acharya Dr. Rajnath Jha" eager class="aspect-[480/640] w-full rounded-[var(--radius-card)] object-cover object-top shadow-[var(--shadow-card)]" />

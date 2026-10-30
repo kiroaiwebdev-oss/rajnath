@@ -4,7 +4,7 @@
     $fmt = function (string $iso, string $date) { $c = \Illuminate\Support\Carbon::parse($iso); return $c->format('Y-m-d') === $date ? $c->format('g:i A') : $c->format('g:i A, d M'); };
     $paksha = fn (array $nums, string $p) => $nums ? $p.' '.implode(', ', $nums) : null;
 @endphp
-<x-layouts.public :title="$rule['name'].' muhurat — '.$month->format('F Y')" :description="$rule['name'].' muhurat dates for '.$month->format('F Y').' in '.$placeLabel.', from the Panchang.'">
+<x-layouts.public :title="$rule['name'].' muhurat — '.$month->format('F Y')" :description="$rule['name'].' muhurat dates for '.$month->format('F Y').' in '.$placeLabel.', from the Panchang.'" :jsonld="[\App\Support\Seo\JsonLd::webApp($rule['name'].' muhurat', __('Free, location-aware, from the Swiss Ephemeris.'), route('muhurat.show', $event)), \App\Support\Seo\JsonLd::breadcrumbs([[$rule['name'].' muhurat', route('muhurat.show', $event)]])]">
     <div class="container-page py-10">
         <nav aria-label="Breadcrumb" class="text-sm text-ink-600"><a href="{{ route('muhurat.index') }}">Shubh Muhurat</a> / <span aria-current="page" class="text-ink-900">{{ $rule['name'] }}</span></nav>
         <h1 class="mt-3 text-3xl">{{ $rule['name'] }} muhurat — {{ $month->format('F Y') }}</h1>
@@ -38,7 +38,7 @@
                     <li class="card p-4">
                         <p class="font-semibold">{{ \Illuminate\Support\Carbon::parse($c['date'])->format('l, d F Y') }}</p>
                         <ul class="mt-1 space-y-0.5 text-sm text-ink-700">@foreach ($c['windows'] as $w)<li>{{ $fmt($w[0], $c['date']) }} – {{ $fmt($w[1], $c['date']) }} <span class="text-xs text-ink-600">({{ $w[2] }}, {{ $w[3] }})</span></li>@endforeach</ul>
-                        <p class="mt-1 text-xs text-ink-600">{{ $f['masa'] }} masa (amanta) · {{ \Illuminate\Support\Str::before($V::VARAS[$f['weekday']], ' (') }}</p>
+                        <p class="mt-1 text-xs text-ink-600">{{ $f['masa'] }} (amanta)@if (($f['masa_purnimanta'] ?? null) && $f['masa_purnimanta'] !== $f['masa']) / {{ $f['masa_purnimanta'] }} (purnimanta)@endif · {{ \Illuminate\Support\Str::before($V::VARAS[$f['weekday']], ' (') }}</p>
                     </li>
                 @endforeach
             </ul>

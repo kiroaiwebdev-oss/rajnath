@@ -7,7 +7,7 @@
     $nextP = $isMoon ? ['month' => $from->addMonth()->format('Y-m')] : ['year' => $from->year + 1];
     $f = $G::FACTS[$planet];
 @endphp
-<x-layouts.public :title="$name.' transit '.$period.' — '.$G::HI[$planet].' गोचर'" :description="$name.' transit '.$period.': sign changes, retrograde and direct dates, and effects for each Moon sign.'">
+<x-layouts.public :title="$name.' transit '.$period.' — '.$G::HI[$planet].' गोचर'" :description="$name.' transit '.$period.': sign changes, retrograde and direct dates, and effects for each Moon sign.'" :jsonld="[\App\Support\Seo\JsonLd::webApp($name.' transit', __('Free, location-aware, from the Swiss Ephemeris.'), route('gochar.planet', $planet)), \App\Support\Seo\JsonLd::breadcrumbs([[$name.' transit', route('gochar.planet', $planet)]])]">
     <div class="container-page py-10">
         <nav aria-label="Breadcrumb" class="text-sm text-ink-600"><a href="{{ route('gochar') }}">Grah Gochar</a> / <span aria-current="page" class="text-ink-900">{{ $name }}</span></nav>
         <h1 class="mt-3 text-3xl">{{ $name }} transit {{ $period }} <span class="text-ink-600" lang="hi">· {{ $G::HI[$planet] }} गोचर</span></h1>

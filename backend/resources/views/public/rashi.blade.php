@@ -11,7 +11,7 @@
     $debil = collect($G::FACTS)->filter(fn ($f) => $f['debil'] === $i)->keys();
     $name = $C::SIGNS_HI[$i].' — '.$V::SIGNS[$i];
 @endphp
-<x-layouts.public :title="$C::SIGNS_HI[$i].' राशि — '.$V::SIGNS[$i]" :description="'Guide to '.$V::SIGNS[$i].': lord, element, nakshatras, current transits and published Rashifal.'">
+<x-layouts.public :title="$C::SIGNS_HI[$i].' राशि — '.$V::SIGNS[$i]" :description="'Guide to '.$V::SIGNS[$i].': lord, element, nakshatras, current transits and published Rashifal.'" :jsonld="[\App\Support\Seo\JsonLd::breadcrumbs([[$V::SIGNS[$i], route('rashi', $C::signSlugs()[$i])]])]">
     <div class="container-page py-10">
         <nav aria-label="Breadcrumb" class="text-sm text-ink-600"><a href="{{ route('rashifal', ['lang' => $locale]) }}">{{ $hi ? 'राशिफल' : 'Rashifal' }}</a> / <span aria-current="page" class="text-ink-900">{{ $name }}</span></nav>
         <h1 class="mt-3 text-3xl">{{ $name }}</h1>

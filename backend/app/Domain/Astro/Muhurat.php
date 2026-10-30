@@ -79,6 +79,7 @@ class Muhurat
                 'angas' => array_map(fn ($list) => array_map(fn ($a) => ['index' => $a['index'], 'name' => $a['name'], 'ends' => $a['ends']], $list), $p['angas']),
                 'sun_sign' => Vedic::sign($c['sun']['lon']),
                 'masa' => $lm ? LunarCalendar::name($lm) : null, 'masa_index' => $lm['masa'] ?? null, 'adhik' => $lm['adhik'] ?? false,
+                'masa_purnimanta' => $lm ? LunarCalendar::purnimantaName($lm, $p['angas']['tithi'][0]['index']) : null,
                 'jupiter_combust' => $sep('jupiter') < self::COMBUST['jupiter'],
                 'venus_combust' => $sep('venus') < ($c['venus']['retro'] ? self::COMBUST['venus_retro'] : self::COMBUST['venus']),
             ];

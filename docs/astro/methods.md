@@ -38,12 +38,13 @@
   - Brahma muhurta = 96 to 48 minutes before sunrise.
 - **Choghadiya:** day (sunrise→sunset) and night (sunset→next sunrise) each in 8 equal parts. Cycle Udveg, Char, Labh, Amrit, Kaal, Shubh, Rog; the day starts with the weekday's entry (Sun Udveg, Mon Amrit, Tue Rog, Wed Labh, Thu Shubh, Fri Char, Sat Kaal) and steps +1, the night starts Sun Shubh, Mon Char, Tue Kaal, Wed Udveg, Thu Amrit, Fri Rog, Sat Labh and steps −2. Amrit, Shubh, Labh good; Char neutral; Udveg, Rog, Kaal avoided.
 - **Hora:** 12 day and 12 night planetary hours (1/12 of each); the first day hora belongs to the weekday lord and each next one follows the Chaldean order Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon (so the next sunrise starts with the next weekday's lord).
-- **Not yet implemented:** purnimanta month names (amanta is used).
+- Lunar months are shown in both systems: amanta and purnimanta (see below).
 
 ## Lunar months (`LunarCalendar`)
 - New and full moons come from the engine (`lunations`: Moon − Sun elongation crossing 0° / 180°, 12-hour scan plus bisection). Checked against published times: full moon 3 Jan 2026 10:03 UT, new moon 18 Jan 2026 19:52 UT.
 - **Amanta** months run new moon to new moon. The name comes from the Sun's sidereal sign at the starting new moon: Sun in Meena → Chaitra, in Mesha → Vaishakha, and so on.
 - A month in which the Sun does not change sign is **Adhik** and takes the following month's name (e.g. Adhik Jyeshtha, 17 May–15 Jun 2026). Kshaya masa is not handled.
+- **Purnimanta** months (used in North India) run full moon to full moon. The Shukla paksha has the same name as amanta; the Krishna paksha (tithi 16–30) takes the next month's name. Example: 29 Oct 2026, Krishna Chaturthi, is Ashwin (amanta) and Kartik (purnimanta). Adhik months keep the amanta name in both systems.
 
 ## Festivals (`Festivals`, `/festivals`, monthly `/calendar`)
 - Lunar festivals: amanta month + tithi (rule table in `Festivals::LUNAR`). Adhik months are skipped. The festival falls on the local day whose observance time lies in the tithi:

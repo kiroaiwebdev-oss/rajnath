@@ -7,8 +7,11 @@ namespace App\Domain\Astro;
  * the new moon that starts it: Sun in Meena → Chaitra, Sun in Mesha → Vaishakha, and so on.
  * A month in which the Sun does not change sign (both bounding new moons have the Sun in the
  * same sign) is Adhik (extra) and takes the name of the month that follows it.
- * Kshaya masa (very rare) is not handled. North Indian purnimanta month names for the Krishna
- * paksha are one month ahead of these amanta names; festival rules in Festivals use amanta names.
+ * Kshaya masa (very rare) is not handled. Festival rules in Festivals use amanta names.
+ *
+ * Purnimanta (North India: Bihar, UP, MP, Rajasthan…): the month runs full moon to full moon,
+ * so the Shukla paksha has the same name as amanta and the Krishna paksha takes the NEXT
+ * month's name (amanta Ashwin Krishna = purnimanta Kartik Krishna). purnimantaName() gives it.
  */
 class LunarCalendar
 {
@@ -57,6 +60,20 @@ class LunarCalendar
         }
 
         return null;
+    }
+
+    /**
+     * Purnimanta name of the paksha containing a tithi (0..29) in amanta month $m.
+     * An adhik month keeps "Adhik" for its own pakshas.
+     */
+    public static function purnimantaName(array $m, int $tithi, string $locale = 'en'): string
+    {
+        if ($tithi < 15 || $m['adhik']) {
+            return self::name($m, $locale);
+        }
+        $next = ['masa' => ($m['masa'] + 1) % 12, 'adhik' => false];
+
+        return self::name($next, $locale);
     }
 
     public static function name(array $m, string $locale = 'en'): string

@@ -1,4 +1,4 @@
-<x-layouts.public title="Design system">
+<x-layouts.public title="Design system" robots="noindex,nofollow" :jsonld="false">
     <div class="container-page space-y-14 py-12">
         <header>
             <p class="eyebrow">Internal reference</p>

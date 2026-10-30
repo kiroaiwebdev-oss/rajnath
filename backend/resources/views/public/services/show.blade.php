@@ -1,4 +1,5 @@
-<x-layouts.public :title="$t->title" :description="$t->meta_description" :image="$o->image_path">
+@php $qa = \App\Support\Seo\JsonLd::serviceQuestions($o); @endphp
+<x-layouts.public :title="$t->title" :description="$t->meta_description ?: $t->summary" :image="$o->image_path" :jsonld="[\App\Support\Seo\JsonLd::service($o), \App\Support\Seo\JsonLd::faq($qa), \App\Support\Seo\JsonLd::breadcrumbs([[__('Services'), route('services.index')], [$o->family->label(), route('services.index', ['family' => $o->family->slug])], [$t->title, route('services.show', $o->slug)]])]">
     <div class="container-page py-10">
         <nav aria-label="Breadcrumb" class="text-sm text-ink-600">
             <ol class="flex flex-wrap gap-1.5">
@@ -31,6 +32,10 @@
                     <ul class="mt-4 list-disc space-y-1.5 pl-5 text-ink-700">@foreach ($t->audience as $a)<li>{{ $a }}</li>@endforeach</ul>
                 @endif
                 @if ($t->exclusions)<h2 class="mt-10 text-xl">{{ __('Not included') }}</h2><p class="mt-3 text-ink-700">{{ $t->exclusions }}</p>@endif
+                <section class="mt-10" aria-labelledby="qa-h">
+                    <h2 id="qa-h" class="text-xl">{{ __('Quick answers') }}</h2>
+                    <dl class="mt-4 space-y-3">@foreach ($qa as [$q, $a])<div class="card p-4"><dt class="font-semibold">{{ $q }}</dt><dd class="mt-1 text-sm text-ink-700">{{ $a }}</dd></div>@endforeach</dl>
+                </section>
                 @if ($t->disclaimer)
                     <p class="mt-10 rounded-2xl border border-gold-200 bg-gold-50 p-4 text-sm text-ink-700"><strong>{{ __('Please note:') }}</strong> {{ $t->disclaimer }}</p>
                 @endif

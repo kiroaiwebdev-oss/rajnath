@@ -12,19 +12,35 @@ sandbox cannot run containers. Run the steps below on the VPS and send me any er
   ```
 - Install Docker Engine and the Compose plugin (docs.docker.com/engine/install/ubuntu).
 
-## 2. First install
+## 2. First install (one command)
 ```bash
 sudo git clone https://github.com/kiroaiwebdev-oss/rajnath.git /opt/arj && cd /opt/arj
-git checkout platform-v1
-cp deploy/.env.production.example deploy/.env.production && chmod 600 deploy/.env.production
-nano deploy/.env.production          # set passwords (long random), DOMAIN
-docker compose -f deploy/docker-compose.yml run --rm app php artisan key:generate --show   # paste into APP_KEY
-deploy/deploy.sh
-docker compose -f deploy/docker-compose.yml exec app php artisan arj:bootstrap-owner you@example.com "Your Name"
+sudo deploy/install.sh astrorajnathjha.com owner@example.com "Acharya Dr. Rajnath Jha"
 ```
-Open the printed link within 30 minutes. Then set up the providers:
-- **Admin → Email & SMS** (SMTP, Twilio or Fast2SMS)
-- **Admin → Payments setup**: Razorpay test keys first. Add the webhook URL shown on that page in the Razorpay dashboard.
+`install.sh` creates `deploy/.env.production` with a new `APP_KEY` and random database passwords,
+builds the images, runs migrations and seeders, starts the site with HTTPS (Caddy gets the
+certificate automatically once DNS points at the server) and prints a one-time owner link.
+Open the link within 30 minutes and set the password and authenticator app.
+
+Everything else is entered in the admin. No file editing is needed:
+- **Admin → Settings**: phone numbers, WhatsApp, email, address, map location, social links, Google/Bing verification codes.
+- **Admin → Email & SMS**: SMTP (or another mail provider) and Twilio / Fast2SMS. Send the test message on that page.
+- **Admin → Payments setup**: Razorpay keys (test first, then live), GSTIN and tax rates, RazorpayX, Shiprocket. Add the webhook URL shown on that page in the Razorpay dashboard.
+- **Admin → Push** (Firebase), **Calling** (LiveKit or Zoom/Meet links), **AI assistant** (optional).
+
+In-app video calls on your own LiveKit server need `RTC_DOMAIN` in `deploy/.env.production`
+(for example `rtc.astrorajnathjha.com` with its own DNS record), then `deploy/deploy.sh`. See `livekit-on-vps.md`.
+More languages: set `SITE_LOCALES=en,hi,bn,…` after the text has been reviewed (see `backend/lang/`).
+
+## 2a. Search engines (SEO / AEO / GEO)
+The site serves `/sitemap.xml` (all public pages, with Hindi alternates), `/robots.txt`,
+`/llms.txt` and `/llms-full.txt` (summaries for AI answer engines), canonical and hreflang tags,
+Open Graph cards, geo tags and schema.org data (LocalBusiness, Person, Service, Product, FAQPage, BreadcrumbList).
+After going live:
+1. Google Search Console: add the domain, paste the verification code in **Admin → Settings**, submit `https://<domain>/sitemap.xml`.
+2. Bing Webmaster Tools: the same, with the Bing code.
+3. Google Business Profile: use exactly the same name, address and phone as **Admin → Settings**.
+4. Test a service page with Google's Rich Results Test.
 
 **APP_KEY warning:** keep a copy of `APP_KEY` in a safe place. Losing it makes saved provider secrets and MFA secrets unreadable.
 

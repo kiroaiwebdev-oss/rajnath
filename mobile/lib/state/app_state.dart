@@ -29,10 +29,29 @@ class AppState extends ChangeNotifier {
 
   bool get signedIn => user != null;
 
+  /// Display names for the languages the server knows (config/locales.php).
+  static const localeNames = {
+    'en': 'English', 'hi': 'हिन्दी', 'bn': 'বাংলা', 'gu': 'ગુજરાતી', 'kn': 'ಕನ್ನಡ',
+    'ml': 'മലയാളം', 'mr': 'मराठी', 'pa': 'ਪੰਜਾਬੀ', 'ta': 'தமிழ்', 'te': 'తెలుగు',
+  };
+
+  /// App language. Null until chosen (the server then uses the account's saved language, else English).
+  String? locale;
+
+  /// Languages offered in the app: `meta.locales` when the server reports them, else English and Hindi.
+  List<String> get enabledLocales {
+    final l = meta?['locales'];
+    final list = l is List ? l.map((e) => e is Map ? '${e['code'] ?? e['key']}' : '$e').where(localeNames.containsKey).toList() : const <String>[];
+    return list.isEmpty ? const ['en', 'hi'] : list;
+  }
+
   Future<void> bootstrap() async {
+    final saved = await api.savedLocale();
+    if (saved != null && localeNames.containsKey(saved)) api.locale = locale = saved;
     if (await api.token() != null) {
       try {
         user = (await api.get('/me'))['data'] as Map<String, dynamic>;
+        if (locale == null && localeNames.containsKey(user?['locale'])) api.locale = locale = '${user!['locale']}';
       } on ApiException catch (e) {
         if (e.status == 401) await api.clearToken();
       }
@@ -69,6 +88,22 @@ class AppState extends ChangeNotifier {
     user = u;
     notifyListeners();
     unawaited(refreshUnread());
+  }
+
+  /// Switches the app language: saved on the device, sent as Accept-Language, and saved to the account when signed in.
+  Future<void> setLocale(String l) async {
+    api.locale = locale = l;
+    notifyListeners();
+    await api.saveLocale(l);
+    if (signedIn) {
+      final r = await api.patch('/me', {'locale': l});
+      if (r['data'] is Map) setUser((r['data'] as Map).cast<String, dynamic>());
+    }
+  }
+
+  void setUser(Map<String, dynamic> u) {
+    user = u;
+    notifyListeners();
   }
 
   Future<void> refreshUser() async {

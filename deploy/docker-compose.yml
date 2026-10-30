@@ -1,6 +1,5 @@
-# VPS stack. Usage (from repository root):
-#   cp deploy/.env.production.example deploy/.env.production   # fill in, keep private
-#   docker compose -f deploy/docker-compose.yml up -d --build
+# VPS stack. First install: deploy/install.sh (see docs/ops/vps-deployment.md). Updates: deploy/deploy.sh
+# deploy/.env is a link to .env.production so ${DOMAIN} etc. below are filled from it.
 # Caddy obtains and renews TLS certificates automatically for $DOMAIN.
 name: arj
 
@@ -14,6 +13,7 @@ x-app: &app
     redis: { condition: service_started }
   volumes:
     - storage:/var/www/backend/storage
+    - uploads:/var/www/backend/public/uploads   # product and astrologer photos survive rebuilds
 
 services:
   app:
@@ -36,10 +36,12 @@ services:
     restart: unless-stopped
     ports: ["80:80", "443:443"]
     environment:
-      DOMAIN: ${DOMAIN:-astrorajnathjha.com}
+      DOMAIN: ${DOMAIN:?set DOMAIN in deploy/.env.production}
+      RTC_DOMAIN: ${RTC_DOMAIN:-rtc.localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - public:/srv/public:ro
+      - uploads:/srv/public/uploads:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on: [app]
@@ -85,8 +87,9 @@ services:
     <<: *app
     restart: "no"
     user: root
+    entrypoint: []
     command: ["sh", "-c", "cp -a /var/www/backend/public/. /srv/public/"]
     volumes:
       - public:/srv/public
 
-volumes: { db: {}, redis: {}, storage: {}, public: {}, caddy_data: {}, caddy_config: {} }
+volumes: { db: {}, redis: {}, storage: {}, uploads: {}, public: {}, caddy_data: {}, caddy_config: {} }

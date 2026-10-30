@@ -1,4 +1,4 @@
-<x-layouts.public title="Privacy policy">
+<x-layouts.public title="Privacy policy" :description="__('How we collect, use, protect and delete your personal data, birth details and payment records.')">
     <article class="container-page max-w-3xl py-12 leading-7">
         <p class="eyebrow">Legal</p>
         <h1 class="mt-2 text-3xl">Privacy policy</h1>

@@ -1,5 +1,5 @@
 @php $R = \App\Domain\Astro\Festivals::RELIGIONS; @endphp
-<x-layouts.public :title="'Festivals and holidays '.$year" :description="'Hindu, Islamic, Christian, Sikh, Jain and Buddhist festival dates for '.$year.' in '.$placeLabel.'.'">
+<x-layouts.public :title="'Festivals and holidays '.$year" :description="'Hindu, Islamic, Christian, Sikh, Jain and Buddhist festival dates for '.$year.' in '.$placeLabel.'.'" :jsonld="[\App\Support\Seo\JsonLd::breadcrumbs([['Festivals and holidays', route('festivals')]])]">
     <div class="container-page py-10">
         <p class="eyebrow">Festivals · त्योहार</p>
         <h1 class="mt-2 text-3xl">Festivals and holidays {{ $year }}</h1>

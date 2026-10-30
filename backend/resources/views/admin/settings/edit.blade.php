@@ -4,7 +4,7 @@
         <div class="grid gap-5 sm:grid-cols-2">
             @foreach ($fields as $key => $f)
                 @php $n = str_replace('.', '__', $key); @endphp
-                <div @class(['sm:col-span-2' => in_array($key, ['contact.address', 'brand.tagline', 'source.repository_url'])])>
+                <div @class(['sm:col-span-2' => in_array($key, ['contact.street', 'brand.tagline', 'source.repository_url'])])>
                     <x-field :name="$n" :label="$f['label']" :value="$values[$key] ?? (config('brand')[$key] ?? null)" />
                 </div>
             @endforeach

@@ -30,7 +30,10 @@ COPY --from=engine /src/engine/ephe engine/ephe
 COPY backend/ backend/
 COPY --from=assets /src/backend/public/build backend/public/build
 WORKDIR /var/www/backend
+COPY deploy/entrypoint.sh /usr/local/bin/arj-entrypoint
 RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader \
- && chown -R www-data:www-data storage bootstrap/cache
+ && mkdir -p public/uploads storage/app/private storage/framework/cache storage/framework/sessions storage/framework/views storage/logs \
+ && chown -R www-data:www-data storage bootstrap/cache public/uploads && chmod +x /usr/local/bin/arj-entrypoint
 USER www-data
+ENTRYPOINT ["arj-entrypoint"]
 CMD ["php-fpm"]

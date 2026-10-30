@@ -5,6 +5,7 @@ import '../api/api_client.dart';
 import '../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import '../widgets/tool_display.dart';
 
 const planetNames = {'sun': 'Sun', 'moon': 'Moon', 'mars': 'Mars', 'mercury': 'Mercury', 'jupiter': 'Jupiter', 'venus': 'Venus', 'saturn': 'Saturn', 'rahu': 'Rahu', 'ketu': 'Ketu'};
 
@@ -44,6 +45,18 @@ class PlaceField extends StatelessWidget {
 }
 
 class BirthInput {
+  BirthInput();
+
+  /// Prefilled from a saved birth profile (GET /birth-profiles).
+  factory BirthInput.fromProfile(Map p) {
+    final i = BirthInput()..date = DateTime.tryParse('${p['birth_date'] ?? ''}');
+    final t = RegExp(r'^(\d{1,2}):(\d{2})').firstMatch('${p['birth_time'] ?? ''}');
+    if (t != null) i.time = TimeOfDay(hour: int.parse(t[1]!), minute: int.parse(t[2]!));
+    final place = p['place'];
+    if (place is Map && place['id'] != null) i.place = {'id': place['id'], 'label': place['label']};
+    return i;
+  }
+
   DateTime? date;
   TimeOfDay? time;
   Map<String, dynamic>? place;
@@ -88,7 +101,7 @@ class _BirthFieldsState extends State<BirthFields> {
         },
       ),
       const SizedBox(height: 8),
-      PlaceField(api: widget.api, onSelected: (p) => setState(() => i.place = p)),
+      PlaceField(api: widget.api, initial: i.place == null ? null : '${i.place!['label'] ?? ''}', onSelected: (p) => setState(() => i.place = p)),
     ]);
   }
 }
@@ -138,6 +151,13 @@ class _KundliScreenState extends State<KundliScreen> {
           if (_error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
           if (r != null && !widget.matching) ..._kundli(context, r['chart'] as Map),
           if (r != null && widget.matching) ..._match(context, r),
+          if (r != null && r['display'] is Map)
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('All details'),
+              subtitle: Text(widget.matching ? 'Koota table and Manglik check' : 'Navamsa, Manglik check and full tables'),
+              children: [ToolDisplayView(r['display'] as Map)],
+            ),
         ]),
       ),
     );
@@ -172,6 +192,23 @@ class _KundliScreenState extends State<KundliScreen> {
       const Text('Guna milan is one traditional input; exceptions and the full charts should be reviewed by an astrologer.', style: TextStyle(fontSize: 12, color: ArjColors.ink600)),
     ];
   }
+}
+
+/// "Kartika (amanta) · Margashirsha (purnimanta)" from Panchang's `masa` map, or a plain
+/// month name from a string. Null when there is nothing to show.
+String? lunarMonthText(Object? masa, [Object? purnimanta]) {
+  String? amanta, purni;
+  if (masa is Map) {
+    amanta = masa['amanta'] == null ? null : '${masa['amanta']}';
+    purni = masa['purnimanta'] == null ? null : '${masa['purnimanta']}';
+  } else if (masa != null && '$masa'.isNotEmpty) {
+    amanta = '$masa';
+    purni = purnimanta == null ? null : '$purnimanta';
+  }
+  if (amanta == null) return null;
+  final a = amanta; // the server already prefixes "Adhik"
+  if (purni == null || purni == amanta) return masa is Map ? 'Lunar month: $a' : a;
+  return '${masa is Map ? 'Lunar month: ' : ''}$a (amanta) · $purni (purnimanta)';
 }
 
 class PanchangScreen extends StatefulWidget {
@@ -229,6 +266,7 @@ class _PanchangScreenState extends State<PanchangScreen> {
               builder: (context, p, _) => ListView(padding: const EdgeInsets.all(16), children: [
                 if (p['polar'] == true) Text('${p['polar_note']}'),
                 Text('${p['vara']}', style: Theme.of(context).textTheme.titleLarge),
+                if (lunarMonthText(p['masa']) != null) Text(lunarMonthText(p['masa'])!),
                 Text('Times shown in the place\'s local time (UTC${p['place']['utc_offset']}).', style: const TextStyle(color: ArjColors.ink600, fontSize: 12)),
                 const SectionTitle('Sun & Moon'),
                 Wrap(spacing: 16, runSpacing: 8, children: [

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Astro\PanchangService;
+use App\Domain\Astro\ToolDisplay;
 use App\Domain\Astro\Tools;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,9 @@ class ToolApiController extends Controller
         }
         $in = $request->validate(Tools::rules(Tools::TOOLS[$slug][1]));
         try {
-            return response()->json(['data' => $tools->compute($slug, $in)]);
+            $r = $tools->compute($slug, $in);
+
+            return response()->json(['data' => $r + ['display' => ToolDisplay::for($r)]]);
         } catch (RuntimeException $e) {
             report($e);
 

@@ -1,4 +1,4 @@
-<x-layouts.public title="Questions & answers" description="Answers to common questions about consultations, birth details, languages, timings, remedies and privacy.">
+<x-layouts.public :title="__('Questions & answers')" :description="__('Answers to common questions about consultations, birth details, languages, timings, remedies and privacy.')" :jsonld="[\App\Support\Seo\JsonLd::faq($faqs->map(fn ($f) => [$f->question, $f->answer])), \App\Support\Seo\JsonLd::breadcrumbs([[__('Questions & answers'), route('faq')]])]">
     <div class="container-page max-w-3xl py-12">
         <p class="eyebrow">Help</p>
         <h1 class="mt-2 text-3xl">Questions & answers</h1>

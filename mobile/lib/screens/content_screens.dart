@@ -416,7 +416,8 @@ class _MuhuratDetailScreenState extends State<MuhuratDetailScreen> {
                           padding: const EdgeInsets.all(16),
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Text(_date(d['date'], 'EEE, d MMM yyyy'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                            if (d['masa'] != null) Text('${d['masa']}', style: const TextStyle(color: ArjColors.ink600)),
+                            if (lunarMonthText(d['masa'], d['masa_purnimanta']) != null)
+                              Text(lunarMonthText(d['masa'], d['masa_purnimanta'])!, style: const TextStyle(color: ArjColors.ink600)),
                             const SizedBox(height: 6),
                             for (final w in ((d['windows'] as List?) ?? const []).whereType<Map>())
                               Padding(
@@ -454,6 +455,9 @@ class _FestivalsScreenState extends State<FestivalsScreen> {
   int _year = DateTime.now().year;
   String? _religion;
 
+  /// Chosen city; null uses the server default (Patna).
+  Map<String, dynamic>? _place;
+
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const Text('Festivals')),
@@ -463,10 +467,14 @@ class _FestivalsScreenState extends State<FestivalsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: PeriodStepper(label: '$_year', onPrevious: () => setState(() => _year--), onNext: () => setState(() => _year++)),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: PlaceField(api: widget.state.api, labelText: 'City', initial: _place == null ? null : '${_place!['label']}', onSelected: (p) => setState(() => _place = p)),
+            ),
             Expanded(
               child: AsyncView<Map<String, dynamic>>(
-                key: ValueKey('$_year|$_religion'),
-                load: () => widget.state.api.get('/festivals', query: {'year': _year, 'religion': ?_religion}),
+                key: ValueKey('$_year|$_religion|${_place?['id']}'),
+                load: () => widget.state.api.get('/festivals', query: {'year': _year, 'religion': ?_religion, 'place_id': ?_place?['id']}),
                 builder: (context, r, _) {
                   final meta = (r['meta'] as Map?) ?? const {};
                   final religions = ((meta['religions'] as Map?) ?? const {}).map((k, v) => MapEntry('$k', '$v'));

@@ -6,6 +6,7 @@ use App\Domain\Identity\CustomerAuth;
 use App\Domain\Identity\Otp\OtpException;
 use App\Domain\Identity\Otp\OtpService;
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\SetLocale;
 use App\Models\BirthProfile;
 use App\Models\Enquiry;
 use App\Models\User;
@@ -55,7 +56,7 @@ class AccountController extends Controller
         $u = $request->user();
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'locale' => ['required', Rule::in(['en', 'hi'])],
+            'locale' => ['required', Rule::in(SetLocale::enabled())],
             'prefs' => ['array'],
             'prefs.*' => ['in:1'],
         ]);

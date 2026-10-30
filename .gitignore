@@ -3,3 +3,4 @@
 *.keystore
 key.properties
 .env
+deploy/.env.production

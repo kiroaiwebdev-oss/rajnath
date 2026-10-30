@@ -1,4 +1,4 @@
-<x-layouts.public title="Terms of use">
+<x-layouts.public title="Terms of use" :description="__('Terms for consultations, reports, puja, gem purchases, payments, refunds and use of this website and app.')">
     <article class="container-page max-w-3xl py-12 leading-7">
         <p class="eyebrow">Legal</p>
         <h1 class="mt-2 text-3xl">Terms of use</h1>

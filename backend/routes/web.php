@@ -3,6 +3,7 @@
 use App\Domain\Astro\Gochar;
 use App\Domain\Astro\Muhurat;
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\FileLinkController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\ProviderWebhookController;
 use App\Http\Controllers\RazorpayWebhookController;
@@ -44,6 +45,10 @@ Route::view('/privacy', 'public.privacy')->name('privacy');
 Route::view('/terms', 'public.terms')->name('terms');
 Route::view('/offline', 'public.offline')->name('offline');
 Route::view('/design-system', 'public.design-system')->name('design-system');
+Route::get('/sitemap.xml', [Web\SeoController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [Web\SeoController::class, 'robots'])->name('robots');
+Route::get('/llms.txt', [Web\SeoController::class, 'llms'])->name('llms');
+Route::get('/llms-full.txt', [Web\SeoController::class, 'llmsFull'])->name('llms.full');
 Route::get('/manifest.webmanifest', [Web\SiteController::class, 'manifest'])->name('manifest');
 Route::get('/places/search', [Web\SiteController::class, 'places'])->middleware('throttle:places')->name('places.search');
 Route::get('/ready', [HealthController::class, 'ready'])->name('ready');
@@ -124,6 +129,8 @@ Route::middleware('customer')->prefix('checkout')->name('checkout.')->group(func
     Route::post('{ref}/cancel', [Web\PaymentController::class, 'cancel'])->name('cancel');
 });
 Route::post('/webhooks/razorpay', RazorpayWebhookController::class)->withoutMiddleware([ValidateCsrfToken::class])->name('webhooks.razorpay');
+Route::get('/files/{kind}/{ref}', FileLinkController::class)->whereIn('kind', FileLinkController::KINDS)
+    ->middleware(['signed', 'throttle:60,1'])->name('files.show');
 Route::post('/webhooks/razorpayx', [ProviderWebhookController::class, 'razorpayx'])->withoutMiddleware([ValidateCsrfToken::class])->middleware('throttle:60,1')->name('webhooks.razorpayx');
 Route::post('/webhooks/courier-tracking', [ProviderWebhookController::class, 'courier'])->withoutMiddleware([ValidateCsrfToken::class])->middleware('throttle:120,1')->name('webhooks.courier');
 

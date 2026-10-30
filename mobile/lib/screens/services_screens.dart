@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../api/api_client.dart';
 import '../models/slots.dart';
@@ -17,23 +18,24 @@ class ServicesScreen extends StatefulWidget {
 
 class _ServicesScreenState extends State<ServicesScreen> {
   String _q = '';
-  String? _family;
+  String? _family, _mode;
   final _key = GlobalKey();
 
   Future<Map<String, dynamic>> _load() async {
     final fams = await widget.state.api.get('/catalogue/families');
-    final list = await widget.state.api.get('/catalogue/offerings', query: {if (_q.isNotEmpty) 'q': _q, if (_family != null) 'family': _family});
-    return {'families': fams['data'], 'items': list['data']};
+    final list = await widget.state.api.get('/catalogue/offerings', query: {if (_q.isNotEmpty) 'q': _q, if (_family != null) 'family': _family, if (_mode != null) 'mode': _mode});
+    return {'families': fams['data'], 'modes': (fams['meta'] as Map?)?['modes'] ?? const [], 'items': list['data']};
   }
 
   @override
   Widget build(BuildContext context) {
     return AsyncView<Map<String, dynamic>>(
-      key: ValueKey('$_q|$_family|$_key'),
+      key: ValueKey('$_q|$_family|$_mode|$_key'),
       load: _load,
       builder: (context, d, reload) {
         final items = (d['items'] as List).cast<Map>();
         final fams = (d['families'] as List).cast<Map>();
+        final modes = (d['modes'] as List).whereType<Map>().toList();
         return ListView(padding: const EdgeInsets.all(16), children: [
           Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -52,6 +54,15 @@ class _ServicesScreenState extends State<ServicesScreen> {
             ChoiceChip(label: const Text('All'), selected: _family == null, onSelected: (_) => setState(() => _family = null)),
             for (final f in fams) ChoiceChip(label: Text('${f['name']}'), selected: _family == f['slug'], onSelected: (_) => setState(() => _family = '${f['slug']}')),
           ]),
+          if (modes.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text('How would you like it?', style: TextStyle(color: ArjColors.ink600)),
+            const SizedBox(height: 6),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              ChoiceChip(label: const Text('Any mode'), selected: _mode == null, onSelected: (_) => setState(() => _mode = null)),
+              for (final m in modes) ChoiceChip(label: Text('${m['label']}'), selected: _mode == m['key'], onSelected: (_) => setState(() => _mode = '${m['key']}')),
+            ]),
+          ],
           const SizedBox(height: 12),
           if (items.isEmpty) const Padding(padding: EdgeInsets.all(24), child: Text('No services match.', textAlign: TextAlign.center)),
           for (final o in items)
@@ -170,12 +181,21 @@ class _RequestScreenState extends State<RequestScreen> {
   late final _phone = TextEditingController(text: '${widget.state.user?['phone'] ?? ''}');
   final _msg = TextEditingController();
   bool _consent = false, _busy = false;
+  String? _mode, _language;
+  DateTime? _date;
   Map<String, String> _errors = {};
+
+  /// Same modes and languages the server accepts (OfferingVariant::MODES, EnquiryApiController).
+  static const modes = {'video': 'Video call', 'audio': 'Audio call', 'chat': 'Chat', 'in_person': 'In person (Patna office)', 'written': 'Written answer', 'report': 'Report', 'onsite': 'On-site visit', 'puja': 'Puja'};
+  static const languages = ['Hindi', 'Maithili', 'Sanskrit', 'English'];
 
   Future<void> _submit() async {
     setState(() { _busy = true; _errors = {}; });
     try {
-      final r = await widget.state.api.post('/enquiries', {'offering': widget.slug, 'name': _name.text.trim(), 'phone': _phone.text.trim(), 'message': _msg.text.trim(), 'consent': _consent});
+      final r = await widget.state.api.post('/enquiries', {
+        'offering': widget.slug, 'name': _name.text.trim(), 'phone': _phone.text.trim(), 'message': _msg.text.trim(), 'consent': _consent,
+        'mode': ?_mode, 'language': ?_language, if (_date != null) 'preferred_date': DateFormat('yyyy-MM-dd').format(_date!),
+      });
       if (!mounted) return;
       await showDialog<void>(context: context, builder: (_) => AlertDialog(title: const Text('Request received'),
           content: Text('Thank you. Our team will call you to confirm. Reference ${('${r['data']['ref']}').substring(18)}.'), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))]));
@@ -198,6 +218,31 @@ class _RequestScreenState extends State<RequestScreen> {
             const SizedBox(height: 12),
             TextField(controller: _phone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: 'Mobile number', errorText: _errors['phone'])),
             const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _mode,
+              decoration: InputDecoration(labelText: 'Preferred mode (optional)', errorText: _errors['mode']),
+              items: [for (final e in modes.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
+              onChanged: (v) => setState(() => _mode = v),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _language,
+              decoration: InputDecoration(labelText: 'Language (optional)', errorText: _errors['language']),
+              items: [for (final l in languages) DropdownMenuItem(value: l, child: Text(l))],
+              onChanged: (v) => setState(() => _language = v),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.event_outlined),
+              title: Text(_date == null ? 'Preferred date (optional)' : DateFormat('EEE, d MMM yyyy').format(_date!)),
+              subtitle: _errors['preferred_date'] != null ? Text(_errors['preferred_date']!, style: TextStyle(color: Theme.of(context).colorScheme.error)) : null,
+              trailing: _date == null ? null : IconButton(tooltip: 'Clear date', onPressed: () => setState(() => _date = null), icon: const Icon(Icons.clear)),
+              onTap: () async {
+                final now = DateTime.now();
+                final d = await showDatePicker(context: context, firstDate: DateTime(now.year, now.month, now.day), lastDate: now.add(const Duration(days: 365)), initialDate: _date ?? now);
+                if (d != null) setState(() => _date = d);
+              },
+            ),
             TextField(controller: _msg, maxLines: 3, decoration: const InputDecoration(labelText: 'Your question (optional)')),
             CheckboxListTile(contentPadding: EdgeInsets.zero, value: _consent, controlAffinity: ListTileControlAffinity.leading, onChanged: (v) => setState(() => _consent = v ?? false),
                 title: const Text('I agree to be contacted about this request'), subtitle: _errors['consent'] != null ? Text(_errors['consent']!, style: TextStyle(color: Theme.of(context).colorScheme.error)) : null),

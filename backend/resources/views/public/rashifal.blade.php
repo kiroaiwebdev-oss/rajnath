@@ -8,7 +8,7 @@
     $heading = $L($T::KINDS[$kind]).' — '.$L($T::PERIODS[$period]).($topic !== 'general' ? ' · '.$L($T::TOPICS[$topic]) : '').($year ? ' '.$year : '');
     $slugs = \App\Http\Controllers\Web\ContentController::signSlugs();
 @endphp
-<x-layouts.public :title="$hi ? 'राशिफल' : 'Horoscope'" description="Daily, weekly, monthly, half-yearly and yearly Rashifal; love, career, finance, health and education; nakshatra, Chinese, numerology and tarot — written and reviewed by Acharya Dr. Rajnath Jha's team.">
+<x-layouts.public :title="$hi ? 'राशिफल' : 'Horoscope'" description="Daily, weekly, monthly, half-yearly and yearly Rashifal; love, career, finance, health and education; nakshatra, Chinese, numerology and tarot — written and reviewed by Acharya Dr. Rajnath Jha's team." :jsonld="[\App\Support\Seo\JsonLd::breadcrumbs([['Rashifal', route('rashifal')]])]">
     <div class="container-page py-10" lang="{{ $locale }}">
         <p class="eyebrow">{{ $hi ? 'राशिफल' : 'Horoscope' }}</p>
         <h1 class="mt-2 text-3xl">{{ $heading }}</h1>

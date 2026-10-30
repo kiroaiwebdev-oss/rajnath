@@ -1,5 +1,5 @@
 @php $t = fn ($iso) => $iso ? \Illuminate\Support\Carbon::parse($iso)->format(\Illuminate\Support\Carbon::parse($iso)->format('Y-m-d') === $date ? 'g:i A' : 'g:i A, d M') : '—'; @endphp
-<x-layouts.public title="Panchang" description="Daily Panchang: tithi, nakshatra, yoga, karana, sunrise, sunset, Rahu Kaal for your city.">
+<x-layouts.public title="Panchang" description="Daily Panchang: tithi, nakshatra, yoga, karana, sunrise, sunset, Rahu Kaal for your city." :jsonld="[\App\Support\Seo\JsonLd::webApp('Panchang', __('Free, location-aware, from the Swiss Ephemeris.'), route('panchang')), \App\Support\Seo\JsonLd::breadcrumbs([['Panchang', route('panchang')]])]">
     <div class="container-page py-10">
         <p class="eyebrow">Daily Panchang</p>
         <h1 class="mt-2 text-3xl">{{ \Illuminate\Support\Carbon::parse($date)->format('l, d F Y') }}</h1>
@@ -33,6 +33,7 @@
                     <h2 id="ang-h" class="text-lg">Panchang</h2>
                     <dl class="mt-3 divide-y divide-ink-200/60 text-sm">
                         <div class="flex justify-between gap-3 py-2"><dt class="text-ink-600">Vara</dt><dd class="font-medium">{{ $p['vara'] }}</dd></div>
+                        @if ($p['masa'] ?? null)<div class="flex justify-between gap-3 py-2"><dt class="text-ink-600">Lunar month</dt><dd class="text-right font-medium">{{ $p['masa']['purnimanta'] }} <span class="font-normal text-ink-600">(purnimanta, North India)</span>@if ($p['masa']['amanta'] !== $p['masa']['purnimanta'])<span class="block">{{ $p['masa']['amanta'] }} <span class="font-normal text-ink-600">(amanta)</span></span>@endif</dd></div>@endif
                         @foreach (['tithi' => 'Tithi', 'nakshatra' => 'Nakshatra', 'yoga' => 'Yoga', 'karana' => 'Karana'] as $k => $l)
                             <div class="py-2"><dt class="text-ink-600">{{ $l }}</dt>
                                 <dd class="mt-1 space-y-0.5">@foreach ($p['angas'][$k] as $a)<p><span class="font-medium">{{ $a['name'] }}</span>{{ $a['ends'] ? ' until '.$t($a['ends']) : ' (to next sunrise)' }}</p>@endforeach</dd></div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\AccountController;
+use App\Http\Middleware\SetLocale;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
 use Illuminate\Http\JsonResponse;
@@ -32,7 +33,7 @@ class MeController extends Controller
     {
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:120'],
-            'locale' => ['sometimes', Rule::in(['en', 'hi'])],
+            'locale' => ['sometimes', Rule::in(SetLocale::enabled())],
             'notification_prefs' => ['sometimes', 'array'],
             'notification_prefs.*' => ['boolean'],
         ]);

@@ -6,6 +6,7 @@ use App\Domain\Notify\Fcm;
 use App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Web\AssistantController;
 use App\Http\Controllers\Web\CallController;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Support\Facades\Route;
 
 // Versioned API shared by the Flutter app. Docs: docs/api/openapi.yaml
@@ -17,6 +18,7 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         'source_code_url' => config('brand')['source.repository_url'],
         'push' => ($fb = app(Fcm::class)->clientConfig()) ? ['firebase' => $fb] : null,
         'assistant' => ['enabled' => app(Assistant::class)->enabled()],
+        'locales' => SetLocale::enabled(),
     ]))->name('api.v1.meta');
     Route::get('store/products', [V1\CommerceController::class, 'products']);
     Route::get('store/products/{slug}', [V1\CommerceController::class, 'productShow']);
@@ -36,6 +38,8 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
     Route::get('tools', fn () => response()->json(['data' => collect(Tools::TOOLS)->map(fn ($t, $k) => ['slug' => $k, 'title' => $t[0], 'input' => $t[1], 'kind' => $t[2], 'description' => $t[3]])->values()]));
     Route::post('tools/{slug}', [V1\ToolApiController::class, 'compute'])->middleware('throttle:tools');
     Route::get('panchang', [V1\ToolApiController::class, 'panchang'])->middleware('throttle:tools');
+    Route::get('faq', [V1\ContentApiController::class, 'faq']);
+    Route::get('site', [V1\ContentApiController::class, 'site']);
     Route::get('horoscopes/types', [V1\ContentApiController::class, 'horoscopeTypes']);
     Route::get('horoscopes', [V1\ContentApiController::class, 'horoscopes']);
     Route::middleware('throttle:tools')->group(function () {
@@ -44,6 +48,9 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('muhurat', [V1\ContentApiController::class, 'muhuratEvents']);
         Route::get('muhurat/{event}', [V1\ContentApiController::class, 'muhurat']);
         Route::get('festivals', [V1\ContentApiController::class, 'festivals']);
+        Route::get('calendar', [V1\ContentApiController::class, 'calendar']);
+        Route::get('rashi/{sign}', [V1\ContentApiController::class, 'rashi']);
+        Route::get('navagraha', [V1\ContentApiController::class, 'navagraha']);
     });
 
     Route::middleware(['auth:sanctum', 'ability:customer', 'customer.api'])->group(function () {
@@ -98,6 +105,22 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('practitioner-applications', [V1\ApplicationApiController::class, 'index']);
         Route::post('practitioner-applications', [V1\ApplicationApiController::class, 'store'])->middleware('throttle:checkout');
         Route::post('practitioner-applications/{ref}/withdraw', [V1\ApplicationApiController::class, 'withdraw']);
+        Route::get('support', [V1\AccountApiController::class, 'tickets']);
+        Route::get('support/{ref}', [V1\AccountApiController::class, 'showTicket']);
+        Route::get('privacy', [V1\AccountApiController::class, 'privacy']);
+        Route::middleware('throttle:checkout')->group(function () {
+            Route::post('support', [V1\AccountApiController::class, 'openTicket']);
+            Route::post('support/{ref}/reply', [V1\AccountApiController::class, 'replyTicket']);
+            Route::post('support/{ref}/close', [V1\AccountApiController::class, 'closeTicket']);
+            Route::post('me/sign-out-others', [V1\AccountApiController::class, 'signOutOthers']);
+            Route::post('privacy/export', [V1\AccountApiController::class, 'export']);
+            Route::post('privacy/delete', [V1\AccountApiController::class, 'destroy']);
+        });
+        Route::middleware('throttle:otp')->group(function () {
+            Route::post('me/contact', [V1\AccountApiController::class, 'startContactChange']);
+            Route::post('me/contact/confirm', [V1\AccountApiController::class, 'confirmContactChange']);
+            Route::post('privacy/code', [V1\AccountApiController::class, 'privacyCode']);
+        });
         Route::post('assistant/chat', [AssistantController::class, 'chat'])->middleware('throttle:assistant');
     });
 });

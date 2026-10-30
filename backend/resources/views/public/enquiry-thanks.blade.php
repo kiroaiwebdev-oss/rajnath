@@ -1,4 +1,4 @@
-<x-layouts.public title="Request received">
+<x-layouts.public title="Request received" robots="noindex,nofollow" :jsonld="false">
     <div class="container-page max-w-2xl py-16">
         <div class="card p-6 text-center sm:p-10" role="status">
             <span aria-hidden="true" class="mx-auto grid size-14 place-items-center rounded-full bg-green-50 text-2xl text-success-700 ring-1 ring-green-200">✓</span>

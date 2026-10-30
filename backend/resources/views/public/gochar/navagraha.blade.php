@@ -1,5 +1,5 @@
 @php $V = \App\Domain\Astro\Vedic::class; $G = \App\Domain\Astro\Gochar::class; $S = fn ($i) => \Illuminate\Support\Str::before($V::SIGNS[$i], ' ('); @endphp
-<x-layouts.public title="Navagraha — the nine planets" description="Guide to the nine planets of Vedic astrology: what each signifies, signs ruled, exaltation, nakshatras, dasha years, day and gemstone.">
+<x-layouts.public title="Navagraha — the nine planets" description="Guide to the nine planets of Vedic astrology: what each signifies, signs ruled, exaltation, nakshatras, dasha years, day and gemstone." :jsonld="[\App\Support\Seo\JsonLd::breadcrumbs([['Navagraha', route('navagraha')]])]">
     <div class="container-page py-10">
         <p class="eyebrow">Navagraha · नवग्रह</p>
         <h1 class="mt-2 text-3xl">The nine planets</h1>

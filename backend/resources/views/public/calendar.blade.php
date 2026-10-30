@@ -1,4 +1,4 @@
-<x-layouts.public title="Vrat calendar" description="Monthly vrat and festival calendar: Ekadashi, Pradosh, Purnima, Amavasya, Chaturthi, Sankranti and major festivals for your city.">
+<x-layouts.public title="Vrat calendar" description="Monthly vrat and festival calendar: Ekadashi, Pradosh, Purnima, Amavasya, Chaturthi, Sankranti and major festivals for your city." :jsonld="[\App\Support\Seo\JsonLd::webApp('Vrat calendar', __('Free, location-aware, from the Swiss Ephemeris.'), route('calendar')), \App\Support\Seo\JsonLd::breadcrumbs([['Vrat calendar', route('calendar')]])]">
     <div class="container-page py-10">
         <p class="eyebrow">Calendar</p>
         <h1 class="mt-2 text-3xl">{{ $month->format('F Y') }} — vrat and festival dates</h1>

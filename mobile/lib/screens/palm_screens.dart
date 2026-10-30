@@ -9,6 +9,7 @@ import '../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../util/validators.dart';
 import '../widgets/common.dart';
+import 'activity_screens.dart';
 
 class PalmListScreen extends StatelessWidget {
   const PalmListScreen({super.key, required this.state});
@@ -30,7 +31,15 @@ class PalmListScreen extends StatelessWidget {
                     leading: const Icon(Icons.back_hand_outlined),
                     title: const Text('Palm reading'),
                     subtitle: Padding(padding: const EdgeInsets.only(top: 4), child: Row(children: [StatusChip(p['status'])])),
-                    trailing: const Icon(Icons.chevron_right, semanticLabel: 'Open'),
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      if (p['pdf_url'] != null)
+                        IconButton(
+                          tooltip: 'Download PDF',
+                          icon: const Icon(Icons.picture_as_pdf_outlined),
+                          onPressed: () => openFreshLink(context, () => freshPdfUrl(state, '/palmistry/${p['ref']}')),
+                        ),
+                      const Icon(Icons.chevron_right, semanticLabel: 'Open'),
+                    ]),
                     onTap: () async {
                       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PalmDetailScreen(state: state, ref: '${p['ref']}')));
                       await reload();
@@ -80,6 +89,7 @@ class _PalmDetailScreenState extends State<PalmDetailScreen> {
                 ),
               if (p['status'] == 'completed') ...[
                 if (p['completed_at'] != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text('Completed ${formatWhen(p['completed_at'], pattern: 'd MMM yyyy')}', style: const TextStyle(color: ArjColors.ink600))),
+                if (p['pdf_url'] != null) Padding(padding: const EdgeInsets.only(top: 12), child: Align(alignment: Alignment.centerLeft, child: pdfButton(context, widget.state, '/palmistry/${widget.ref}'))),
                 SectionsView((p['sections'] as List?) ?? const []),
               ],
               if (p['can_upload'] == true) PalmUploadForm(state: widget.state, ref: widget.ref, onDone: () => setState(() => _v++)),

@@ -1,5 +1,5 @@
 @php [$title, $input, $kind, $desc] = $tool; $r = $result; @endphp
-<x-layouts.public :title="$title" :description="$desc">
+<x-layouts.public :title="$title" :description="$desc.' '.__('Free, instant, by Acharya Dr. Rajnath Jha.')" :jsonld="[\App\Support\Seo\JsonLd::webApp($title, $desc, route('tools.show', $slug)), \App\Support\Seo\JsonLd::breadcrumbs([[__('Free calculators'), route('tools.index')], [$title, route('tools.show', $slug)]])]">
     <div class="container-page py-10">
         <nav aria-label="Breadcrumb" class="text-sm text-ink-600"><a href="{{ route('tools.index') }}">Calculators</a> / <span class="text-ink-900">{{ $title }}</span></nav>
         <div class="mt-4 flex flex-wrap items-center gap-3"><h1 class="text-3xl">{{ $title }}</h1><span class="badge-ink">{{ $kind }}</span></div>

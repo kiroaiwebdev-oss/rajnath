@@ -6,10 +6,12 @@ use App\Domain\Astro\Festivals;
 use App\Domain\Astro\Gochar;
 use App\Domain\Astro\Muhurat;
 use App\Domain\Astro\Vedic;
+use App\Domain\Astro\VratCalendar;
 use App\Domain\Content\HoroscopeTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\ContentController;
 use App\Http\Controllers\Web\JyotishController;
+use App\Support\Business;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -123,7 +125,7 @@ class ContentApiController extends Controller
             return $this->engineDown($e);
         }
 
-        return response()->json(['data' => collect(Muhurat::candidates($event, $facts))->map(fn ($c) => ['date' => $c['date'], 'masa' => $c['facts']['masa'],
+        return response()->json(['data' => collect(Muhurat::candidates($event, $facts))->map(fn ($c) => ['date' => $c['date'], 'masa' => $c['facts']['masa'], 'masa_purnimanta' => $c['facts']['masa_purnimanta'] ?? $c['facts']['masa'],
             'windows' => array_map(fn ($w) => ['start' => $w[0], 'end' => $w[1], 'tithi' => $w[2], 'nakshatra' => $w[3]], $c['windows'])])->values(),
             'meta' => ['event' => $event, 'name' => Muhurat::EVENTS[$event]['name'], 'month' => $month->format('Y-m'), 'place' => ['id' => $place->id, 'name' => $place->name],
                 'note' => 'Dates follow the Panchang rules for this ceremony. Confirm the final muhurat with Acharya Ji.']]);
@@ -141,5 +143,90 @@ class ContentApiController extends Controller
 
         return response()->json(['data' => $list->when($d['religion'] ?? null, fn ($c, $r) => $c->where('religion', $r))->values(),
             'meta' => ['religions' => Festivals::RELIGIONS, 'place' => ['id' => $place->id, 'name' => $place->name]]]);
+    }
+
+    /** Monthly vrat and festival calendar (same data as /calendar). */
+    public function calendar(Request $request, VratCalendar $cal, Festivals $festivals): JsonResponse
+    {
+        $d = $request->validate(['month' => ['nullable', 'date_format:Y-m'], 'place_id' => ['nullable', 'integer', 'exists:places,id']]);
+        $place = JyotishController::place($d['place_id'] ?? null);
+        $month = CarbonImmutable::parse(($d['month'] ?? now($place->tz_name)->format('Y-m')).'-01');
+        if ($month->year < 1900 || $month->year > 2100) {
+            return AuthController::error('out_of_range', 'Choose a month between 1900 and 2100.', 422);
+        }
+        try {
+            $days = Cache::remember('vrat:'.$month->format('Y-m').':'.($place->id ?? 'patna'), now()->addDays(30), fn () => $cal->month($month->year, $month->month, (float) $place->lat, (float) $place->lng, $place->tz_name));
+            foreach (ContentController::festivalYear($festivals, $month->year, $place) as $f) {
+                if (isset($days[$f['date']])) {
+                    $days[$f['date']]['events'][] = $f['name'].($f['religion'] !== 'hindu' ? ' ('.Festivals::RELIGIONS[$f['religion']].')' : '');
+                }
+            }
+        } catch (RuntimeException $e) {
+            return $this->engineDown($e);
+        }
+
+        return response()->json(['data' => collect($days)->map(fn ($x, $date) => ['date' => $date, 'tithi' => $x['tithi'], 'nakshatra' => $x['nakshatra'], 'events' => $x['events']])->values(),
+            'meta' => ['month' => $month->format('Y-m'), 'place' => ['id' => $place->id, 'name' => $place->name]]]);
+    }
+
+    /** Zodiac sign guide (same as /rashi/{sign}). */
+    public function rashi(Request $request, string $sign, Gochar $gochar): JsonResponse
+    {
+        $i = array_search($sign, ContentController::signSlugs(), true);
+        abort_if($i === false, 404);
+        $locale = $request->query('lang') === 'en' ? 'en' : 'hi';
+        $today = now('Asia/Kolkata')->toDateString();
+        try {
+            $now = Cache::remember('gochar:now:'.now()->format('YmdH'), 3600, fn () => $gochar->now());
+        } catch (RuntimeException $e) {
+            return $this->engineDown($e);
+        }
+        $lord = Vedic::SIGN_LORDS[$i];
+        $elements = ['Fire', 'Earth', 'Air', 'Water'];
+        $qualities = ['Movable (chara)', 'Fixed (sthira)', 'Dual (dwiswabhava)'];
+
+        return response()->json(['data' => [
+            'sign' => $i, 'slug' => $sign, 'name' => Vedic::SIGNS[$i], 'hi' => ContentController::SIGNS_HI[$i], 'symbol' => ContentController::SIGN_SYMBOLS[$i],
+            'lord' => ['planet' => $lord, 'name' => Vedic::PLANET_NAMES[$lord]], 'element' => $elements[$i % 4], 'quality' => $qualities[$i % 3],
+            'nature' => $i % 2 === 0 ? 'Odd sign (masculine, krura)' : 'Even sign (feminine, saumya)',
+            'nakshatras' => collect(ContentController::nakshatrasIn($i))->map(fn ($p, $n) => ['name' => $n, 'padas' => $p])->values(),
+            'lord_day' => Gochar::FACTS[$lord]['day'], 'lord_gem' => Gochar::FACTS[$lord]['gem'],
+            'transits' => collect($now)->map(fn ($pos, $p) => ['planet' => $p, 'name' => Vedic::PLANET_NAMES[$p], 'sign_name' => Vedic::SIGNS[$pos['sign']],
+                'house' => Gochar::fromMoon($p, $pos['sign'])[$i]['house'], 'favourable' => Gochar::fromMoon($p, $pos['sign'])[$i]['good']])->values(),
+            'horoscopes' => DB::table('horoscopes')->where('status', 'published')->where('kind', 'rashi')->where('sign', $i)->where('locale', $locale)
+                ->where('starts_on', '<=', $today)->where('ends_on', '>=', $today)->orderBy('topic')->orderBy('period')->get()
+                ->map(fn ($r) => ['period' => $r->period, 'topic' => $r->topic, 'body' => $r->body])->values(),
+        ]]);
+    }
+
+    /** The nine planets guide (same as /navagraha). */
+    public function navagraha(Gochar $gochar): JsonResponse
+    {
+        try {
+            $now = Cache::remember('gochar:now:'.now()->format('YmdH'), 3600, fn () => $gochar->now());
+        } catch (RuntimeException $e) {
+            return $this->engineDown($e);
+        }
+
+        return response()->json(['data' => collect(Gochar::PLANETS)->map(fn ($p) => ['planet' => $p, 'name' => Vedic::PLANET_NAMES[$p], 'hi' => Gochar::HI[$p],
+            'now' => ['sign_name' => Vedic::SIGNS[$now[$p]['sign']], 'degree' => $now[$p]['deg'], 'retro' => $now[$p]['retro']],
+            'rules' => array_map(fn ($s) => Vedic::SIGNS[$s], Gochar::ownSigns($p)), 'exalted' => Vedic::SIGNS[Gochar::FACTS[$p]['exalt'][0]], 'debilitated' => Vedic::SIGNS[Gochar::FACTS[$p]['debil']],
+            'nakshatras' => Gochar::nakshatras($p), 'dasha_years' => Vedic::DASHA_YEARS[$p]] + array_intersect_key(Gochar::FACTS[$p], array_flip(['signifies', 'day', 'gem', 'colour', 'stay'])))->values()]);
+    }
+
+    public function faq(): JsonResponse
+    {
+        $faqs = DB::table('faqs')->where('published', true)->where('locale', app()->getLocale())->orderBy('sort')->get(['question', 'answer']);
+        if ($faqs->isEmpty()) {
+            $faqs = DB::table('faqs')->where('published', true)->where('locale', 'en')->orderBy('sort')->get(['question', 'answer']);
+        }
+
+        return response()->json(['data' => $faqs]);
+    }
+
+    /** Business facts for the app's About and Contact screens. */
+    public function site(Business $business): JsonResponse
+    {
+        return response()->json(['data' => $business->toApi()]);
     }
 }

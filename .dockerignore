@@ -1,0 +1,26 @@
+# Keep the build context small and free of local secrets and build output.
+.git
+**/.env
+**/.env.*
+!**/.env.example
+!deploy/.env.production.example
+deploy/.env.production
+backend/vendor
+backend/node_modules
+backend/public/build
+backend/public/uploads/*
+backend/storage/app/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/framework/testing
+backend/storage/logs/*
+backend/bootstrap/cache/*.php
+mobile
+legacy-static-site
+owner-assets
+docs
+engine/bin
+**/*.keystore
+**/*.jks
+**/key.properties

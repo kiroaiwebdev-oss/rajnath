@@ -1,4 +1,4 @@
-<x-layouts.public :title="$p->name" :description="$p->summary" :image="$p->image_path">
+<x-layouts.public :title="$p->name" :description="$p->summary" :image="$p->image_path" type="product" :jsonld="[\App\Support\Seo\JsonLd::product($p), \App\Support\Seo\JsonLd::breadcrumbs([[__('Gemstone store'), route('store.index')], [$p->name, route('store.show', $p->slug)]])]">
     <div class="container-page py-10">
         <nav aria-label="Breadcrumb" class="text-sm text-ink-600"><a href="{{ route('store.index') }}">Store</a> / <span class="text-ink-900">{{ $p->name }}</span></nav>
         <div class="mt-6 grid gap-10 lg:grid-cols-[1fr_26rem]">

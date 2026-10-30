@@ -133,11 +133,14 @@ class PanchangService
             ];
         }
 
+        $lm = LunarCalendar::monthAt((new LunarCalendar($this->engine))->months($ref - 1, $ref + 1), $ref);
+        $masa = $lm ? ['amanta' => LunarCalendar::name($lm), 'purnimanta' => LunarCalendar::purnimantaName($lm, $at['tithi']),
+            'amanta_hi' => LunarCalendar::name($lm, 'hi'), 'purnimanta_hi' => LunarCalendar::purnimantaName($lm, $at['tithi'], 'hi'), 'adhik' => $lm['adhik']] : null;
         [$choghadiya, $hora] = $polar ? [[], []] : [self::choghadiya($weekday, $sunrise, $sunset, $next, $fmt), self::hora($weekday, $sunrise, $sunset, $next, $fmt)];
 
         return [
             'date' => $date, 'place' => ['lat' => $lat, 'lng' => $lng, 'tz' => $tzName, 'utc_offset' => $localMidnight->format('P')],
-            'choghadiya' => $choghadiya, 'hora' => $hora,
+            'choghadiya' => $choghadiya, 'hora' => $hora, 'masa' => $masa,
             'vara' => Vedic::VARAS[$weekday],
             'sunrise' => $fmt($sunrise)?->format(DATE_ATOM), 'sunset' => $fmt($sunset)?->format(DATE_ATOM),
             'moonrise' => $fmt($moonEv['moonrise'])?->format(DATE_ATOM), 'moonset' => $fmt($moonEv['moonset'])?->format(DATE_ATOM),

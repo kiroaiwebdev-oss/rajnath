@@ -1,4 +1,4 @@
-<x-layouts.public title="Shubh Muhurat" description="Auspicious dates for marriage (vivah), namkaran, annaprashan, mundan, karnavedha, vidyarambh and upanayan, calculated from the Panchang for your city.">
+<x-layouts.public title="Shubh Muhurat" description="Auspicious dates for marriage (vivah), namkaran, annaprashan, mundan, karnavedha, vidyarambh and upanayan, calculated from the Panchang for your city." :jsonld="[\App\Support\Seo\JsonLd::webApp('Shubh Muhurat', __('Free, location-aware, from the Swiss Ephemeris.'), route('muhurat.index')), \App\Support\Seo\JsonLd::breadcrumbs([['Shubh Muhurat', route('muhurat.index')]])]">
     <div class="container-page py-10">
         <p class="eyebrow">Shubh Muhurat · शुभ मुहूर्त</p>
         <h1 class="mt-2 text-3xl">Muhurat finder</h1>

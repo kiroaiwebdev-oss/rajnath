@@ -4,7 +4,7 @@
             @csrf @method('PUT')
             <h2 class="text-lg">Profile</h2>
             <x-field name="name" label="Name" :value="$user->name" autocomplete="name" required />
-            <x-select name="locale" label="Preferred language" :value="$user->locale" :options="['en' => 'English', 'hi' => 'हिन्दी (Hindi)']" hint="Hindi screens are being translated; some pages may show English until review is complete." />
+            <x-select name="locale" label="Preferred language" :value="$user->locale" :options="collect(\App\Http\Middleware\SetLocale::enabled())->mapWithKeys(fn ($l) => [$l => config('locales.available')[$l]])->all()" hint="Pages not yet translated show English." />
             <fieldset>
                 <legend class="field-label">Notifications</legend>
                 @foreach ($prefs as $k => $label)

@@ -2,7 +2,7 @@
 @php
     $tabs = [['Overview', 'account.dashboard'], ['Notifications', 'account.notifications'], ['Bookings', 'account.bookings'], ['Puja', 'account.puja.index'], ['Reports', 'account.reports.index'], ['Orders', 'account.orders'], ['Wallet', 'account.wallet'], ['Palmistry', 'account.palm.index'], ['Birth profiles', 'account.birth-profiles.index'], ['Profile & contact', 'account.profile'], ['Devices', 'account.devices'], ['Help', 'account.support.index'], ['Join as astrologer', 'account.apply'], ['Privacy', 'account.privacy']];
 @endphp
-<x-layouts.public :title="$title">
+<x-layouts.public :title="$title" robots="noindex,nofollow" :jsonld="false">
     <div class="container-page py-8">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>

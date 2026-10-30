@@ -1,4 +1,4 @@
-<x-layouts.public :description="__('Vedic astrology consultations, Kundli, Vastu and remedies with Acharya Dr. Rajnath Jha, Ph.D. in Astrology, Director of Jyotirveda Vigyan Sansthan, Patna.')">
+<x-layouts.public :description="__('Vedic astrology consultations, Kundli, Vastu and remedies with Acharya Dr. Rajnath Jha, Ph.D. in Astrology, Director of Jyotirveda Vigyan Sansthan, Patna.')" :jsonld="[['@type' => 'ItemList', 'name' => __('How Acharya Ji can help'), 'itemListElement' => $featured->values()->map(fn ($o, $i) => ['@type' => 'ListItem', 'position' => $i + 1, 'url' => route('services.show', $o->slug), 'name' => $o->t()?->title])->all()]]">
     {{-- Hero --}}
     <section class="container-page grid items-center gap-10 pt-10 pb-16 md:grid-cols-[1.1fr_0.9fr] md:pt-16">
         <div>

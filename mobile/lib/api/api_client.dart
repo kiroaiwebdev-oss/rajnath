@@ -28,6 +28,7 @@ class ApiClient {
     this.dio.interceptors.add(InterceptorsWrapper(onRequest: (o, h) async {
       final t = await token();
       if (t != null) o.headers['Authorization'] = 'Bearer $t';
+      if (locale != null) o.headers['Accept-Language'] = locale;
       h.next(o);
     }));
   }
@@ -35,14 +36,34 @@ class ApiClient {
   final Dio dio;
   final FlutterSecureStorage _storage;
   static const _tokenKey = 'arj_token';
+  static const _localeKey = 'arj_locale';
   void Function()? onUnauthorized;
+
+  /// App language (e.g. `hi`), sent as `Accept-Language`. Null lets the server decide.
+  String? locale;
 
   Future<String?> token() => _storage.read(key: _tokenKey);
   Future<void> saveToken(String t) => _storage.write(key: _tokenKey, value: t);
   Future<void> clearToken() => _storage.delete(key: _tokenKey);
 
+  /// The saved app language, or null when none was chosen (or storage is unavailable).
+  Future<String?> savedLocale() async {
+    try {
+      return await _storage.read(key: _localeKey);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveLocale(String l) async {
+    try {
+      await _storage.write(key: _localeKey, value: l);
+    } catch (_) {/* the choice still applies for this session */}
+  }
+
   Future<Map<String, dynamic>> get(String path, {Map<String, dynamic>? query}) => _wrap(() => dio.get(path, queryParameters: query));
   Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) => _wrap(() => dio.post(path, data: body));
+  Future<Map<String, dynamic>> put(String path, Map<String, dynamic> body) => _wrap(() => dio.put(path, data: body));
   Future<Map<String, dynamic>> patch(String path, Map<String, dynamic> body) => _wrap(() => dio.patch(path, data: body));
   Future<Map<String, dynamic>> delete(String path, [Map<String, dynamic>? body]) => _wrap(() => dio.delete(path, data: body));
 

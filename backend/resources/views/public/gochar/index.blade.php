@@ -1,5 +1,5 @@
 @php $V = \App\Domain\Astro\Vedic::class; $G = \App\Domain\Astro\Gochar::class; @endphp
-<x-layouts.public title="Grah Gochar — planetary transits" description="Where the nine planets are now in the sidereal zodiac, their next sign change, and transit dates for Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu and Ketu.">
+<x-layouts.public title="Grah Gochar — planetary transits" description="Where the nine planets are now in the sidereal zodiac, their next sign change, and transit dates for Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu and Ketu." :jsonld="[\App\Support\Seo\JsonLd::webApp('Grah Gochar', __('Free, location-aware, from the Swiss Ephemeris.'), route('gochar')), \App\Support\Seo\JsonLd::breadcrumbs([['Grah Gochar', route('gochar')]])]">
     <div class="container-page py-10">
         <p class="eyebrow">Grah Gochar · ग्रह गोचर</p>
         <h1 class="mt-2 text-3xl">Planetary transits today</h1>

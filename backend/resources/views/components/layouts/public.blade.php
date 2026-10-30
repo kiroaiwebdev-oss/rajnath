@@ -1,4 +1,4 @@
-@props(['title' => null, 'description' => null, 'image' => null])
+@props(['title' => null, 'description' => null, 'image' => null, 'robots' => 'index,follow', 'jsonld' => null, 'type' => 'website'])
 @php
     $nav = [
         [__('Services'), route('services.index'), 'services.*'],
@@ -19,7 +19,7 @@
     $accountUrl = $me ? ($me->isStaff() ? route('admin.dashboard') : route('account.dashboard')) : route('account.sign-in');
     $langs = collect(\App\Http\Middleware\SetLocale::enabled())->reject(fn ($l) => $l === app()->getLocale());
 @endphp
-<x-layouts.base :title="$title" :description="$description" :image="$image">
+<x-layouts.base :title="$title" :description="$description" :image="$image" :robots="$robots" :jsonld="$jsonld" :type="$type">
     <header class="sticky top-0 z-40 border-b border-ink-200/60 bg-ivory-50/90 backdrop-blur pt-[env(safe-area-inset-top)]" x-data="disclosure">
         <div class="container-page flex h-16 items-center justify-between gap-4">
             <a href="{{ route('home') }}" class="flex min-w-0 items-center gap-2.5 no-underline">
@@ -66,7 +66,7 @@
             <div>
                 <p class="font-semibold text-ink-900">{{ $site('brand.name') }}</p>
                 <p class="mt-2">{{ $site('brand.tagline') }}</p>
-                <p class="mt-3">B-Block, 1st Floor, Chanakya Plaza, Kankarbagh Main Road, Patna, Bihar 800020</p>
+                <address class="mt-3 not-italic">{{ app(\App\Support\Business::class)->addressLine() }}</address>
             </div>
             <div>
                 <p class="font-semibold text-ink-900">{{ __('Explore') }}</p>

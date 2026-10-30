@@ -22,6 +22,33 @@ Future<void> openExternal(BuildContext context, String? url) async {
 
 String _date(Object? iso) => formatWhen(iso, pattern: 'd MMM yyyy');
 
+/// PDF and photo links are signed and expire after 15 minutes, so fetch the record again
+/// and open the fresh link in the browser / PDF viewer.
+Future<void> openFreshLink(BuildContext context, Future<String?> Function() fresh) async {
+  String? url;
+  try {
+    url = await fresh();
+  } on ApiException catch (e) {
+    if (context.mounted) showSnack(context, e.message);
+    return;
+  }
+  if (!context.mounted) return;
+  if (url == null || url.isEmpty) return showSnack(context, 'This file is not available yet.');
+  await openExternal(context, url);
+}
+
+/// Fresh `pdf_url` of a report or palm reading (`/reports/{ref}`, `/palmistry/{ref}`).
+Future<String?> freshPdfUrl(AppState state, String path) async {
+  final u = unwrap(await state.api.get(path))['pdf_url'];
+  return u == null ? null : '$u';
+}
+
+Widget pdfButton(BuildContext context, AppState state, String path) => OutlinedButton.icon(
+      onPressed: () => openFreshLink(context, () => freshPdfUrl(state, path)),
+      icon: const Icon(Icons.picture_as_pdf_outlined),
+      label: const Text('Download PDF'),
+    );
+
 // ───────────────────────────── Orders ─────────────────────────────
 
 class OrdersScreen extends StatelessWidget {
@@ -112,7 +139,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 if (o['invoices'] is List && (o['invoices'] as List).isNotEmpty) ...[
                   const SectionTitle('Invoices'),
                   for (final inv in (o['invoices'] as List).whereType<Map>())
-                    _kv('${inv['type'] == 'credit_note' ? 'Credit note' : 'Invoice'} ${inv['number'] ?? ''}'.trim(), formatPaise((inv['total_minor'] as num?)?.toInt() ?? 0)),
+                    Row(children: [
+                      Expanded(child: _kv('${inv['type'] == 'credit_note' ? 'Credit note' : 'Invoice'} ${inv['number'] ?? ''}'.trim(), formatPaise((inv['total_minor'] as num?)?.toInt() ?? 0))),
+                      if (inv['ref'] != null)
+                        IconButton(
+                          tooltip: 'Download PDF',
+                          icon: const Icon(Icons.picture_as_pdf_outlined),
+                          onPressed: () => openFreshLink(context, () async {
+                            final fresh = unwrap(await widget.state.api.get('/orders/${widget.ref}'));
+                            final match = ((fresh['invoices'] as List?) ?? const []).whereType<Map>().where((i) => i['ref'] == inv['ref']);
+                            return match.isEmpty || match.first['pdf_url'] == null ? null : '${match.first['pdf_url']}';
+                          }),
+                        ),
+                    ]),
                 ],
                 const SizedBox(height: 8),
                 Text('Reference ${o['ref']}', style: const TextStyle(fontSize: 12, color: ArjColors.ink600)),
@@ -278,7 +317,15 @@ class ReportsScreen extends StatelessWidget {
                   child: ListTile(
                     title: Text('${r['title']}'),
                     subtitle: Padding(padding: const EdgeInsets.only(top: 4), child: Row(children: [StatusChip(r['status'])])),
-                    trailing: const Icon(Icons.chevron_right, semanticLabel: 'Open'),
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      if (r['pdf_url'] != null)
+                        IconButton(
+                          tooltip: 'Download PDF',
+                          icon: const Icon(Icons.picture_as_pdf_outlined),
+                          onPressed: () => openFreshLink(context, () => freshPdfUrl(state, '/reports/${r['ref']}')),
+                        ),
+                      const Icon(Icons.chevron_right, semanticLabel: 'Open'),
+                    ]),
                     onTap: () async {
                       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReportDetailScreen(state: state, ref: '${r['ref']}')));
                       await reload();
@@ -319,6 +366,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                 const Padding(padding: EdgeInsets.only(top: 16), child: Text('Your report is being prepared. We will notify you when it is ready.'))
               else ...[
                 if (r['completed_at'] != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text('Completed ${_date(r['completed_at'])}', style: const TextStyle(color: ArjColors.ink600))),
+                if (r['pdf_url'] != null) Padding(padding: const EdgeInsets.only(top: 12), child: Align(alignment: Alignment.centerLeft, child: pdfButton(context, widget.state, '/reports/${widget.ref}'))),
                 SectionsView((r['sections'] as List?) ?? const []),
               ],
             ]),
@@ -485,7 +533,21 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
               Row(children: [StatusChip(p['status'])]),
               if (p['scheduled_at'] != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text('Scheduled for ${formatWhen(p['scheduled_at'], pattern: 'EEE, d MMM yyyy · h:mm a')}')),
               if (p['customer_note'] != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text('${p['customer_note']}')),
-              if ((p['photo_count'] as num? ?? 0) > 0) Padding(padding: const EdgeInsets.only(top: 8), child: Text('${p['photo_count']} photos shared — see the website for the gallery.', style: const TextStyle(color: ArjColors.ink600))),
+              if ((p['photo_urls'] as List? ?? const []).isNotEmpty) ...[
+                const SectionTitle('Photos from the puja'),
+                Wrap(spacing: 8, runSpacing: 8, children: [
+                  for (var i = 0; i < (p['photo_urls'] as List).length; i++)
+                    OutlinedButton.icon(
+                      onPressed: () => openFreshLink(context, () async {
+                        final urls = (unwrap(await widget.state.api.get('/puja/${widget.ref}'))['photo_urls'] as List?) ?? const [];
+                        return i < urls.length ? '${urls[i]}' : null;
+                      }),
+                      icon: const Icon(Icons.photo_outlined),
+                      label: Text((p['photo_urls'] as List).length == 1 ? 'View photo' : 'View photo ${i + 1}'),
+                    ),
+                ]),
+              ] else if ((p['photo_count'] as num? ?? 0) > 0)
+                Padding(padding: const EdgeInsets.only(top: 8), child: Text('${p['photo_count']} photos shared.', style: const TextStyle(color: ArjColors.ink600))),
               const SizedBox(height: 12),
               Wrap(spacing: 8, runSpacing: 8, children: [
                 if (p['live_link'] != null) FilledButton.icon(onPressed: () => openExternal(context, '${p['live_link']}'), icon: const Icon(Icons.live_tv_outlined), label: const Text('Watch live')),

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Booking\Slots;
+use App\Domain\Meetings\LiveKit;
 use App\Domain\Palmistry\PalmReadings;
 use App\Domain\Puja\PujaBookings;
 use App\Domain\Reports\ReportJobs;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\FileLinkController;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,7 +45,7 @@ class ActivityController extends Controller
             'start_utc' => $start->toIso8601ZuluString(), 'end_utc' => CarbonImmutable::parse($b->end_utc, 'UTC')->toIso8601ZuluString(), 'status' => $b->status,
             'meeting_link' => $b->status === 'confirmed' && $b->meeting_provider !== 'livekit' ? $b->meeting_link : null,
             'meeting_provider' => $b->status === 'confirmed' ? $b->meeting_provider : null,
-            'call_open' => $b->status === 'confirmed' && now()->between($start->subMinutes(\App\Domain\Meetings\LiveKit::EARLY_MINUTES), CarbonImmutable::parse($b->end_utc, 'UTC')->addMinutes(\App\Domain\Meetings\LiveKit::LATE_MINUTES)), 'practitioner' => $p?->display_name, 'practitioner_ref' => $p?->ref,
+            'call_open' => $b->status === 'confirmed' && now()->between($start->subMinutes(LiveKit::EARLY_MINUTES), CarbonImmutable::parse($b->end_utc, 'UTC')->addMinutes(LiveKit::LATE_MINUTES)), 'practitioner' => $p?->display_name, 'practitioner_ref' => $p?->ref,
             'can_cancel' => $changeable, 'can_reschedule' => $changeable && $b->reschedules < config('booking.max_reschedules')];
     }
 
@@ -76,7 +78,8 @@ class ActivityController extends Controller
         return ['ref' => $p->ref, 'status' => $p->status, 'staff_note' => $p->status === 'needs_new_photos' ? $p->staff_note : null,
             'can_upload' => in_array($p->status, ['awaiting_photos', 'needs_new_photos'], true),
             'sections' => $p->status === 'completed' ? self::sections(PalmReadings::SECTIONS, $p->report) : [],
-            'completed_at' => CommerceController::iso($p->completed_at)];
+            'completed_at' => CommerceController::iso($p->completed_at),
+            'pdf_url' => $p->status === 'completed' ? FileLinkController::url('palm', $p->ref, (int) $p->user_id) : null];
     }
 
     public function palms(Request $r): JsonResponse
@@ -108,7 +111,8 @@ class ActivityController extends Controller
         $title = DB::table('offerings as o')->join('offering_translations as t', fn ($x) => $x->on('t.offering_id', '=', 'o.id')->where('t.locale', 'en'))->where('o.slug', $j->offering_slug)->value('t.title');
 
         return ['ref' => $j->ref, 'title' => $title, 'status' => $j->status, 'needs_two_profiles' => ReportJobs::needsTwo($j->offering_slug),
-            'sections' => $j->status === 'completed' ? self::sections(ReportJobs::sections($j->offering_slug), $j->sections) : [], 'completed_at' => CommerceController::iso($j->completed_at)];
+            'sections' => $j->status === 'completed' ? self::sections(ReportJobs::sections($j->offering_slug), $j->sections) : [], 'completed_at' => CommerceController::iso($j->completed_at),
+            'pdf_url' => $j->status === 'completed' ? FileLinkController::url('report', $j->ref, (int) $j->user_id) : null];
     }
 
     public function reports(Request $r): JsonResponse
@@ -139,7 +143,8 @@ class ActivityController extends Controller
 
         return ['ref' => $b->ref, 'title' => DB::table('offering_translations')->where('offering_id', $b->offering_id)->where('locale', 'en')->value('title'), 'status' => $b->status,
             'scheduled_at' => CommerceController::iso($b->scheduled_at), 'live_link' => $b->live_link, 'customer_note' => $b->customer_note,
-            'video_url' => $ev['video_url'] ?? null, 'photo_count' => count($ev['photos'] ?? [])];
+            'video_url' => $ev['video_url'] ?? null, 'photo_count' => count($ev['photos'] ?? []),
+            'photo_urls' => array_map(fn ($i) => FileLinkController::url('puja-photo', $b->ref, (int) $b->user_id, $i), array_keys($ev['photos'] ?? []))];
     }
 
     public function pujas(Request $r): JsonResponse

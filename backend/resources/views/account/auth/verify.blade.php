@@ -1,4 +1,4 @@
-<x-layouts.public title="Enter your code">
+<x-layouts.public title="Enter your code" robots="noindex,nofollow" :jsonld="false">
     <div class="container-page py-12">
         <div class="card mx-auto w-full max-w-md p-6 sm:p-8">
             <h1 class="text-2xl">Enter your code</h1>
