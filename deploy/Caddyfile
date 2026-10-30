@@ -5,6 +5,8 @@
 	@static file
 	handle @static {
 		header /build/* Cache-Control "public, max-age=31536000, immutable"
+		# uploaded photos get a new file name on every upload, so they can be cached for long
+		header /uploads/* Cache-Control "public, max-age=2592000"
 		file_server
 	}
 	# private folders are never served as files
@@ -17,7 +19,7 @@
 		root /var/www/backend/public
 	}
 	request_body {
-		max_size 12MB
+		max_size 100MB
 	}
 	log {
 		output stdout

@@ -2,6 +2,7 @@
 
 namespace App\Support\Uploads;
 
+use GdImage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -15,9 +16,53 @@ use Illuminate\Validation\ValidationException;
 class SafeImage
 {
     public const MAX_BYTES = 8 * 1024 * 1024;
+
     public const MAX_SIDE = 2400;
 
+    public const THUMB_SIDE = 720;
+
     public static function store(UploadedFile $file, string $disk, string $dir, string $field = 'photo'): string
+    {
+        $path = trim($dir, '/').'/'.Str::ulid().'.jpg';
+        Storage::disk($disk)->put($path, self::jpeg(self::resize(self::decode($file, $field), self::MAX_SIDE)));
+
+        return $path;
+    }
+
+    /**
+     * Public web image: a full-size JPEG (longest side 2400 px) and a thumbnail (720 px), each with a
+     * WebP sibling that the <x-photo> component serves to browsers that support it.
+     *
+     * @return array{path: string, thumb: string, width: int, height: int}
+     */
+    public static function storeForWeb(UploadedFile $file, string $disk, string $dir, string $field = 'photo'): array
+    {
+        $src = self::decode($file, $field);
+        $base = trim($dir, '/').'/'.Str::ulid();
+        $full = self::resize($src, self::MAX_SIDE);
+        $thumb = self::resize($src, self::THUMB_SIDE);
+        $d = Storage::disk($disk);
+        $d->put($base.'.jpg', self::jpeg($full));
+        $d->put($base.'-thumb.jpg', self::jpeg($thumb, 82));
+        if (function_exists('imagewebp')) {
+            $d->put($base.'.webp', self::webp($full));
+            $d->put($base.'-thumb.webp', self::webp($thumb, 78));
+        }
+
+        return ['path' => $base.'.jpg', 'thumb' => $base.'-thumb.jpg', 'width' => imagesx($full), 'height' => imagesy($full)];
+    }
+
+    /** Deletes a stored web image and its thumbnail and WebP siblings. */
+    public static function deleteForWeb(string $disk, ?string $path): void
+    {
+        if (! $path) {
+            return;
+        }
+        $base = preg_replace('/(-thumb)?\.jpg$/', '', $path);
+        Storage::disk($disk)->delete([$base.'.jpg', $base.'.webp', $base.'-thumb.jpg', $base.'-thumb.webp']);
+    }
+
+    private static function decode(UploadedFile $file, string $field): GdImage
     {
         if (! $file->isValid() || $file->getSize() > self::MAX_BYTES) {
             throw ValidationException::withMessages([$field => 'Upload a photo under 8 MB.']);
@@ -38,20 +83,39 @@ class SafeImage
         }
         if ($info[2] === IMAGETYPE_JPEG && function_exists('exif_read_data')) {
             $o = @exif_read_data($file->getRealPath())['Orientation'] ?? 1;
-            $src = match ((int) $o) { 3 => imagerotate($src, 180, 0), 6 => imagerotate($src, -90, 0), 8 => imagerotate($src, 90, 0), default => $src };
+            $src = match ((int) $o) {
+                3 => imagerotate($src, 180, 0), 6 => imagerotate($src, -90, 0), 8 => imagerotate($src, 90, 0), default => $src
+            };
         }
+
+        return $src;
+    }
+
+    private static function resize(GdImage $src, int $maxSide): GdImage
+    {
         $w = imagesx($src);
         $h = imagesy($src);
-        $scale = min(1, self::MAX_SIDE / max($w, $h));
-        $dst = imagecreatetruecolor((int) round($w * $scale), (int) round($h * $scale));
+        $scale = min(1, $maxSide / max($w, $h));
+        $dst = imagecreatetruecolor(max(1, (int) round($w * $scale)), max(1, (int) round($h * $scale)));
         imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
         imagecopyresampled($dst, $src, 0, 0, 0, 0, imagesx($dst), imagesy($dst), $w, $h);
-        ob_start();
-        imagejpeg($dst, null, 86);
-        $bytes = (string) ob_get_clean();
-        $path = trim($dir, '/').'/'.Str::ulid().'.jpg';
-        Storage::disk($disk)->put($path, $bytes);
 
-        return $path;
+        return $dst;
+    }
+
+    private static function jpeg(GdImage $img, int $quality = 86): string
+    {
+        ob_start();
+        imagejpeg($img, null, $quality);
+
+        return (string) ob_get_clean();
+    }
+
+    private static function webp(GdImage $img, int $quality = 80): string
+    {
+        ob_start();
+        imagewebp($img, null, $quality);
+
+        return (string) ob_get_clean();
     }
 }

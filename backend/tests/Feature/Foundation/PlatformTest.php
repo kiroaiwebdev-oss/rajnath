@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Foundation;
 
+use Database\Seeders\ShowcaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -11,6 +12,7 @@ class PlatformTest extends TestCase
 
     public function test_home_renders_with_brand_and_confirmed_biography(): void
     {
+        $this->seed(ShowcaseSeeder::class);
         $this->get('/')->assertOk()
             ->assertSee('Astro Rajnath Jha')
             ->assertSee('Jyotirveda Vigyan Sansthan')

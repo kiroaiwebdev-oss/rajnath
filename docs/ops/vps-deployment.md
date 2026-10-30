@@ -32,6 +32,14 @@ In-app video calls on your own LiveKit server need `RTC_DOMAIN` in `deploy/.env.
 (for example `rtc.astrorajnathjha.com` with its own DNS record), then `deploy/deploy.sh`. See `livekit-on-vps.md`.
 More languages: set `SITE_LOCALES=en,hi,bn,…` after the text has been reviewed (see `backend/lang/`).
 
+Website content is also managed in the admin:
+- **Admin → About & awards**: biography, stats (years, clients, awards), home-page text, the two portraits, and the lists for education, positions, awards (with photos), expertise, research, books and media. Each text has an optional Hindi box.
+- **Admin → Gallery**: albums for pujas and anushthans, awards, events, media and the office. Upload up to 10 photos at a time (resized, location data removed) and add YouTube links. Authors upload; a content publisher publishes and picks albums for the home page.
+- **Admin → Settings**: also the opening hours (per day, morning and evening) and the city, state and PIN code.
+- **Admin → Catalogue**: each service can have an uploaded photo.
+
+The first deploy fills About and Gallery with the current biography, 14 awards and the office photos. Later deploys never overwrite the owner's edits.
+
 ## 2a. Search engines (SEO / AEO / GEO)
 The site serves `/sitemap.xml` (all public pages, with Hindi alternates), `/robots.txt`,
 `/llms.txt` and `/llms-full.txt` (summaries for AI answer engines), canonical and hreflang tags,

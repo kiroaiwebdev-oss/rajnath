@@ -39,7 +39,10 @@ Route::permanentRedirect('/tools/match-making', '/tools/kundli-matching');
 Route::get('/tools/{slug}', [Web\ToolController::class, 'show'])->name('tools.show');
 Route::post('/tools/{slug}', [Web\ToolController::class, 'compute'])->middleware('throttle:tools')->name('tools.compute');
 Route::get('/panchang', [Web\ToolController::class, 'panchang'])->middleware('throttle:tools')->name('panchang');
-Route::view('/about', 'public.about')->name('about');
+Route::get('/about', [Web\ShowcaseController::class, 'about'])->name('about');
+Route::get('/awards', [Web\ShowcaseController::class, 'awards'])->name('awards');
+Route::get('/gallery', [Web\ShowcaseController::class, 'gallery'])->name('gallery');
+Route::get('/gallery/{slug}', [Web\ShowcaseController::class, 'album'])->name('gallery.show');
 Route::view('/contact', 'public.contact')->name('contact');
 Route::view('/privacy', 'public.privacy')->name('privacy');
 Route::view('/terms', 'public.terms')->name('terms');
@@ -249,6 +252,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::get('faqs', [Admin\FaqController::class, 'index'])->name('faqs.index');
     Route::post('faqs', [Admin\FaqController::class, 'save'])->name('faqs.save');
     Route::delete('faqs/{id}', [Admin\FaqController::class, 'destroy'])->whereNumber('id')->name('faqs.destroy');
+    Route::get('about', [Admin\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('about', [Admin\ProfileController::class, 'saveText'])->name('profile.text');
+    Route::post('about/entries', [Admin\ProfileController::class, 'saveEntry'])->name('profile.entry');
+    Route::delete('about/entries/{id}', [Admin\ProfileController::class, 'destroyEntry'])->whereNumber('id')->name('profile.entry.destroy');
+    Route::controller(Admin\GalleryController::class)->prefix('gallery')->name('gallery.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::get('{ref}', 'edit')->name('edit');
+        Route::put('{ref}', 'update')->name('update');
+        Route::delete('{ref}', 'destroy')->name('destroy');
+        Route::post('{ref}/photos', 'upload')->name('upload');
+        Route::post('{ref}/videos', 'addVideo')->name('video');
+        Route::put('{ref}/items/{id}', 'updateItem')->whereNumber('id')->name('item');
+        Route::delete('{ref}/items/{id}', 'destroyItem')->whereNumber('id')->name('item.destroy');
+    });
 
     // Sensitive changes: fresh password + TOTP confirmation required.
     Route::middleware('step.up')->group(function () {

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Web;
 
 use App\Domain\Places\PlaceSearch;
+use App\Domain\Showcase\Gallery;
+use App\Domain\Showcase\Profile;
 use App\Http\Controllers\Controller;
 use App\Models\Enquiry;
 use App\Models\Offering;
@@ -23,6 +25,10 @@ class SiteController extends Controller
         return view('public.home', [
             'featured' => Offering::public()->with(['translations', 'variants', 'family'])->where('featured', true)->orderBy('sort')->limit(6)->get(),
             'families' => ServiceFamily::whereHas('offerings', fn ($q) => $q->where('status', 'active'))->orderBy('sort')->withCount(['offerings' => fn ($q) => $q->where('status', 'active')])->get(),
+            'profile' => $profile = app(Profile::class),
+            'highlights' => $profile->homeHighlights(),
+            'albums' => app(Gallery::class)->publicAlbums(null, 3, true),
+            'awardPhotos' => ShowcaseController::awardPhotos(2),
         ]);
     }
 

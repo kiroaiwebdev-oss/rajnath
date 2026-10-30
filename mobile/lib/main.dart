@@ -12,10 +12,12 @@ import 'screens/info_screens.dart';
 import 'screens/purchase_screens.dart';
 import 'screens/routing.dart';
 import 'screens/services_screens.dart';
+import 'screens/showcase_screens.dart';
 import 'screens/store_screens.dart';
 import 'screens/tool_screens.dart';
 import 'state/app_state.dart';
 import 'theme/app_theme.dart';
+import 'widgets/common.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 final messengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -89,46 +91,97 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-class HomeTab extends StatelessWidget {
+class HomeTab extends StatefulWidget {
   const HomeTab({super.key, required this.state, required this.onOpenServices});
   final AppState state;
   final VoidCallback onOpenServices;
+  @override
+  State<HomeTab> createState() => _HomeTabState();
+}
+
+String _or(Object? v, String fallback) {
+  final s = v == null ? '' : '$v'.trim();
+  return s.isEmpty ? fallback : s;
+}
+
+class _HomeTabState extends State<HomeTab> {
+  /// GET /profile (hero text, stats, portrait). Until it loads, or if it fails, the built-in text and portrait show.
+  Map<String, dynamic>? _profile;
+  String? _locale;
+
+  AppState get state => widget.state;
 
   @override
-  Widget build(BuildContext context) => ListView(padding: const EdgeInsets.all(20), children: [
-        Text('VEDIC ASTROLOGY · VASTU · REMEDIES', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: ArjColors.gold700, letterSpacing: 1.5)),
-        const SizedBox(height: 8),
-        Text('Clear, practical guidance from Acharya Dr. Rajnath Jha', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        const Text('Ph.D. in Astrology · Director, Jyotirveda Vigyan Sansthan, Patna · 30+ years of practice', style: TextStyle(color: ArjColors.ink600)),
-        const SizedBox(height: 16),
-        ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.asset('assets/images/portrait-navy-480.jpg', fit: BoxFit.cover, semanticLabel: 'Acharya Dr. Rajnath Jha')),
-        const SizedBox(height: 16),
-        FilledButton(onPressed: onOpenServices, child: const Text('Book a consultation')),
-        const SizedBox(height: 8),
-        OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => KundliScreen(state: state))), child: const Text('Free Kundli')),
-        const SizedBox(height: 8),
-        OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PanchangScreen(state: state))), child: const Text("Today's Panchang")),
-        const SizedBox(height: 8),
-        OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => HoroscopeScreen(state: state))), child: const Text('Rashifal')),
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  @override
+  void didUpdateWidget(HomeTab old) {
+    super.didUpdateWidget(old);
+    if (state.locale != _locale) _loadProfile(); // the profile text is translated
+  }
+
+  Future<void> _loadProfile() async {
+    _locale = state.locale;
+    try {
+      final p = await loadProfile(state);
+      if (mounted) setState(() => _profile = p);
+    } catch (_) {/* keep the built-in hero */}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = _profile ?? const <String, dynamic>{};
+    final home = (p['home'] as Map?) ?? const {};
+    final name = _or(p['name'], 'Acharya Dr. Rajnath Jha');
+    final eyebrow = _or(home['eyebrow'], 'Vedic astrology · Vastu · Remedies').toUpperCase();
+    return ListView(padding: const EdgeInsets.all(20), children: [
+      Text(eyebrow, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: ArjColors.gold700, letterSpacing: 1.5)),
+      const SizedBox(height: 8),
+      Text('Clear, practical guidance from $name', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+      const SizedBox(height: 8),
+      Text(_or(home['subtitle'], 'Ph.D. in Astrology · Director, Jyotirveda Vigyan Sansthan, Patna · 30+ years of practice'), style: const TextStyle(color: ArjColors.ink600)),
+      const SizedBox(height: 16),
+      ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: NetImage('${(p['photos'] as Map?)?['home'] ?? ''}', semanticLabel: name, fallback: Image.asset(portraitAsset, fit: BoxFit.cover, semanticLabel: name)),
+      ),
+      if (p['stats'] != null) ...[const SizedBox(height: 12), ProfileStats(p['stats'])],
+      const SizedBox(height: 16),
+      FilledButton(onPressed: widget.onOpenServices, child: const Text('Book a consultation')),
+      const SizedBox(height: 8),
+      OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => KundliScreen(state: state))), child: const Text('Free Kundli')),
+      const SizedBox(height: 8),
+      OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PanchangScreen(state: state))), child: const Text("Today's Panchang")),
+      const SizedBox(height: 8),
+      OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => HoroscopeScreen(state: state))), child: const Text('Rashifal')),
+      const SizedBox(height: 8),
+      OutlinedButton.icon(
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => StoreScreen(state: state))),
+        icon: const Icon(Icons.diamond_outlined),
+        label: const Text('Gemstone store'),
+      ),
+      const SizedBox(height: 8),
+      OutlinedButton.icon(
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GalleryScreen(state: state))),
+        icon: const Icon(Icons.photo_library_outlined),
+        label: const Text('Photo gallery'),
+      ),
+      if (state.assistantEnabled) ...[
         const SizedBox(height: 8),
         OutlinedButton.icon(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => StoreScreen(state: state))),
-          icon: const Icon(Icons.diamond_outlined),
-          label: const Text('Gemstone store'),
+          onPressed: () async {
+            if (!await ensureSignedIn(context, state, reason: 'Sign in to chat with our assistant.') || !context.mounted) return;
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) => AssistantScreen(state: state)));
+          },
+          icon: const Icon(Icons.chat_bubble_outline),
+          label: const Text('Ask our assistant'),
         ),
-        if (state.assistantEnabled) ...[
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () async {
-              if (!await ensureSignedIn(context, state, reason: 'Sign in to chat with our assistant.') || !context.mounted) return;
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => AssistantScreen(state: state)));
-            },
-            icon: const Icon(Icons.chat_bubble_outline),
-            label: const Text('Ask our assistant'),
-          ),
-        ],
-        const SizedBox(height: 24),
-        const Text('Astrological guidance is traditional and interpretive. It does not replace medical, legal or financial advice.', style: TextStyle(fontSize: 12, color: ArjColors.ink600)),
-      ]);
+      ],
+      const SizedBox(height: 24),
+      const Text('Astrological guidance is traditional and interpretive. It does not replace medical, legal or financial advice.', style: TextStyle(fontSize: 12, color: ArjColors.ink600)),
+    ]);
+  }
 }

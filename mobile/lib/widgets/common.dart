@@ -166,6 +166,40 @@ class SectionsView extends StatelessWidget {
       ]);
 }
 
+/// Network image with a quiet placeholder while loading and when it fails (or [fallback] instead,
+/// e.g. a bundled asset). Failed loads always go through errorBuilder, so they never throw.
+class NetImage extends StatelessWidget {
+  const NetImage(this.url, {super.key, this.fit = BoxFit.cover, this.fallback, this.semanticLabel, this.dark = false});
+  final String? url;
+  final BoxFit fit;
+  final Widget? fallback;
+  final String? semanticLabel;
+
+  /// Black placeholder for the full-screen photo viewer.
+  final bool dark;
+
+  Widget _placeholder(IconData icon) =>
+      fallback ??
+      Semantics(
+        label: semanticLabel,
+        image: semanticLabel != null,
+        child: ColoredBox(color: dark ? Colors.black : ArjColors.ivory200, child: Center(child: Icon(icon, color: dark ? Colors.white54 : ArjColors.ink600))),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final u = url?.trim() ?? '';
+    if (u.isEmpty) return _placeholder(Icons.image_outlined);
+    return Image.network(
+      u,
+      fit: fit,
+      semanticLabel: semanticLabel,
+      frameBuilder: (_, child, frame, sync) => sync || frame != null ? child : _placeholder(Icons.image_outlined),
+      errorBuilder: (_, _, _) => _placeholder(Icons.broken_image_outlined),
+    );
+  }
+}
+
 /// Error line under a form.
 class FormError extends StatelessWidget {
   const FormError(this.text, {super.key});

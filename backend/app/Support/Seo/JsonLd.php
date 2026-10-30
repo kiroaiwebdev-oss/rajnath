@@ -2,11 +2,14 @@
 
 namespace App\Support\Seo;
 
+use App\Domain\Showcase\Gallery;
+use App\Domain\Showcase\Profile;
 use App\Http\Middleware\SetLocale;
 use App\Models\Offering;
 use App\Models\OfferingVariant;
 use App\Support\Business;
 use App\Support\Money;
+use Illuminate\Support\Facades\DB;
 
 /**
  * schema.org structured data (JSON-LD) for search engines and AI answer engines.
@@ -26,7 +29,8 @@ class JsonLd
         $b = app(Business::class);
         $a = $b->address();
         $g = $b->geo();
-        $hours = array_map(fn ($h) => ['@type' => 'OpeningHoursSpecification', 'dayOfWeek' => $h[0], 'opens' => $h[1], 'closes' => $h[2]], Business::HOURS);
+        $hours = array_map(fn ($h) => ['@type' => 'OpeningHoursSpecification', 'dayOfWeek' => $h[0], 'opens' => $h[1], 'closes' => $h[2]], $b->hoursSpec());
+        $langs = $b->languages();
         $phones = array_values(array_filter([$b->phone(), $b->phone2()]));
 
         return [
@@ -38,11 +42,11 @@ class JsonLd
                 'address' => ['@type' => 'PostalAddress', 'streetAddress' => $a['street'], 'addressLocality' => $a['locality'], 'addressRegion' => $a['region'], 'postalCode' => $a['postal_code'], 'addressCountry' => $a['country']],
                 'geo' => ['@type' => 'GeoCoordinates', 'latitude' => $g['lat'], 'longitude' => $g['lng']], 'hasMap' => $b->mapUrl(),
                 'openingHoursSpecification' => $hours, 'areaServed' => [['@type' => 'City', 'name' => 'Patna'], ['@type' => 'State', 'name' => 'Bihar'], ['@type' => 'Country', 'name' => 'India'], 'Worldwide (online)'],
-                'availableLanguage' => Business::LANGUAGES, 'priceRange' => '₹₹', 'currenciesAccepted' => 'INR', 'paymentAccepted' => 'UPI, Credit Card, Debit Card, Net Banking, Wallet',
+                'availableLanguage' => $langs, 'priceRange' => '₹₹', 'currenciesAccepted' => 'INR', 'paymentAccepted' => 'UPI, Credit Card, Debit Card, Net Banking, Wallet',
                 'founder' => ['@id' => self::id('founder')], 'employee' => ['@id' => self::id('founder')],
-                'contactPoint' => array_map(fn ($p) => ['@type' => 'ContactPoint', 'telephone' => $p, 'contactType' => 'customer service', 'areaServed' => 'IN', 'availableLanguage' => Business::LANGUAGES], $phones),
+                'contactPoint' => array_map(fn ($p) => ['@type' => 'ContactPoint', 'telephone' => $p, 'contactType' => 'customer service', 'areaServed' => 'IN', 'availableLanguage' => $langs], $phones),
                 'sameAs' => $b->social() ?: null,
-                'knowsAbout' => Business::PERSON['knows'],
+                'knowsAbout' => self::expertise(),
             ],
             self::person(),
             [
@@ -53,16 +57,52 @@ class JsonLd
         ];
     }
 
+    /** @return list<string> */
+    private static function expertise(): array
+    {
+        return app(Profile::class)->entries('expertise')->pluck('title')->all();
+    }
+
     public static function person(): array
     {
-        $p = Business::PERSON;
+        $p = app(Profile::class);
+        $edu = $p->entries('education');
 
-        return ['@type' => 'Person', '@id' => self::id('founder'), 'name' => $p['name'], 'url' => url('/about'), 'image' => asset('images/owner/portrait-red-480.jpg'),
-            'jobTitle' => $p['job'], 'description' => $p['summary'], 'honorificPrefix' => 'Acharya Dr.',
-            'worksFor' => ['@id' => self::id('business')], 'alumniOf' => ['@type' => 'CollegeOrUniversity', 'name' => $p['alumni']],
-            'hasCredential' => array_map(fn ($e) => ['@type' => 'EducationalOccupationalCredential', 'name' => $e[0], 'dateCreated' => (string) $e[1], 'recognizedBy' => ['@type' => 'Organization', 'name' => $e[2]]], $p['education']),
-            'award' => $p['awards'], 'knowsAbout' => $p['knows'], 'knowsLanguage' => Business::LANGUAGES,
+        return ['@type' => 'Person', '@id' => self::id('founder'), 'name' => $p->name(), 'url' => url('/about'), 'image' => asset($p->photo('profile.photo_about')),
+            'jobTitle' => $p->english('profile.job_title'), 'description' => $p->english('profile.summary'), 'honorificPrefix' => 'Acharya Dr.',
+            'worksFor' => ['@id' => self::id('business')], 'alumniOf' => ['@type' => 'CollegeOrUniversity', 'name' => $p->english('profile.alumni')],
+            'hasCredential' => $edu->map(fn ($e) => ['@type' => 'EducationalOccupationalCredential', 'name' => $e->title, 'dateCreated' => $e->year ? (string) $e->year : null,
+                'recognizedBy' => $e->detail ? ['@type' => 'Organization', 'name' => $e->detail] : null])->values()->all(),
+            'award' => $p->entries('award')->map(fn ($e) => Profile::line($e, true))->values()->all(), 'knowsAbout' => self::expertise(), 'knowsLanguage' => $p->languages(true),
+            'sameAs' => app(Business::class)->social() ?: null,
             'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Patna', 'addressRegion' => 'Bihar', 'addressCountry' => 'IN']];
+    }
+
+    /** Last change to the profile (entries or profile.* settings), as Y-m-d. */
+    public static function profileModified(): string
+    {
+        $dates = array_filter([DB::table('profile_entries')->max('updated_at'), DB::table('settings')->where('group', 'profile')->max('updated_at')]);
+
+        return $dates ? substr((string) max($dates), 0, 10) : '2026-10-28';
+    }
+
+    /** ImageGallery with its photos (ImageObject) and videos (VideoObject). */
+    public static function gallery(object $album, iterable $items): array
+    {
+        $date = $album->event_date ?: substr((string) ($album->published_at ?? $album->created_at), 0, 10);
+        $media = [];
+        foreach ($items as $i) {
+            $caption = Profile::tr($i, 'caption') ?: Profile::tr($album, 'title');
+            $media[] = $i->kind === 'photo'
+                ? ['@type' => 'ImageObject', 'contentUrl' => asset($i->path), 'thumbnailUrl' => asset($i->thumb_path ?: $i->path), 'caption' => $caption,
+                    'width' => $i->width, 'height' => $i->height, 'creditText' => app(Business::class)->name(), 'copyrightHolder' => ['@id' => self::id('business')]]
+                : ['@type' => 'VideoObject', 'name' => $caption, 'description' => Profile::tr($album, 'description') ?: $caption, 'thumbnailUrl' => Gallery::videoThumb($i->video_id),
+                    'embedUrl' => 'https://www.youtube-nocookie.com/embed/'.$i->video_id, 'contentUrl' => Gallery::videoWatch($i->video_id), 'uploadDate' => $date];
+        }
+
+        return ['@type' => 'ImageGallery', 'name' => Profile::tr($album, 'title'), 'description' => Profile::tr($album, 'description'), 'url' => route('gallery.show', $album->slug),
+            'dateCreated' => $date, 'contentLocation' => $album->location ? ['@type' => 'Place', 'name' => $album->location] : null,
+            'author' => ['@id' => self::id('business')], 'about' => ['@id' => self::id('founder')], 'associatedMedia' => $media];
     }
 
     /** @param list<array{0: string, 1: string}> $items [name, url] from home to the current page */
@@ -96,7 +136,7 @@ class JsonLd
 
         return array_filter(['@type' => 'Service', '@id' => route('services.show', $o->slug).'#service', 'name' => $t?->title, 'description' => $t?->summary,
             'serviceType' => $o->family?->name, 'category' => $o->family?->name, 'provider' => ['@id' => self::id('business')], 'areaServed' => ['Patna', 'India', 'Worldwide (online)'],
-            'image' => $o->image_path ? asset($o->image_path) : null, 'url' => route('services.show', $o->slug), 'availableLanguage' => Business::LANGUAGES,
+            'image' => $o->image_path ? asset($o->image_path) : null, 'url' => route('services.show', $o->slug), 'availableLanguage' => app(Business::class)->languages(),
             'offers' => $offers ?: null]);
     }
 
@@ -116,7 +156,7 @@ class JsonLd
         if ($modes->isNotEmpty()) {
             $out[] = [__('How is :title given?', ['title' => $title]), __('Available as: :modes. Book online on this page or call the office.', ['modes' => $modes->implode(', ')])];
         }
-        $out[] = [__('Who provides :title?', ['title' => $title]), __(':name, Ph.D. in Astrology, with more than 30 years of practice in Patna, or an approved astrologer of his team where stated.', ['name' => Business::PERSON['name']])];
+        $out[] = [__('Who provides :title?', ['title' => $title]), __(':name, Ph.D. in Astrology, with more than 30 years of practice in Patna, or an approved astrologer of his team where stated.', ['name' => app(Profile::class)->name()])];
 
         return $out;
     }

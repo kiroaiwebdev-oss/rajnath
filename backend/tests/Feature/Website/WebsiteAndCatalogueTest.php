@@ -2,12 +2,17 @@
 
 namespace Tests\Feature\Website;
 
+use App\Http\Controllers\Admin\EnquiryController;
+use App\Mail\OtpMail;
 use App\Models\Enquiry;
 use App\Models\Offering;
+use App\Models\User;
 use App\Support\Money;
 use Database\Seeders\CatalogueSeeder;
+use Database\Seeders\ShowcaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Tests\Concerns\StaffHelpers;
 use Tests\TestCase;
 
@@ -19,12 +24,13 @@ class WebsiteAndCatalogueTest extends TestCase
     {
         parent::setUp();
         $this->seed(CatalogueSeeder::class);
+        $this->seed(ShowcaseSeeder::class);
         $this->syncRbac();
     }
 
     public function test_public_pages_render(): void
     {
-        foreach (['/', '/services', '/services/janma-kundali-reading', '/about', '/contact', '/faq', '/privacy', '/terms', '/offline', '/account/sign-in'] as $url) {
+        foreach (['/', '/services', '/services/janma-kundali-reading', '/about', '/awards', '/gallery', '/gallery/awards-and-honours', '/contact', '/faq', '/privacy', '/terms', '/offline', '/account/sign-in'] as $url) {
             $this->get($url)->assertOk();
         }
         $this->get('/')->assertSee('Janma Kundali Reading')->assertSee('Global Astrological Iconic Award');
@@ -72,7 +78,7 @@ class WebsiteAndCatalogueTest extends TestCase
         $this->post('/enquiries', ['name' => 'X', 'phone' => '9835258203'])->assertSessionHasErrors('consent');
         $this->post('/enquiries', ['name' => 'Bot', 'phone' => '9835258203', 'consent' => '1', 'website' => 'http://spam'])->assertRedirect();
         $this->assertSame(0, Enquiry::count());
-        $this->assertSame("'=HYPERLINK(\"x\")", \App\Http\Controllers\Admin\EnquiryController::csvSafe('=HYPERLINK("x")'));
+        $this->assertSame("'=HYPERLINK(\"x\")", EnquiryController::csvSafe('=HYPERLINK("x")'));
     }
 
     public function test_enquiry_rate_limit(): void
@@ -125,7 +131,7 @@ class WebsiteAndCatalogueTest extends TestCase
 
     public function test_admin_customer_suspension_and_faq_management(): void
     {
-        $c = new \App\Models\User(['name' => 'Cust', 'email' => 'cust@example.com']);
+        $c = new User(['name' => 'Cust', 'email' => 'cust@example.com']);
         $c->save();
         $c->createToken('app', ['customer']);
         $support = $this->makeStaff(['support']);
@@ -144,7 +150,7 @@ class WebsiteAndCatalogueTest extends TestCase
 
     public function test_customer_devices_page_and_sign_out_others(): void
     {
-        $c = new \App\Models\User(['name' => 'D', 'email' => 'd@example.com']);
+        $c = new User(['name' => 'D', 'email' => 'd@example.com']);
         $c->save();
         $c->createToken('Phone', ['customer']);
         DB::table('sessions')->insert(['id' => 'other-session', 'user_id' => $c->id, 'payload' => '', 'last_activity' => time(), 'user_agent' => 'Firefox']);
@@ -157,16 +163,20 @@ class WebsiteAndCatalogueTest extends TestCase
 
     public function test_contact_change_requires_otp_to_new_address(): void
     {
-        \Illuminate\Support\Facades\Mail::fake();
-        $c = new \App\Models\User(['name' => 'P', 'phone_e164' => '+919835258203']);
+        Mail::fake();
+        $c = new User(['name' => 'P', 'phone_e164' => '+919835258203']);
         $c->save();
-        $taken = new \App\Models\User(['name' => 'T', 'email' => 'taken@example.com']);
+        $taken = new User(['name' => 'T', 'email' => 'taken@example.com']);
         $taken->save();
         $this->actingAs($c)->post('/account/contact', ['contact' => 'taken@example.com'])->assertSessionHasErrors('contact');
         $this->post('/account/contact', ['contact' => 'new@example.com'])->assertSessionHas('contact_pending');
         $this->assertNull($c->fresh()->email);
         $code = null;
-        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\OtpMail::class, function ($m) use (&$code) { $code = $m->code; return true; });
+        Mail::assertSent(OtpMail::class, function ($m) use (&$code) {
+            $code = $m->code;
+
+            return true;
+        });
         $this->post('/account/contact/confirm', ['contact_code' => $code])->assertSessionHas('status');
         $this->assertSame('new@example.com', $c->fresh()->email);
         $this->assertNotNull($c->fresh()->email_verified_at);

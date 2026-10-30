@@ -10,6 +10,7 @@ use App\Models\OfferingVariant;
 use App\Models\ServiceFamily;
 use App\Support\Audit\AuditLogger;
 use App\Support\Money;
+use App\Support\Uploads\SafeImage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -193,7 +194,8 @@ class CatalogueController extends Controller
             'audience' => ['nullable', 'string', 'max:4000'],
             'exclusions' => ['nullable', 'string', 'max:2000'],
             'disclaimer' => ['nullable', 'string', 'max:2000'],
-            'image_path' => ['nullable', 'string', 'max:255', 'regex:#^images/[a-z0-9/_\-]+\.(jpg|jpeg|png|webp)$#'],
+            'image_path' => ['nullable', 'string', 'max:255', 'regex:#^(images|uploads)/[A-Za-z0-9/_\-]+\.(jpg|jpeg|png|webp)$#'],
+            'image' => ['nullable', 'file', 'max:8192'],
             'featured' => ['nullable', 'boolean'],
             'sort' => ['nullable', 'integer', 'min:0', 'max:9999'],
         ]);
@@ -202,9 +204,12 @@ class CatalogueController extends Controller
         if (Offering::where('slug', $data['slug'])->when($o, fn ($q) => $q->whereKeyNot($o->id))->exists()) {
             throw ValidationException::withMessages(['slug' => 'Another service already uses this web address.']);
         }
-        if ($data['image_path'] && ! is_file(public_path($data['image_path']))) {
+        if ($request->hasFile('image')) {
+            $data['image_path'] = 'uploads/'.SafeImage::storeForWeb($request->file('image'), 'uploads', 'services', 'image')['path'];
+        } elseif ($data['image_path'] && ! is_file(public_path($data['image_path']))) {
             throw ValidationException::withMessages(['image_path' => 'Image not found on the server.']);
         }
+        unset($data['image']);
         $data['featured'] = (bool) ($data['featured'] ?? false);
         $data['sort'] = (int) ($data['sort'] ?? 0);
 

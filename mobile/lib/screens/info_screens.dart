@@ -9,6 +9,7 @@ import '../widgets/common.dart';
 import 'activity_screens.dart';
 import 'astro_screens.dart';
 import 'content_screens.dart';
+import 'showcase_screens.dart';
 import 'support_screens.dart';
 
 /// URL slugs for GET /rashi/{sign}, by sign index (first word of the sign name, lower case).
@@ -51,11 +52,14 @@ class MoreScreen extends StatelessWidget {
         _tile(context, Icons.celebration_outlined, 'Festivals', page: () => FestivalsScreen(state: state)),
         _tile(context, Icons.brightness_3_outlined, 'Rashi guide', page: () => RashiListScreen(state: state)),
         _tile(context, Icons.public_outlined, 'Navagraha', page: () => NavagrahaScreen(state: state)),
+        const SectionTitle('Acharya Ji'),
+        _tile(context, Icons.info_outline, 'About Acharya Ji', page: () => AboutScreen(state: state)),
+        _tile(context, Icons.emoji_events_outlined, 'Awards and honours', page: () => AwardsScreen(state: state)),
+        _tile(context, Icons.photo_library_outlined, 'Gallery', subtitle: 'Pujas, events and media', page: () => GalleryScreen(state: state)),
         const SectionTitle('Help'),
         _tile(context, Icons.help_outline, 'FAQ', page: () => FaqScreen(state: state)),
         _tile(context, Icons.support_agent_outlined, 'Help & support', subtitle: 'Your support requests', page: () => SupportGate(state: state)),
         _tile(context, Icons.call_outlined, 'Contact us', page: () => ContactScreen(state: state)),
-        _tile(context, Icons.info_outline, 'About Acharya Ji', page: () => AboutScreen(state: state)),
         const SectionTitle('Settings'),
         _tile(context, Icons.translate, 'Language', subtitle: AppState.localeNames[state.locale ?? 'en'], page: () => LanguageScreen(state: state)),
         const SectionTitle('Legal'),
@@ -342,7 +346,7 @@ class FaqScreen extends StatelessWidget {
       );
 }
 
-// ───────────────────────────── About & Contact (GET /site) ─────────────────────────────
+// ───────────────────────────── Contact (GET /site) ─────────────────────────────
 
 String _digits(String s) => s.replaceAll(RegExp(r'[^\d+]'), '');
 
@@ -404,43 +408,6 @@ class ContactScreen extends StatelessWidget {
                   for (final u in (s['social'] as List))
                     ListTile(contentPadding: EdgeInsets.zero, leading: const Icon(Icons.link), title: Text(Uri.tryParse('$u')?.host ?? '$u'), onTap: () => openExternal(context, '$u')),
                 ],
-              ]);
-            },
-          ),
-        ),
-      );
-}
-
-class AboutScreen extends StatelessWidget {
-  const AboutScreen({super.key, required this.state});
-  final AppState state;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('About')),
-        body: SafeArea(
-          child: AsyncView<Map<String, dynamic>>(
-            load: () async => unwrap(await state.api.get('/site')),
-            builder: (context, s, _) {
-              final a = (s['about'] as Map?) ?? const {};
-              List<String> strings(Object? v) => [for (final e in (v as List?) ?? const []) e is List ? e.join(', ') : '$e'];
-              return ListView(padding: const EdgeInsets.all(16), children: [
-                ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.asset('assets/images/portrait-navy-480.jpg', fit: BoxFit.cover, semanticLabel: '${a['name'] ?? ''}')),
-                const SizedBox(height: 16),
-                Text('${a['name'] ?? s['practitioner'] ?? ''}', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
-                if (a['job'] != null) Text('${a['job']}', style: const TextStyle(color: ArjColors.ink600)),
-                if (a['summary'] != null) ...[const SizedBox(height: 12), SelectableText('${a['summary']}', style: const TextStyle(height: 1.5))],
-                for (final sec in [('Expertise', a['knows']), ('Education', a['education']), ('Positions', a['positions']), ('Awards and honours', a['awards'])])
-                  if (strings(sec.$2).isNotEmpty) ...[
-                    SectionTitle(sec.$1),
-                    for (final line in strings(sec.$2))
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 3),
-                        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('•  ', style: TextStyle(color: ArjColors.gold700)), Expanded(child: Text(line))]),
-                      ),
-                  ],
-                const SizedBox(height: 16),
-                OutlinedButton.icon(onPressed: () => openExternal(context, '${(s['web'] as Map?)?['about'] ?? '$siteOrigin/about'}'), icon: const Icon(Icons.open_in_new), label: const Text('Read more on the website')),
               ]);
             },
           ),

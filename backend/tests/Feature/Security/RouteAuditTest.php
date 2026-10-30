@@ -68,7 +68,7 @@ class RouteAuditTest extends TestCase
     public function test_api_customer_routes_require_token_and_ability(): void
     {
         $open = ['api/v1/meta', 'api/v1/auth/otp/start', 'api/v1/auth/otp/resend', 'api/v1/auth/otp/verify', 'api/v1/catalogue/families', 'api/v1/catalogue/offerings',
-            'api/v1/catalogue/offerings/{slug}', 'api/v1/places', 'api/v1/tools', 'api/v1/tools/{slug}', 'api/v1/panchang', 'api/v1/enquiries',
+            'api/v1/catalogue/offerings/{slug}', 'api/v1/places', 'api/v1/profile', 'api/v1/gallery', 'api/v1/gallery/{slug}', 'api/v1/tools', 'api/v1/tools/{slug}', 'api/v1/panchang', 'api/v1/enquiries',
             'api/v1/store/products', 'api/v1/store/products/{slug}', 'api/v1/practitioners', 'api/v1/horoscopes', 'api/v1/horoscopes/types',
             'api/v1/gochar', 'api/v1/gochar/{planet}', 'api/v1/muhurat', 'api/v1/muhurat/{event}', 'api/v1/festivals',
             'api/v1/calendar', 'api/v1/rashi/{sign}', 'api/v1/navagraha', 'api/v1/faq', 'api/v1/site'];

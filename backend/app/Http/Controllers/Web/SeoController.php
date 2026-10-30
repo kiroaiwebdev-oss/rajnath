@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Web;
 use App\Domain\Astro\Gochar;
 use App\Domain\Astro\Muhurat;
 use App\Domain\Astro\Tools;
+use App\Domain\Showcase\Gallery;
+use App\Domain\Showcase\Profile;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\SetLocale;
 use App\Models\Offering;
@@ -27,7 +29,8 @@ class SeoController extends Controller
         $u = [['/', $today, 'daily', '1.0'], ['/services', $today, 'daily', '0.9'], ['/about', '2026-10-28', 'monthly', '0.8'], ['/contact', null, 'monthly', '0.8'],
             ['/faq', null, 'monthly', '0.6'], ['/rashifal', $today, 'daily', '0.8'], ['/panchang', $today, 'daily', '0.8'], ['/calendar', $today, 'weekly', '0.6'],
             ['/festivals', null, 'monthly', '0.7'], ['/muhurat', null, 'monthly', '0.7'], ['/gochar', $today, 'daily', '0.7'], ['/navagraha', null, 'monthly', '0.5'],
-            ['/tools', null, 'monthly', '0.8'], ['/gems', $today, 'weekly', '0.6'], ['/privacy', null, 'yearly', '0.2'], ['/terms', null, 'yearly', '0.2']];
+            ['/tools', null, 'monthly', '0.8'], ['/gems', $today, 'weekly', '0.6'],
+            ['/awards', null, 'monthly', '0.7'], ['/gallery', $today, 'weekly', '0.7'], ['/privacy', null, 'yearly', '0.2'], ['/terms', null, 'yearly', '0.2']];
         foreach (['nakshatra', 'chinese', 'numerology', 'tarot'] as $k) {
             $u[] = ["/rashifal/$k", $today, 'weekly', '0.5'];
         }
@@ -36,6 +39,9 @@ class SeoController extends Controller
         }
         foreach (DB::table('products')->where('active', true)->get(['slug', 'updated_at']) as $p) {
             $u[] = ['/gems/'.$p->slug, substr((string) $p->updated_at, 0, 10) ?: null, 'weekly', '0.5'];
+        }
+        foreach (DB::table('gallery_albums')->where('published', true)->get(['slug', 'updated_at']) as $a) {
+            $u[] = ['/gallery/'.$a->slug, substr((string) $a->updated_at, 0, 10) ?: null, 'monthly', '0.6'];
         }
         foreach (array_keys(Tools::TOOLS) as $t) {
             $u[] = ['/tools/'.$t, null, 'monthly', '0.6'];
@@ -102,21 +108,23 @@ class SeoController extends Controller
     {
         $services = Offering::public()->with(['translations', 'variants'])->orderBy('sort')->get()
             ->map(fn ($o) => '- ['.$o->t('en')?->title.']('.url('/services/'.$o->slug).'): '.$o->t('en')?->summary.(($p = $o->fromPriceMinor()) ? ' From '.Money::format($p).'.' : ''))->implode("\n");
-        $txt = '# '.$b->name()."\n\n> ".Business::PERSON['summary']."\n\n"
-            ."Consultations are given in person at the office in Kankarbagh, Patna (Bihar, India) and online by video or audio call, in Hindi, Maithili, Sanskrit and English.\n\n"
+        $p = app(Profile::class);
+        $st = $p->stats();
+        $txt = '# '.$b->name()."\n\n> ".$p->english('profile.summary')."\n\n"
+            .'Consultations are given in person at the office in Kankarbagh, Patna (Bihar, India) and online by video or audio call, in '.implode(', ', $b->languages()).".\n\n"
             ."## Key facts\n"
-            .'- Astrologer: '.Business::PERSON['name'].' — Ph.D. in Astrology (K.S.D.S.U., Darbhanga, 2014); Director, Jyotirveda Vigyan Sansthan; 30+ years; 1,00,000+ clients; 13+ awards'."\n"
+            .'- Astrologer: '.$p->name().' — '.$p->english('profile.job_title').'; '.$st['years'].' years; '.$st['clients'].' clients; '.$st['awards'].' awards'."\n"
             .'- Address: '.$b->addressLine()."\n"
             .'- Phone / WhatsApp: '.implode(', ', array_filter([$b->phone(), $b->phone2()]))."\n"
             .'- Email: '.$b->email()."\n"
-            ."- Hours (IST): Mon–Wed and Fri–Sun 8:00 AM–12:00 PM and 3:00 PM–7:00 PM; Thursday closed\n"
+            .'- Hours (IST): '.implode('; ', array_map(fn ($r) => $r[0].' '.$r[1], $b->hoursRows()))."\n"
             ."- Payments: online by UPI, cards and net banking (Razorpay); prices in INR\n\n"
             ."## Services\n".$services."\n\n"
             ."## Free tools\n"
             .'- [Free calculators]('.url('/tools').'): 26 calculators including Kundli, Kundli matching (Ashtakoota), Moon sign, Nakshatra, Sade Sati, numerology and baby names'."\n"
             .'- [Daily Panchang]('.url('/panchang').'): tithi, nakshatra, yoga, karana, Rahu Kaal, Choghadiya and Hora for any city'."\n"
             .'- [Muhurat finder]('.url('/muhurat').'), [Festival calendar]('.url('/festivals').'), [Vrat calendar]('.url('/calendar').'), [Grah Gochar]('.url('/gochar').'), [Rashifal]('.url('/rashifal').")\n\n"
-            ."## About\n- [Biography, education and awards](".url('/about').")\n- [Contact and timings](".url('/contact').")\n- [Questions and answers](".url('/faq').")\n\n"
+            ."## About\n- [Biography, education and awards](".url('/about').")\n- [Awards and honours](".url('/awards').")\n- [Photo and video gallery: pujas, events, awards](".url('/gallery').")\n- [Contact and timings](".url('/contact').")\n- [Questions and answers](".url('/faq').")\n\n"
             ."## Optional\n- [Full details for AI systems](".url('/llms-full.txt').")\n";
 
         return response($txt, 200, ['Content-Type' => 'text/plain; charset=UTF-8', 'Cache-Control' => 'public, max-age=3600']);
@@ -126,11 +134,19 @@ class SeoController extends Controller
     public function llmsFull(Business $b): Response
     {
         $txt = Cache::remember('seo:llms-full:'.url('/'), 3600, function () use ($b) {
-            $out = '# '.$b->name()." — full information\n\n".Business::PERSON['summary']."\n\n## Education\n";
-            foreach (Business::PERSON['education'] as [$d, $y, $where]) {
-                $out .= "- $d ($y), $where\n";
+            $p = app(Profile::class);
+            $out = '# '.$b->name()." — full information\n\n".$p->english('profile.summary')."\n";
+            foreach (Profile::SECTIONS as $key => $label) {
+                $list = $p->entries($key);
+                if ($list->isNotEmpty()) {
+                    $out .= "\n## ".$label."\n- ".$list->map(fn ($e) => Profile::line($e, true))->implode("\n- ")."\n";
+                }
             }
-            $out .= "\n## Positions\n- ".implode("\n- ", Business::PERSON['positions'])."\n\n## Awards\n- ".implode("\n- ", Business::PERSON['awards'])."\n\n## Media\n- ".implode("\n- ", Business::PERSON['media'])."\n\n## Services and prices (INR)\n";
+            $albums = app(Gallery::class)->publicAlbums();
+            if ($albums->isNotEmpty()) {
+                $out .= "\n## Gallery\n- ".$albums->map(fn ($a) => $a->title.($a->event_date ? ' ('.$a->event_date.')' : '').': '.route('gallery.show', $a->slug))->implode("\n- ")."\n";
+            }
+            $out .= "\n## Services and prices (INR)\n";
             foreach (Offering::public()->with(['translations', 'variants', 'family'])->orderBy('family_id')->orderBy('sort')->get() as $o) {
                 $t = $o->t('en');
                 $out .= "\n### ".$t?->title.' ('.$o->family->name.")\nURL: ".url('/services/'.$o->slug)."\n".$t?->summary."\n";
@@ -145,7 +161,7 @@ class SeoController extends Controller
             foreach (DB::table('faqs')->where('published', true)->where('locale', 'en')->orderBy('sort')->get() as $f) {
                 $out .= "\nQ: ".$f->question."\nA: ".strip_tags($f->answer)."\n";
             }
-            $out .= "\n## Contact\n".$b->addressLine()."\nPhone: ".implode(', ', array_filter([$b->phone(), $b->phone2()]))."\nEmail: ".$b->email()."\nHours (IST): Mon–Wed and Fri–Sun 8 AM–12 PM and 3–7 PM; Thursday closed.\n"
+            $out .= "\n## Contact\n".$b->addressLine()."\nPhone: ".implode(', ', array_filter([$b->phone(), $b->phone2()]))."\nEmail: ".$b->email()."\nHours (IST): ".implode('; ', array_map(fn ($r) => $r[0].' '.$r[1], $b->hoursRows())).".\n"
                 ."\nNote: astrological guidance is traditional and interpretive and does not replace medical, legal or financial advice. Childbirth timing is never suggested.\n";
 
             return $out;

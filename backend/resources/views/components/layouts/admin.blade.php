@@ -22,6 +22,8 @@
         ['Gem orders', 'admin.store.orders', 'puja.fulfil'],
         ['Palmistry', 'admin.palm.index', 'reports.fulfil'],
         ['Payments setup', 'admin.payments.settings', 'providers.manage'],
+        ['About & awards', 'admin.profile.edit', 'content.author'],
+        ['Gallery', 'admin.gallery.index', 'media.manage'],
         ['FAQs', 'admin.faqs.index', 'content.author'],
         ['Team', 'admin.team.index', 'team.view'],
         ['Settings', 'admin.settings.edit', 'settings.view'],

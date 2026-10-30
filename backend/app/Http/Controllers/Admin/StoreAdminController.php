@@ -70,7 +70,7 @@ class StoreAdminController extends Controller
             'ship_weight_g' => (int) ($d['ship_weight_g'] ?? $p->ship_weight_g ?? 200), 'ship_length_cm' => (int) ($d['ship_length_cm'] ?? $p->ship_length_cm ?? 12),
             'ship_breadth_cm' => (int) ($d['ship_breadth_cm'] ?? $p->ship_breadth_cm ?? 10), 'ship_height_cm' => (int) ($d['ship_height_cm'] ?? $p->ship_height_cm ?? 6)];
         if ($request->hasFile('image')) {
-            $row['image_path'] = 'uploads/'.SafeImage::store($request->file('image'), 'uploads', 'products', 'image');
+            $row['image_path'] = 'uploads/'.SafeImage::storeForWeb($request->file('image'), 'uploads', 'products', 'image')['path'];
         }
         if ($p) {
             DB::table('products')->where('id', $p->id)->update($row);

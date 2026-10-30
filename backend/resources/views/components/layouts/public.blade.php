@@ -13,6 +13,8 @@
         [__('Muhurat'), route('muhurat.index'), 'muhurat.*', false],
         [__('Festivals'), route('festivals'), 'festivals', false],
         [__('About'), route('about'), 'about', false],
+        [__('Awards'), route('awards'), 'awards', false],
+        [__('Gallery'), route('gallery'), 'gallery*', false],
         [__('Contact'), route('contact'), 'contact'],
     ];
     $me = auth()->user();
@@ -73,6 +75,8 @@
                 <ul class="mt-2 space-y-1.5">
                     <li><a href="{{ route('services.index') }}">{{ __('All services') }}</a></li>
                     <li><a href="{{ route('about') }}">{{ __('About Acharya Ji') }}</a></li>
+                    <li><a href="{{ route('awards') }}">{{ __('Awards and honours') }}</a></li>
+                    <li><a href="{{ route('gallery') }}">{{ __('Gallery: pujas and events') }}</a></li>
                     <li><a href="{{ route('store.index') }}">{{ __('Gemstone store') }}</a></li>
                     <li><a href="{{ route('services.show', 'palmistry-photo-report') }}">{{ __('Palmistry report from photos') }}</a></li>
                     <li><a href="{{ route('tools.index') }}">{{ __('Free calculators') }}</a></li>

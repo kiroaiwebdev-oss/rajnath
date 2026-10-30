@@ -1,7 +1,7 @@
 <x-layouts.admin :title="$o->exists ? ($t?->title ?? 'Service') : 'New service'">
     <div class="grid gap-6 2xl:grid-cols-[1fr_28rem]">
         <div class="min-w-0 space-y-6">
-        <form method="POST" action="{{ $o->exists ? route('admin.catalogue.update', $o->ref) : route('admin.catalogue.store') }}" class="card min-w-0 space-y-5 p-5 sm:p-6">
+        <form method="POST" action="{{ $o->exists ? route('admin.catalogue.update', $o->ref) : route('admin.catalogue.store') }}" enctype="multipart/form-data" class="card min-w-0 space-y-5 p-5 sm:p-6">
             @csrf @if ($o->exists) @method('PUT') @endif
             <h2 class="text-lg">Details (English)</h2>
             <div class="grid gap-5 sm:grid-cols-2">
@@ -14,7 +14,14 @@
                 <div><label for="f-{{ $n }}" class="field-label">{{ $l }}</label><textarea id="f-{{ $n }}" name="{{ $n }}" rows="{{ $rows }}" class="input">{{ old($n, $v) }}</textarea>@error($n)<p class="field-error">{{ $message }}</p>@enderror</div>
             @endforeach
             <div class="grid gap-5 sm:grid-cols-3">
-                <div class="sm:col-span-2"><x-field name="image_path" label="Image" :value="$o->image_path" hint="Path under public/, e.g. images/owner/portrait-navy-480.jpg" /></div>
+                <div class="sm:col-span-2">
+                    <label for="f-image" class="field-label">Photo (JPG/PNG/WebP, at least 400×400; resized automatically)</label>
+                    <input id="f-image" name="image" type="file" accept="image/jpeg,image/png,image/webp" class="input">
+                    @error('image')<p class="field-error">{{ $message }}</p>@enderror
+                    @if ($o->image_path)<img src="/{{ $o->image_path }}" alt="" class="mt-3 h-28 rounded-xl object-cover">@endif
+                    <details class="mt-2 text-sm"><summary class="cursor-pointer text-ink-600">Or use a photo already on the server</summary>
+                        <div class="mt-2"><x-field name="image_path" label="Image path" :value="$o->image_path" hint="e.g. images/owner/portrait-navy-480.jpg. Leave as is to keep the current photo." /></div></details>
+                </div>
                 <x-field name="sort" label="Order" type="number" :value="$o->sort" min="0" />
             </div>
             <label class="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" name="featured" value="1" class="size-4 accent-ink-900" @checked(old('featured', $o->featured))> Feature on the home page</label>

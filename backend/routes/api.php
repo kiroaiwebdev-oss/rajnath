@@ -40,6 +40,9 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
     Route::get('panchang', [V1\ToolApiController::class, 'panchang'])->middleware('throttle:tools');
     Route::get('faq', [V1\ContentApiController::class, 'faq']);
     Route::get('site', [V1\ContentApiController::class, 'site']);
+    Route::get('profile', [V1\ShowcaseApiController::class, 'profile']);
+    Route::get('gallery', [V1\ShowcaseApiController::class, 'albums']);
+    Route::get('gallery/{slug}', [V1\ShowcaseApiController::class, 'album']);
     Route::get('horoscopes/types', [V1\ContentApiController::class, 'horoscopeTypes']);
     Route::get('horoscopes', [V1\ContentApiController::class, 'horoscopes']);
     Route::middleware('throttle:tools')->group(function () {

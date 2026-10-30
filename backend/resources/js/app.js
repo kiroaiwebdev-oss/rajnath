@@ -184,6 +184,59 @@ Alpine.data('callRoom', () => ({
 
 Alpine.data('printer', () => ({ print() { window.print(); } }));
 
+// Gallery viewer: thumbnails carry data-lb attributes; arrows, Escape and swipe navigate.
+// YouTube loads (youtube-nocookie.com) only after the visitor presses play.
+Alpine.data('lightbox', () => ({
+    items: [], index: -1, playing: false, opener: null, touchX: null,
+    init() {
+        this.items = [...this.$el.querySelectorAll('[data-lb]')].map((el) => ({
+            kind: el.dataset.kind, src: el.dataset.src, caption: el.dataset.caption || '', video: el.dataset.video || '',
+        }));
+    },
+    get isOpen() { return this.index >= 0; },
+    get current() { return this.items[this.index] || {}; },
+    get isPhoto() { return this.isOpen && this.current.kind === 'photo'; },
+    get isVideo() { return this.isOpen && this.current.kind === 'video'; },
+    get showPlay() { return this.isVideo && !this.playing; },
+    get showFrame() { return this.isVideo && this.playing; },
+    get src() { return this.current.src || ''; },
+    get caption() { return this.current.caption || ''; },
+    get counter() { return this.isOpen ? `${this.index + 1} / ${this.items.length}` : ''; },
+    get embed() { return this.showFrame && /^[A-Za-z0-9_-]{11}$/.test(this.current.video) ? `https://www.youtube-nocookie.com/embed/${this.current.video}?autoplay=1&rel=0` : ''; },
+    openAt(e) {
+        this.opener = e.currentTarget;
+        this.index = Number(e.currentTarget.dataset.index);
+        this.playing = false;
+        document.documentElement.classList.add('overflow-hidden');
+        this.$nextTick(() => this.$refs.close && this.$refs.close.focus());
+    },
+    close() {
+        this.index = -1;
+        this.playing = false;
+        document.documentElement.classList.remove('overflow-hidden');
+        if (this.opener) { this.opener.focus(); }
+    },
+    go(step) {
+        if (!this.items.length) { return; }
+        this.index = (this.index + step + this.items.length) % this.items.length;
+        this.playing = false;
+    },
+    next() { this.go(1); },
+    prev() { this.go(-1); },
+    play() { this.playing = true; },
+    key(e) {
+        if (!this.isOpen) { return; }
+        if (e.key === 'Escape') { this.close(); } else if (e.key === 'ArrowRight') { this.next(); } else if (e.key === 'ArrowLeft') { this.prev(); }
+    },
+    touchStart(e) { this.touchX = e.changedTouches[0].clientX; },
+    touchEnd(e) {
+        if (this.touchX === null) { return; }
+        const dx = e.changedTouches[0].clientX - this.touchX;
+        this.touchX = null;
+        if (Math.abs(dx) > 50) { if (dx < 0) { this.next(); } else { this.prev(); } }
+    },
+}));
+
 window.Alpine = Alpine;
 Alpine.start();
 
