@@ -14,7 +14,7 @@ return [
         'settings.view', 'settings.manage', 'providers.manage',
         'health.view',
         // Content
-        'content.author', 'content.review', 'content.publish', 'media.manage',
+        'content.author', 'content.review', 'content.publish', 'media.manage', 'legal.manage',
         // Catalogue
         'catalogue.view', 'catalogue.manage', 'prices.manage',
         // Customers & bookings
@@ -39,7 +39,7 @@ return [
         'owner' => ['*'],
         'administrator' => [
             'team.view', 'team.manage', 'audit.view', 'settings.view', 'settings.manage', 'health.view',
-            'content.author', 'content.review', 'content.publish', 'media.manage',
+            'content.author', 'content.review', 'content.publish', 'media.manage', 'legal.manage',
             'catalogue.view', 'catalogue.manage', 'customers.view', 'customers.restrict',
             'bookings.view', 'bookings.manage', 'practitioners.view', 'practitioners.review',
             'practitioners.manage', 'reports.review', 'suppliers.manage', 'support.view',
@@ -63,7 +63,7 @@ return [
 
     // Permissions that always require a fresh step-up (password + TOTP within the window).
     'step_up' => [
-        'team.manage', 'roles.manage', 'settings.manage', 'providers.manage', 'prices.manage',
+        'team.manage', 'roles.manage', 'settings.manage', 'providers.manage', 'prices.manage', 'legal.manage',
         'refunds.approve', 'payouts.approve', 'commission.approve', 'privacy.approve',
     ],
 

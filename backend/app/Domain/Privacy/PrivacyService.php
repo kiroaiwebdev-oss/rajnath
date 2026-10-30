@@ -2,6 +2,7 @@
 
 namespace App\Domain\Privacy;
 
+use App\Domain\Reviews\Reviews;
 use App\Models\BirthProfile;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
@@ -44,6 +45,7 @@ class PrivacyService
             'notifications' => DB::table('user_notifications')->where('user_id', $u->id)->orderBy('id')->get(['kind', 'title', 'body', 'created_at', 'read_at']),
             'assistant_conversations' => DB::table('assistant_conversations')->where('user_id', $u->id)->get()->map(fn ($c) => ['ref' => $c->ref, 'channel' => $c->channel, 'created_at' => $c->created_at,
                 'messages' => DB::table('assistant_messages')->where('conversation_id', $c->id)->orderBy('id')->get(['role', 'content', 'created_at'])]),
+            'reviews' => DB::table('reviews')->where('user_id', $u->id)->get(['ref', 'rating', 'title', 'body', 'display_name', 'city', 'status', 'created_at']),
             'app_devices_for_push' => DB::table('push_tokens')->where('user_id', $u->id)->count(),
             'puja_bookings' => DB::table('puja_bookings')->where('user_id', $u->id)->get()->map(fn ($b) => ['ref' => $b->ref, 'status' => $b->status, 'sankalp' => $b->sankalp ? json_decode(Crypt::decryptString($b->sankalp), true) : null, 'scheduled_at' => $b->scheduled_at]),
         ];
@@ -129,6 +131,8 @@ class PrivacyService
                 DB::table('shipments')->where('id', $sid)->update(['address' => Crypt::encryptString(json_encode(['name' => 'Deleted']))]);
             }
             $steps[] = 'enquiries, tickets, report and delivery details anonymised';
+            $steps[] = 'reviews deleted ('.DB::table('reviews')->where('user_id', $u->id)->delete().')';
+            Reviews::forget();
             DB::table('assistant_conversations')->where('user_id', $u->id)->delete();
             DB::table('user_notifications')->where('user_id', $u->id)->delete();
             DB::table('push_tokens')->where('user_id', $u->id)->delete();

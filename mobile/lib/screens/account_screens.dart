@@ -14,6 +14,7 @@ import 'apply_screens.dart';
 import 'astro_screens.dart';
 import 'info_screens.dart';
 import 'palm_screens.dart';
+import 'review_screens.dart';
 import 'support_screens.dart';
 import 'wallet_screen.dart';
 import 'sign_in_screen.dart';
@@ -53,6 +54,7 @@ class AccountScreen extends StatelessWidget {
       _tile(context, Icons.account_balance_wallet_outlined, 'Wallet', () => WalletScreen(state: state)),
       _tile(context, Icons.notifications_outlined, 'Notifications', () => NotificationsScreen(state: state),
           badge: state.unread > 0 ? '${state.unread}' : null),
+      _tile(context, Icons.rate_review_outlined, 'My reviews', () => MyReviewsScreen(state: state)),
       _tile(context, Icons.support_agent_outlined, 'Help & support', () => SupportScreen(state: state)),
       const SectionTitle('Settings'),
       _tile(context, Icons.badge_outlined, 'Profile, email and mobile', () => ProfileScreen(state: state)),

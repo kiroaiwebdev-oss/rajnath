@@ -37,6 +37,8 @@ Website content is also managed in the admin:
 - **Admin → Gallery**: albums for pujas and anushthans, awards, events, media and the office. Upload up to 10 photos at a time (resized, location data removed) and add YouTube links. Authors upload; a content publisher publishes and picks albums for the home page.
 - **Admin → Settings**: also the opening hours (per day, morning and evening) and the city, state and PIN code.
 - **Admin → Catalogue**: each service can have an uploaded photo.
+- **Admin → Reviews**: customers review paid orders from their account or the app; nothing is public until someone with the reviewer role publishes it. Staff can add a review received offline with a note of how permission was given, reply publicly, and pick reviews for the home page.
+- **Admin → Legal pages**: privacy policy, terms, cancellation and refund policy, and shipping policy (English, optional Hindi). Publishing creates a new dated version (password + authenticator needed); old versions stay readable. The refund and shipping pages start as drafts: check and publish them before asking Razorpay for live payments.
 
 The first deploy fills About and Gallery with the current biography, 14 awards and the office photos. Later deploys never overwrite the owner's edits.
 

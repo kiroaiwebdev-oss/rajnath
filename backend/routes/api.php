@@ -43,6 +43,7 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
     Route::get('profile', [V1\ShowcaseApiController::class, 'profile']);
     Route::get('gallery', [V1\ShowcaseApiController::class, 'albums']);
     Route::get('gallery/{slug}', [V1\ShowcaseApiController::class, 'album']);
+    Route::get('reviews', [V1\ReviewApiController::class, 'index']);
     Route::get('horoscopes/types', [V1\ContentApiController::class, 'horoscopeTypes']);
     Route::get('horoscopes', [V1\ContentApiController::class, 'horoscopes']);
     Route::middleware('throttle:tools')->group(function () {
@@ -123,6 +124,12 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
             Route::post('me/contact', [V1\AccountApiController::class, 'startContactChange']);
             Route::post('me/contact/confirm', [V1\AccountApiController::class, 'confirmContactChange']);
             Route::post('privacy/code', [V1\AccountApiController::class, 'privacyCode']);
+        });
+        Route::get('me/reviews', [V1\ReviewApiController::class, 'mine']);
+        Route::delete('me/reviews/{ref}', [V1\ReviewApiController::class, 'destroy']);
+        Route::middleware('throttle:reviews')->group(function () {
+            Route::post('reviews', [V1\ReviewApiController::class, 'store']);
+            Route::put('me/reviews/{ref}', [V1\ReviewApiController::class, 'update']);
         });
         Route::post('assistant/chat', [AssistantController::class, 'chat'])->middleware('throttle:assistant');
     });

@@ -4,6 +4,7 @@ import '../state/app_state.dart';
 import '../widgets/common.dart';
 import 'activity_screens.dart';
 import 'palm_screens.dart';
+import 'review_screens.dart';
 
 /// Screen for an order's `next` step (`{type, ref}`), or null when there is nothing to do.
 Widget? screenForNext(AppState state, Map order) {
@@ -42,6 +43,7 @@ Widget screenForTarget(AppState state, String? kind, String? ref) {
     'puja' when r != null => PujaDetailScreen(state: state, ref: r),
     'palm' when r != null => PalmDetailScreen(state: state, ref: r),
     'order' when r != null => OrderDetailScreen(state: state, ref: r),
+    'review' => MyReviewsScreen(state: state),
     _ => NotificationsScreen(state: state),
   };
 }

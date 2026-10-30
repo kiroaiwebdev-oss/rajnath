@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Domain\Messaging\MailConfigurator;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
 use App\Support\Settings\SettingsRepository;
@@ -53,11 +54,13 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('checkout', fn (Request $r) => Limit::perMinute(10)->by('co:'.($r->user()?->id ?: $r->ip())));
         RateLimiter::for('assistant', fn (Request $r) => [Limit::perMinute(6)->by('ai:'.($r->user()?->id ?: $r->ip())), Limit::perHour(60)->by('aih:'.$r->ip())]);
         RateLimiter::for('places', fn (Request $r) => Limit::perMinute(60)->by('pl:'.$r->ip()));
+        // reviews: 10 sends or edits an hour per account
+        RateLimiter::for('reviews', fn (Request $r) => Limit::perHour(10)->by('reviews:'.($r->user()?->id ?: $r->ip())));
         RateLimiter::for('enquiry', fn (Request $r) => [Limit::perMinute(3)->by('enq:'.$r->ip()), Limit::perDay(30)->by('enqd:'.$r->ip())]);
         RateLimiter::for('provider-test', fn (Request $r) => Limit::perMinute(5)->by('u:'.$r->user()?->id));
 
         // Apply SMTP settings saved in admin (falls back to .env MAIL_* when none are saved).
-        $this->app->booted(fn () => rescue(fn () => app(\App\Domain\Messaging\MailConfigurator::class)->apply(), null, false));
+        $this->app->booted(fn () => rescue(fn () => app(MailConfigurator::class)->apply(), null, false));
 
         RateLimiter::for('api', fn (Request $r) => Limit::perMinute(120)->by($r->user()?->id ?: $r->ip()));
 

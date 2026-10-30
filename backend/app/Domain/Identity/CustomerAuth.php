@@ -4,8 +4,10 @@ namespace App\Domain\Identity;
 
 use App\Domain\Identity\Otp\OtpException;
 use App\Domain\Identity\Otp\OtpService;
+use App\Domain\Legal\LegalDocuments;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -62,7 +64,7 @@ class CustomerAuth
         // box does not burn their OTP.
         $peek = DB::table('otp_challenges')->where('ref', $ref)->first();
         if ($peek) {
-            $dest = \Illuminate\Support\Facades\Crypt::decryptString($peek->destination);
+            $dest = Crypt::decryptString($peek->destination);
             $exists = $this->findByContact($peek->channel, $dest);
             if (! $exists && ! $acceptedTerms) {
                 throw ValidationException::withMessages(['terms' => 'Please accept the Terms and Privacy Policy to create your account.']);
@@ -90,7 +92,7 @@ class CustomerAuth
                 $c['channel'] === 'email' ? $user->email = $c['destination'] : $user->phone_e164 = $c['destination'];
                 $user->terms_accepted_at = now();
                 $user->save();
-                DB::table('consents')->insert(['user_id' => $user->id, 'type' => 'terms_privacy', 'version' => self::TERMS_VERSION, 'granted_at' => now(), 'ip' => $ip]);
+                DB::table('consents')->insert(['user_id' => $user->id, 'type' => 'terms_privacy', 'version' => LegalDocuments::consentVersion(), 'granted_at' => now(), 'ip' => $ip]);
                 $created = true;
             }
             if ($c['channel'] === 'email') {

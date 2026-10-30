@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Domain\Astro\Gochar;
 use App\Domain\Astro\Muhurat;
 use App\Domain\Astro\Tools;
+use App\Domain\Legal\LegalDocuments;
 use App\Domain\Showcase\Gallery;
 use App\Domain\Showcase\Profile;
 use App\Http\Controllers\Controller;
@@ -30,7 +31,7 @@ class SeoController extends Controller
             ['/faq', null, 'monthly', '0.6'], ['/rashifal', $today, 'daily', '0.8'], ['/panchang', $today, 'daily', '0.8'], ['/calendar', $today, 'weekly', '0.6'],
             ['/festivals', null, 'monthly', '0.7'], ['/muhurat', null, 'monthly', '0.7'], ['/gochar', $today, 'daily', '0.7'], ['/navagraha', null, 'monthly', '0.5'],
             ['/tools', null, 'monthly', '0.8'], ['/gems', $today, 'weekly', '0.6'],
-            ['/awards', null, 'monthly', '0.7'], ['/gallery', $today, 'weekly', '0.7'], ['/privacy', null, 'yearly', '0.2'], ['/terms', null, 'yearly', '0.2']];
+            ['/awards', null, 'monthly', '0.7'], ['/gallery', $today, 'weekly', '0.7'], ['/reviews', $today, 'weekly', '0.7'], ['/privacy', null, 'yearly', '0.2'], ['/terms', null, 'yearly', '0.2']];
         foreach (['nakshatra', 'chinese', 'numerology', 'tarot'] as $k) {
             $u[] = ["/rashifal/$k", $today, 'weekly', '0.5'];
         }
@@ -39,6 +40,11 @@ class SeoController extends Controller
         }
         foreach (DB::table('products')->where('active', true)->get(['slug', 'updated_at']) as $p) {
             $u[] = ['/gems/'.$p->slug, substr((string) $p->updated_at, 0, 10) ?: null, 'weekly', '0.5'];
+        }
+        foreach (['refunds' => '/refund-policy', 'shipping' => '/shipping-policy'] as $kind => $path) {
+            if (app(LegalDocuments::class)->isPublished($kind)) {
+                $u[] = [$path, null, 'yearly', '0.2'];
+            }
         }
         foreach (DB::table('gallery_albums')->where('published', true)->get(['slug', 'updated_at']) as $a) {
             $u[] = ['/gallery/'.$a->slug, substr((string) $a->updated_at, 0, 10) ?: null, 'monthly', '0.6'];

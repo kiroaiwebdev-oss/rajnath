@@ -93,3 +93,19 @@
     .chat-user { @apply ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-ink-900 px-4 py-2.5 text-sm text-white; }
     .chat-bot { @apply mr-auto max-w-[85%] rounded-2xl rounded-bl-sm bg-ivory-100 px-4 py-2.5 text-sm text-ink-900; }
 }
+
+/* Long-form text from Markdown (legal pages). */
+@layer components {
+    .prose-legal { @apply leading-7 text-ink-900; }
+    .prose-legal > * + * { @apply mt-4; }
+    .prose-legal h2 { @apply mt-10 text-xl font-semibold; }
+    .prose-legal h3 { @apply mt-8 text-lg font-semibold; }
+    .prose-legal ul { @apply list-disc space-y-1.5 pl-5; }
+    .prose-legal ol { @apply list-decimal space-y-1.5 pl-5; }
+    .prose-legal a { @apply break-words; }
+    .prose-legal blockquote { @apply rounded-xl border-l-4 border-gold-500 bg-gold-50 px-4 py-3 text-sm; }
+    .prose-legal table { @apply w-full text-left text-sm; }
+    .prose-legal th { @apply bg-ivory-100 px-3 py-2 font-semibold; }
+    .prose-legal td { @apply border-t border-ink-200/60 px-3 py-2 align-top; }
+    .stars { @apply inline-flex items-center gap-0.5 text-gold-500; }
+}

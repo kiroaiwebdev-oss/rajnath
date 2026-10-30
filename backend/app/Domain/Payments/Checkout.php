@@ -3,8 +3,8 @@
 namespace App\Domain\Payments;
 
 use App\Domain\Booking\Slots;
-use App\Domain\Identity\CustomerAuth;
 use App\Domain\Ledger\Ledger;
+use App\Domain\Legal\LegalDocuments;
 use App\Domain\Notify\Notifier;
 use App\Domain\Palmistry\PalmReadings;
 use App\Domain\Puja\PujaBookings;
@@ -42,7 +42,7 @@ class Checkout
         $snapshot = [
             'offering' => ['ref' => $o->ref, 'slug' => $o->slug, 'title' => $o->t('en')?->title, 'family' => $o->family->code],
             'variant' => ['ref' => $variant->ref, 'name' => $variant->name, 'mode' => $variant->mode, 'duration_min' => $variant->duration_min, 'participants' => $variant->participants, 'urgent' => $variant->urgent],
-            'price_minor' => $variant->price_minor, 'currency' => 'INR', 'terms_version' => CustomerAuth::TERMS_VERSION,
+            'price_minor' => $variant->price_minor, 'currency' => 'INR', 'terms_version' => LegalDocuments::consentVersion(),
             'disclaimer' => $o->t('en')?->disclaimer,
         ] + $extra;
 

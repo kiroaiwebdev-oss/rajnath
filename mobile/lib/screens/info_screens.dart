@@ -9,6 +9,7 @@ import '../widgets/common.dart';
 import 'activity_screens.dart';
 import 'astro_screens.dart';
 import 'content_screens.dart';
+import 'review_screens.dart';
 import 'showcase_screens.dart';
 import 'support_screens.dart';
 
@@ -30,9 +31,47 @@ Widget _fact(String label, Object? value) => value == null || _list(value).isEmp
 // ───────────────────────────── More ─────────────────────────────
 
 /// "More" tab: guides, help, about/contact, language and legal pages.
-class MoreScreen extends StatelessWidget {
+class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key, required this.state});
   final AppState state;
+  @override
+  State<MoreScreen> createState() => _MoreScreenState();
+}
+
+class _MoreScreenState extends State<MoreScreen> {
+  /// Published legal pages from GET /site (`data.legal`); null until loaded or when it fails.
+  List<Map>? _legal;
+  String? _locale;
+
+  AppState get state => widget.state;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLegal();
+  }
+
+  @override
+  void didUpdateWidget(MoreScreen old) {
+    super.didUpdateWidget(old);
+    if (state.locale != _locale) _loadLegal(); // page titles are translated
+  }
+
+  Future<void> _loadLegal() async {
+    _locale = state.locale;
+    try {
+      final legal = (unwrap(await state.api.get('/site'))['legal'] as List?)?.whereType<Map>().where((l) => l['url'] != null && l['title'] != null).toList();
+      if (mounted && legal != null && legal.isNotEmpty) setState(() => _legal = legal);
+    } catch (_) {/* keep the built-in Terms and Privacy links */}
+  }
+
+  static IconData _legalIcon(Object? kind) => switch (kind) {
+        'terms' => Icons.gavel_outlined,
+        'privacy' => Icons.privacy_tip_outlined,
+        'refunds' => Icons.currency_exchange,
+        'shipping' => Icons.local_shipping_outlined,
+        _ => Icons.description_outlined,
+      };
 
   Widget _tile(BuildContext context, IconData icon, String title, {String? subtitle, Widget Function()? page, String? url}) => Card(
         margin: const EdgeInsets.only(bottom: 8),
@@ -56,6 +95,7 @@ class MoreScreen extends StatelessWidget {
         _tile(context, Icons.info_outline, 'About Acharya Ji', page: () => AboutScreen(state: state)),
         _tile(context, Icons.emoji_events_outlined, 'Awards and honours', page: () => AwardsScreen(state: state)),
         _tile(context, Icons.photo_library_outlined, 'Gallery', subtitle: 'Pujas, events and media', page: () => GalleryScreen(state: state)),
+        _tile(context, Icons.reviews_outlined, 'Client reviews', subtitle: 'What our clients say', page: () => ReviewsScreen(state: state)),
         const SectionTitle('Help'),
         _tile(context, Icons.help_outline, 'FAQ', page: () => FaqScreen(state: state)),
         _tile(context, Icons.support_agent_outlined, 'Help & support', subtitle: 'Your support requests', page: () => SupportGate(state: state)),
@@ -63,8 +103,12 @@ class MoreScreen extends StatelessWidget {
         const SectionTitle('Settings'),
         _tile(context, Icons.translate, 'Language', subtitle: AppState.localeNames[state.locale ?? 'en'], page: () => LanguageScreen(state: state)),
         const SectionTitle('Legal'),
-        _tile(context, Icons.gavel_outlined, 'Terms of service', url: '$siteOrigin/terms'),
-        _tile(context, Icons.privacy_tip_outlined, 'Privacy policy', url: '$siteOrigin/privacy'),
+        if (_legal case final legal?)
+          for (final l in legal) _tile(context, _legalIcon(l['kind']), '${l['title']}', url: '${l['url']}')
+        else ...[
+          _tile(context, Icons.gavel_outlined, 'Terms of service', url: '$siteOrigin/terms'),
+          _tile(context, Icons.privacy_tip_outlined, 'Privacy policy', url: '$siteOrigin/privacy'),
+        ],
       ]);
 }
 

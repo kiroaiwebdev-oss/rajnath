@@ -18,7 +18,7 @@ class Notifier
     /** kind → preference key (null = always sent). */
     public const PREF = [
         'booking' => 'booking_reminders', 'report' => 'reports_ready', 'palm' => 'reports_ready',
-        'order' => 'payments', 'offer' => 'offers', 'puja' => null, 'ticket' => null, 'general' => null,
+        'order' => 'payments', 'offer' => 'offers', 'puja' => null, 'ticket' => null, 'review' => null, 'general' => null,
     ];
 
     public function send(int|User $user, string $kind, string $title, string $body, ?string $ref = null, ?string $link = null): ?int

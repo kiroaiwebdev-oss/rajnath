@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Domain\Legal\LegalDocuments;
 use App\Domain\Showcase\Profile;
 use App\Support\Settings\SettingsRepository;
 
@@ -174,6 +175,9 @@ class Business
             'phone' => $this->phone(), 'phone2' => $this->phone2(), 'whatsapp' => $this->whatsapp(), 'email' => $this->email(),
             'address' => $this->address() + ['line' => $this->addressLine()], 'geo' => $this->geo(), 'map_url' => $this->mapUrl(),
             'hours' => array_map(fn ($r) => ['days' => $r[0], 'time' => $r[1]], $this->hoursRows()), 'languages' => $this->languages(), 'social' => $this->social(),
-            'about' => app(Profile::class)->toApi(), 'web' => ['about' => url('/about'), 'terms' => url('/terms'), 'privacy' => url('/privacy'), 'contact' => url('/contact')]];
+            'about' => app(Profile::class)->toApi(), 'web' => ['about' => url('/about'), 'terms' => url('/terms'), 'privacy' => url('/privacy'), 'contact' => url('/contact'), 'reviews' => url('/reviews')],
+            // published legal pages: [{kind, title, url}]
+            'legal' => collect(LegalDocuments::KINDS)->filter(fn ($k, $kind) => in_array($kind, ['privacy', 'terms'], true) || app(LegalDocuments::class)->isPublished($kind))
+                ->map(fn ($k, $kind) => ['kind' => $kind, 'title' => app(LegalDocuments::class)->current($kind)?->title ?? __($k[0]), 'url' => url($k[1])])->values()->all()];
     }
 }

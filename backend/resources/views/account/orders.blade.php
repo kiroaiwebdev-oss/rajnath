@@ -10,6 +10,7 @@
                         <p class="text-xs text-ink-600">{{ \Illuminate\Support\Carbon::parse($o->created_at)->tz(auth()->user()->display_timezone)->format('d M Y, g:i A') }} · {{ \App\Support\Money::format((int) $o->subtotal_minor) }}</p></div>
                     <div class="flex items-center gap-3">
                         <span @class(['badge-success' => $o->status === 'paid', 'badge-gold' => $o->status === 'pending_payment', 'badge-ink' => ! in_array($o->status, ['paid', 'pending_payment'])])>{{ ucwords(str_replace('_', ' ', $o->status)) }}</span>
+                        @if (in_array($o->status, \App\Domain\Reviews\Reviews::PAID, true) && in_array($o->kind, ['service', 'product'], true))<a href="{{ route('account.reviews.create', $o->ref) }}" class="btn-ghost">Review</a>@endif
                         <a href="{{ $o->status === 'pending_payment' ? route('checkout.show', $o->ref) : route('account.receipt', $o->ref) }}" class="btn-outline">{{ $o->status === 'pending_payment' ? 'Pay' : 'Receipt' }}</a>
                     </div>
                 </li>

@@ -79,6 +79,20 @@
             </aside>
         </div>
 
+        @php $rv = app(\App\Domain\Reviews\Reviews::class); $svcReviews = $rv->forOffering($o->id, 4); $svcSummary = $rv->summary($o->id); @endphp
+        @if ($svcReviews->isNotEmpty())
+            <section class="mt-16" aria-labelledby="rev-h">
+                <div class="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                        <h2 id="rev-h" class="text-xl">{{ __('What clients say') }}</h2>
+                        <p class="mt-1 flex items-center gap-2 text-sm text-ink-600"><x-stars :rating="$svcSummary['average']" /> {{ number_format($svcSummary['average'], 1) }} · {{ trans_choice(':count review|:count reviews', $svcSummary['count'], ['count' => $svcSummary['count']]) }}</p>
+                    </div>
+                    <a href="{{ route('reviews', ['service' => $o->slug]) }}" class="btn-outline">{{ __('All reviews') }}</a>
+                </div>
+                <div class="mt-5 grid gap-5 md:grid-cols-2">@foreach ($svcReviews as $r)<x-review-card :r="$r" clamp />@endforeach</div>
+            </section>
+        @endif
+
         @if ($related->isNotEmpty())
             <section class="mt-16" aria-labelledby="rel-h">
                 <h2 id="rel-h" class="text-xl">{{ __('Related services') }}</h2>

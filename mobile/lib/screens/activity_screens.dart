@@ -11,6 +11,7 @@ import '../widgets/common.dart';
 import 'account_screens.dart';
 import 'call_screen.dart';
 import 'purchase_screens.dart';
+import 'review_screens.dart';
 import 'routing.dart';
 
 Future<void> openExternal(BuildContext context, String? url) async {
@@ -159,6 +160,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 if (next != null && o['status'] == 'paid' && (o['next'] as Map?)?['type'] != 'shipment')
                   FilledButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => next)), child: const Text('Continue')),
                 if (o['status'] == 'pending_payment') OutlinedButton(onPressed: _cancel, child: const Text('Cancel order')),
+                if (o['review'] is Map) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MyReviewsScreen(state: widget.state))),
+                    icon: const Icon(Icons.reviews_outlined),
+                    label: const Text('Your review'),
+                  ),
+                ] else if (const ['paid', 'partially_refunded'].contains(o['status']) && const ['service', 'product'].contains(o['kind'])) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => WriteReviewScreen(state: widget.state, orderRef: widget.ref, orderLabel: o['label'] == null ? null : '${o['label']}')),
+                    ),
+                    icon: const Icon(Icons.rate_review_outlined),
+                    label: const Text('Write a review'),
+                  ),
+                ],
               ]);
             },
           ),

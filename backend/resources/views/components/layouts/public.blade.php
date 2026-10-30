@@ -77,6 +77,7 @@
                     <li><a href="{{ route('about') }}">{{ __('About Acharya Ji') }}</a></li>
                     <li><a href="{{ route('awards') }}">{{ __('Awards and honours') }}</a></li>
                     <li><a href="{{ route('gallery') }}">{{ __('Gallery: pujas and events') }}</a></li>
+                    <li><a href="{{ route('reviews') }}">{{ __('Client reviews') }}</a></li>
                     <li><a href="{{ route('store.index') }}">{{ __('Gemstone store') }}</a></li>
                     <li><a href="{{ route('services.show', 'palmistry-photo-report') }}">{{ __('Palmistry report from photos') }}</a></li>
                     <li><a href="{{ route('tools.index') }}">{{ __('Free calculators') }}</a></li>
@@ -106,6 +107,9 @@
                 <ul class="mt-3 space-y-1.5">
                     <li><a href="{{ route('privacy') }}">{{ __('Privacy policy') }}</a></li>
                     <li><a href="{{ route('terms') }}">{{ __('Terms of use') }}</a></li>
+                    @php $legalDocs = app(\App\Domain\Legal\LegalDocuments::class); @endphp
+                    @if ($legalDocs->isPublished('refunds'))<li><a href="{{ route('legal.refunds') }}">{{ __('Cancellation and refund policy') }}</a></li>@endif
+                    @if ($legalDocs->isPublished('shipping'))<li><a href="{{ route('legal.shipping') }}">{{ __('Shipping and delivery policy') }}</a></li>@endif
                     <li><a href="{{ $site('source.repository_url') }}" rel="noopener">{{ __('Source code (AGPL-3.0)') }}</a></li>
                 </ul>
             </div>

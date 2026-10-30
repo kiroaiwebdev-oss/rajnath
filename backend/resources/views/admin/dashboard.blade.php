@@ -1,4 +1,17 @@
 <x-layouts.admin title="Dashboard">
+    @if ($attention)
+    <section aria-labelledby="att-h" class="mb-8">
+        <h2 id="att-h" class="text-base">Needs attention</h2>
+        <ul class="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+            @foreach ($attention as [$label, $n, $route])
+                <li><a href="{{ route($route) }}" @class(['card block p-5 no-underline transition hover:-translate-y-0.5', 'ring-2 ring-gold-500' => $n > 0])>
+                    <p class="text-sm text-ink-600">{{ $label }}</p>
+                    <p @class(['mt-2 text-3xl font-semibold tabular-nums', 'text-gold-700' => $n > 0, 'text-ink-400' => $n === 0])>{{ number_format($n) }}</p>
+                </a></li>
+            @endforeach
+        </ul>
+    </section>
+    @endif
     <section aria-labelledby="stats" class="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <h2 id="stats" class="sr-only">Overview</h2>
         @foreach ($stats as $label => $value)

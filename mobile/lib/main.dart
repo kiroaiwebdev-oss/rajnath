@@ -10,6 +10,7 @@ import 'screens/astro_screens.dart';
 import 'screens/content_screens.dart';
 import 'screens/info_screens.dart';
 import 'screens/purchase_screens.dart';
+import 'screens/review_screens.dart';
 import 'screens/routing.dart';
 import 'screens/services_screens.dart';
 import 'screens/showcase_screens.dart';
@@ -180,6 +181,7 @@ class _HomeTabState extends State<HomeTab> {
           label: const Text('Ask our assistant'),
         ),
       ],
+      HomeReviews(state: state),
       const SizedBox(height: 24),
       const Text('Astrological guidance is traditional and interpretive. It does not replace medical, legal or financial advice.', style: TextStyle(fontSize: 12, color: ArjColors.ink600)),
     ]);

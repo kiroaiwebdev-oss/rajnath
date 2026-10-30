@@ -35,7 +35,9 @@ class CommerceController extends Controller
             'wallet_applied_minor' => (int) $o->wallet_applied_minor, 'payable_minor' => (int) $o->payable_minor,
             'refunded_minor' => (int) $o->refunded_minor, 'created_at' => self::iso($o->created_at), 'paid_at' => self::iso($o->paid_at ?? null),
             'next' => in_array($o->status, ['paid', 'partially_refunded'], true) ? Checkout::next($o) : null,
-            'invoices' => DocumentApiController::invoicesFor($o)];
+            'invoices' => DocumentApiController::invoicesFor($o),
+            // the customer's review of this order, if any: {ref, status}
+            'review' => ($rv = DB::table('reviews')->where('order_id', $o->id)->first(['ref', 'status'])) ? ['ref' => $rv->ref, 'status' => $rv->status] : null];
     }
 
     public static function iso(?string $t): ?string
