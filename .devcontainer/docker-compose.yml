@@ -1,0 +1,42 @@
+# Development / test stack for Codespaces. Not used in production (see deploy/).
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_DATABASE: arj
+      DB_USERNAME: arj
+      DB_PASSWORD: arj-dev-password
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: "1025"
+      PDF_CHROME_BINARY: /usr/bin/chromium
+      XDEBUG_MODE: "off"
+    depends_on:
+      - db
+      - mailpit
+
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: arj-dev-root
+      MARIADB_DATABASE: arj
+      MARIADB_USER: arj
+      MARIADB_PASSWORD: arj-dev-password
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./db-init.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+
+volumes:
+  db-data:

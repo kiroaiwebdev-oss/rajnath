@@ -1,0 +1,32 @@
+{
+    // GitHub Codespaces / VS Code Dev Containers: the full platform for testing.
+    // Laravel (PHP 8.4) + MariaDB + Mailpit (catches sign-in codes) + Node + Chromium (PDFs)
+    // + Swiss Ephemeris engine. Docker-in-Docker lets you also build the production image.
+    "name": "Astro Rajnath Jha platform",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "shutdownAction": "stopCompose",
+    "hostRequirements": { "cpus": 4, "memory": "8gb", "storage": "32gb" },
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": { "version": "22" },
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "forwardPorts": [8000, 8025],
+    "portsAttributes": {
+        "8000": { "label": "Website + admin", "onAutoForward": "openBrowser" },
+        "8025": { "label": "Mailpit (sign-in codes, emails)", "onAutoForward": "silent" },
+        "3306": { "label": "MariaDB", "onAutoForward": "ignore" }
+    },
+    "postCreateCommand": "bash .devcontainer/setup.sh",
+    "postStartCommand": "bash .devcontainer/start.sh",
+    "customizations": {
+        "vscode": {
+            "extensions": ["bmewburn.vscode-intelephense-client", "laravel.vscode-laravel", "Dart-Code.flutter", "bradlc.vscode-tailwindcss"]
+        },
+        "codespaces": {
+            "openFiles": ["docs/ops/codespaces.md"]
+        }
+    }
+}
