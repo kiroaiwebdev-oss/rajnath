@@ -40,7 +40,7 @@ class ServiceContentTest extends TestCase
 
         $this->get('/services/sade-sati-report')->assertOk()->assertSee('images/art/sade-sati-report', false)->assertDontSee('details to be finalised');
         $this->get('/services/sade-sati-report?lang=hi')->assertOk()->assertSee('साढ़े');
-        $this->get('/courses')->assertOk()->assertSee('Coming soon');
+        $this->get('/courses?lang=en')->assertOk()->assertSee('Coming soon');
     }
 
     public function test_store_starter_list_is_hidden_until_the_owner_adds_real_stock(): void
