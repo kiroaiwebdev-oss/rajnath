@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 # Runs once when the codespace is created (and can be run again by hand at any time):
 # PHP extensions, Chromium, the ephemeris engine, dependencies, .env, database and assets.
-set -euo pipefail
+set -Eeuo pipefail
 cd "$(dirname "$0")/.."
 ROOT=$(pwd)
-say() { echo; echo "==> $*"; }
+STATE="$ROOT/.devcontainer/.state"
+mkdir -p "$STATE"
+rm -f "$STATE/done" "$STATE/failed"
+touch "$STATE/running"
+# everything below is shown on screen and saved to .devcontainer/.state/setup.log
+exec > >(tee -a "$STATE/setup.log") 2>&1
+trap 'echo; echo "SETUP FAILED at line $LINENO. Send the last 40 lines of .devcontainer/.state/setup.log"; touch "$STATE/failed"; rm -f "$STATE/running"' ERR
+say() { echo; echo "==> $(date +%H:%M:%S) $*"; }
 
 say "System packages and PHP extensions"
 # an expired third-party apt key in some base images must not stop the setup
@@ -13,8 +20,9 @@ sudo apt-get update -y || true
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   libzip-dev libicu-dev libpng-dev libjpeg62-turbo-dev libwebp-dev libfreetype6-dev build-essential unzip curl
 missing=()
+loaded=$(php -m | tr '[:upper:]' '[:lower:]')
 for ext in pdo_mysql bcmath intl zip gd pcntl exif; do
-  php -m | grep -qi "^${ext}$" || missing+=("$ext")
+  grep -qx "$ext" <<< "$loaded" || missing+=("$ext")
 done
 if [ ${#missing[@]} -gt 0 ]; then
   if [[ " ${missing[*]} " == *" gd "* ]]; then
@@ -81,6 +89,8 @@ npm run build
 
 bash "$ROOT/.devcontainer/start.sh"
 
+rm -f "$STATE/running"
+touch "$STATE/done"
 echo
 echo "SETUP FINISHED"
 echo "Website: $URL   (Ports tab: 8000)    Emails and sign-in codes: Ports tab, 8025"

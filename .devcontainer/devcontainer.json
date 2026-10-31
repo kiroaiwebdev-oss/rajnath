@@ -1,7 +1,7 @@
 {
     // GitHub Codespaces / VS Code Dev Containers: the full platform for testing.
     // Laravel (PHP 8.4) + MariaDB + Mailpit (catches sign-in codes) + Node + Chromium (PDFs)
-    // + Swiss Ephemeris engine. Setup runs in .devcontainer/setup.sh (log: /tmp/arj-setup.log).
+    // + Swiss Ephemeris engine. Setup runs in .devcontainer/setup.sh (log: .devcontainer/.state/setup.log).
     "name": "Astro Rajnath Jha platform",
     "dockerComposeFile": "docker-compose.yml",
     "service": "app",
@@ -17,8 +17,9 @@
     "portsAttributes": {
         "8000": { "label": "Website + admin", "onAutoForward": "openBrowser" }
     },
-    "postCreateCommand": "bash .devcontainer/setup.sh 2>&1 | tee /tmp/arj-setup.log",
+    "postCreateCommand": "bash .devcontainer/setup.sh",
     "postStartCommand": "bash .devcontainer/start.sh",
+    "postAttachCommand": "bash .devcontainer/status.sh",
     "customizations": {
         "vscode": {
             "extensions": ["bmewburn.vscode-intelephense-client", "bradlc.vscode-tailwindcss"]
