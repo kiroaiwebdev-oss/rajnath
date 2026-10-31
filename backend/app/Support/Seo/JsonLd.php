@@ -4,6 +4,7 @@ namespace App\Support\Seo;
 
 use App\Domain\Showcase\Gallery;
 use App\Domain\Showcase\Profile;
+use App\Domain\Store\Store;
 use App\Http\Middleware\SetLocale;
 use App\Models\Offering;
 use App\Models\OfferingVariant;
@@ -164,7 +165,7 @@ class JsonLd
     public static function product(object $p): array
     {
         return ['@type' => 'Product', 'name' => $p->name, 'description' => $p->summary, 'image' => $p->image_path ? asset($p->image_path) : null, 'sku' => $p->ref,
-            'category' => 'Gemstone', 'brand' => ['@id' => self::id('business')],
+            'category' => Store::CATEGORIES[$p->category] ?? 'Gemstone', 'brand' => ['@id' => self::id('business')],
             'additionalProperty' => array_values(array_filter([$p->weight ? ['@type' => 'PropertyValue', 'name' => 'Weight', 'value' => $p->weight] : null,
                 $p->origin ? ['@type' => 'PropertyValue', 'name' => 'Origin', 'value' => $p->origin] : null, $p->certification ? ['@type' => 'PropertyValue', 'name' => 'Certification', 'value' => $p->certification] : null])),
             'offers' => ['@type' => 'Offer', 'price' => number_format($p->price_minor / 100, 2, '.', ''), 'priceCurrency' => 'INR', 'url' => route('store.show', $p->slug),

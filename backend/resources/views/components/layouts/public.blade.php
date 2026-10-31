@@ -78,6 +78,7 @@
                     <li><a href="{{ route('awards') }}">{{ __('Awards and honours') }}</a></li>
                     <li><a href="{{ route('gallery') }}">{{ __('Gallery: pujas and events') }}</a></li>
                     <li><a href="{{ route('reviews') }}">{{ __('Client reviews') }}</a></li>
+                    <li><a href="{{ route('courses') }}">{{ __('Astrology courses (coming soon)') }}</a></li>
                     <li><a href="{{ route('store.index') }}">{{ __('Gemstone store') }}</a></li>
                     <li><a href="{{ route('services.show', 'palmistry-photo-report') }}">{{ __('Palmistry report from photos') }}</a></li>
                     <li><a href="{{ route('tools.index') }}">{{ __('Free calculators') }}</a></li>

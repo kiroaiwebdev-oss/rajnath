@@ -16,5 +16,6 @@ class DatabaseSeeder extends Seeder
         $this->call(HindiCatalogueSeeder::class);
         $this->call(ShowcaseSeeder::class);
         $this->call(LegalSeeder::class);
+        $this->call(ServiceContentSeeder::class);
     }
 }

@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
  */
 class Store
 {
-    public const CATEGORIES = ['gemstone' => 'Gemstones', 'rudraksha' => 'Rudraksha', 'yantra' => 'Yantra', 'other' => 'Other remedies'];
+    public const CATEGORIES = ['gemstone' => 'Gemstones', 'rudraksha' => 'Rudraksha', 'yantra' => 'Yantra', 'mala' => 'Mala and bracelets', 'samagri' => 'Pooja samagri', 'kit' => 'Pooja kits', 'idol' => 'Idols and frames', 'other' => 'Other remedies'];
 
     public function __construct(private Checkout $checkout, private AuditLogger $audit) {}
 

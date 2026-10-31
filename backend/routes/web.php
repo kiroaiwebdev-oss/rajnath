@@ -50,6 +50,7 @@ Route::get('/refund-policy', [Web\LegalController::class, 'show'])->defaults('ki
 Route::get('/shipping-policy', [Web\LegalController::class, 'show'])->defaults('kind', 'shipping')->name('legal.shipping');
 Route::get('/legal/{kind}/history', [Web\LegalController::class, 'history'])->name('legal.history');
 Route::get('/reviews', [Web\ReviewController::class, 'index'])->name('reviews');
+Route::view('/courses', 'public.courses')->name('courses');
 Route::view('/offline', 'public.offline')->name('offline');
 Route::view('/design-system', 'public.design-system')->name('design-system');
 Route::get('/sitemap.xml', [Web\SeoController::class, 'sitemap'])->name('sitemap');
