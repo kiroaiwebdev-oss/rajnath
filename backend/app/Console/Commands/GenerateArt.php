@@ -5,8 +5,10 @@ namespace App\Console\Commands;
 use App\Support\Art\ServiceArt;
 use Database\Seeders\BlogSeeder;
 use Database\Seeders\ServiceContentSeeder;
+use Database\Seeders\StoreSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 
 /**
@@ -46,6 +48,12 @@ class GenerateArt extends Command
         $jobs += self::EXTRA;
         $palette = ['kundli' => 'consultation', 'grah-gochar' => 'report', 'vivah' => 'chadhava', 'vastu' => 'vastu', 'numerology' => 'written_question',
             'vrat-tyohar' => 'puja', 'upay' => 'remedy', 'hastrekha' => 'bundle'];
+        foreach (StoreSeeder::ITEMS as [$category, $name, , , , $colour]) {
+            $motif = match ($category) {
+                'gemstone' => 'gem:'.$colour, 'rudraksha', 'mala' => 'rudraksha', 'yantra' => 'yantra', 'kit' => 'kalash', default => 'diya'
+            };
+            $jobs['store-'.Str::slug($name)] = [$motif, 'remedy'];
+        }
         foreach (BlogSeeder::posts() as $post) {
             $jobs['blog-'.$post['slug']] = [$post['motif'], $palette[$post['category']] ?? 'other'];
         }

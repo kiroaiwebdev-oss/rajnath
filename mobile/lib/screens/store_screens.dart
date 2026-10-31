@@ -60,9 +60,8 @@ class _ProductImage extends StatelessWidget {
   const _ProductImage({required this.url});
   final String? url;
   @override
-  Widget build(BuildContext context) => url == null
-      ? Container(color: ArjColors.ivory100, child: const Icon(Icons.diamond_outlined, color: ArjColors.gold700, size: 36))
-      : Image.network(url!, fit: BoxFit.cover, semanticLabel: '', errorBuilder: (_, _, _) => Container(color: ArjColors.ivory100));
+  Widget build(BuildContext context) =>
+      NetImage(url, fallback: Container(color: ArjColors.ivory100, child: const Center(child: Icon(Icons.diamond_outlined, color: ArjColors.gold700, size: 36))));
 }
 
 class ProductDetailScreen extends StatelessWidget {

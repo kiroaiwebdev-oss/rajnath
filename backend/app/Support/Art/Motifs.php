@@ -16,6 +16,11 @@ class Motifs
 
     public static function draw(string $motif, string $gold): string
     {
+        // "gem:#c0263b" draws the motif in that colour
+        $tint = null;
+        if (str_contains($motif, ':')) {
+            [$motif, $tint] = explode(':', $motif, 2);
+        }
         $i = self::INK;
         $s = "stroke=\"$i\" stroke-width=\"7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\"";
         $sg = "stroke=\"$gold\" stroke-width=\"6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\"";
@@ -47,8 +52,8 @@ class Motifs
             'star' => "<path d=\"M0 -96 L24 -30 L94 -30 L38 12 L58 80 L0 40 L-58 80 L-38 12 L-94 -30 L-24 -30 Z\" fill=\"$gold\" stroke=\"$i\" stroke-width=\"6\" stroke-linejoin=\"round\"/><circle r=\"14\" fill=\"$i\"/>",
             'scroll' => "<rect x=\"-66\" y=\"-80\" width=\"132\" height=\"160\" rx=\"8\" fill=\"#fffaf0\" stroke=\"$i\" stroke-width=\"6\"/><path d=\"M-40 -44 H40 M-40 -16 H40 M-40 12 H24 M-40 40 H10\" $s/><circle cx=\"44\" cy=\"52\" r=\"22\" fill=\"$gold\" stroke=\"$i\" stroke-width=\"5\"/><path d=\"M36 52 L42 58 L54 44\" $s/>",
             'hand' => "<path d=\"M-50 90 V-6 Q-50 -20 -38 -20 Q-26 -20 -26 -6 V-60 Q-26 -74 -12 -74 Q2 -74 2 -60 V-84 Q2 -98 16 -98 Q30 -98 30 -84 V-56 Q30 -68 44 -68 Q58 -68 58 -54 V20 Q58 70 20 90 Z\" fill=\"#ffe3c4\" stroke=\"$i\" stroke-width=\"6\"/><path d=\"M-30 30 Q4 6 44 22 M-30 50 Q10 40 40 52 M6 70 Q0 30 18 -20\" stroke=\"$gold\" stroke-width=\"5\" fill=\"none\" stroke-linecap=\"round\"/>",
-            'gem' => "<path d=\"M-80 -30 L-44 -78 H44 L80 -30 L0 86 Z\" fill=\"#3fa7d6\" stroke=\"$i\" stroke-width=\"6\" stroke-linejoin=\"round\"/><path d=\"M-80 -30 H80 M-44 -78 L-24 -30 L0 86 L24 -30 L44 -78 M-24 -30 L0 -78 L24 -30\" stroke=\"$i\" stroke-width=\"4\" fill=\"none\" stroke-linejoin=\"round\"/><path d=\"M-60 -30 L-36 -66\" stroke=\"#fff\" stroke-width=\"5\" opacity=\"0.7\" stroke-linecap=\"round\"/>",
-            'rudraksha' => implode('', array_map(fn ($k) => "<circle cx=\"0\" cy=\"-78\" r=\"13\" fill=\"#8a4b25\" stroke=\"$i\" stroke-width=\"3\" transform=\"rotate(".($k * 30).')"/>', range(0, 11)))."<circle r=\"34\" fill=\"#8a4b25\" stroke=\"$i\" stroke-width=\"5\"/><path d=\"M0 -30 V30 M-26 -16 Q0 0 -26 16 M26 -16 Q0 0 26 16\" stroke=\"#3d1f0c\" stroke-width=\"4\" fill=\"none\"/>",
+            'gem' => '<path d="M-80 -30 L-44 -78 H44 L80 -30 L0 86 Z" fill="'.($tint ?? '#3fa7d6')."\" stroke=\"$i\" stroke-width=\"6\" stroke-linejoin=\"round\"/><path d=\"M-80 -30 H80 M-44 -78 L-24 -30 L0 86 L24 -30 L44 -78 M-24 -30 L0 -78 L24 -30\" stroke=\"$i\" stroke-width=\"4\" fill=\"none\" stroke-linejoin=\"round\"/><path d=\"M-60 -30 L-36 -66\" stroke=\"#fff\" stroke-width=\"5\" opacity=\"0.7\" stroke-linecap=\"round\"/>",
+            'rudraksha' => implode('', array_map(fn ($k) => "<circle cx=\"0\" cy=\"-78\" r=\"13\" fill=\"#8a4b25\" stroke=\"$i\" stroke-width=\"3\" transform=\"rotate(".($k * 30).')"/>', range(0, 11))).'<circle r="34" fill="'.($tint ?? '#8a4b25')."\" stroke=\"$i\" stroke-width=\"5\"/><path d=\"M0 -30 V30 M-26 -16 Q0 0 -26 16 M26 -16 Q0 0 26 16\" stroke=\"#3d1f0c\" stroke-width=\"4\" fill=\"none\"/>",
             'chart' => "<rect x=\"-90\" y=\"-90\" width=\"180\" height=\"180\" fill=\"#fffaf0\" stroke=\"$i\" stroke-width=\"6\"/><path d=\"M-90 -90 L90 90 M90 -90 L-90 90 M0 -90 L90 0 L0 90 L-90 0 Z\" stroke=\"$i\" stroke-width=\"4\" fill=\"none\"/><circle cy=\"-44\" r=\"9\" fill=\"$gold\"/><circle cx=\"44\" r=\"9\" fill=\"$gold\"/><circle cx=\"-50\" cy=\"58\" r=\"7\" fill=\"$i\"/>",
             'eye' => "<path d=\"M-96 0 Q0 -86 96 0 Q0 86 -96 0 Z\" fill=\"#fffaf0\" stroke=\"$i\" stroke-width=\"6\"/><circle r=\"36\" fill=\"#2f56a8\" stroke=\"$i\" stroke-width=\"5\"/><circle r=\"14\" fill=\"$i\"/><circle cx=\"10\" cy=\"-10\" r=\"6\" fill=\"#fff\"/>".$rays(8, 70, 96, $sg),
             'bell' => "<path d=\"M-62 50 Q-62 -60 0 -66 Q62 -60 62 50 L76 66 H-76 Z\" fill=\"$gold\" stroke=\"$i\" stroke-width=\"6\" stroke-linejoin=\"round\"/><circle cy=\"82\" r=\"14\" fill=\"$i\"/><path d=\"M0 -66 V-90\" $s/><circle cy=\"-96\" r=\"8\" fill=\"$i\"/>",

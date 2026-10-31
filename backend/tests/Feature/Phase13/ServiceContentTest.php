@@ -6,6 +6,7 @@ use App\Models\Offering;
 use Database\Seeders\CatalogueSeeder;
 use Database\Seeders\MarketPriceSeeder;
 use Database\Seeders\ServiceContentSeeder;
+use Database\Seeders\StoreSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -40,5 +41,13 @@ class ServiceContentTest extends TestCase
         $this->get('/services/sade-sati-report')->assertOk()->assertSee('images/art/sade-sati-report', false)->assertDontSee('details to be finalised');
         $this->get('/services/sade-sati-report?lang=hi')->assertOk()->assertSee('साढ़े');
         $this->get('/courses')->assertOk()->assertSee('Coming soon');
+    }
+
+    public function test_store_starter_list_is_hidden_until_the_owner_adds_real_stock(): void
+    {
+        $this->seed(StoreSeeder::class);
+        $this->assertSame(count(StoreSeeder::ITEMS), DB::table('products')->where('active', false)->where('stock', 0)->count());
+        $this->assertSame(0, DB::table('products')->whereNull('image_path')->count());
+        $this->get('/gems')->assertOk()->assertDontSee('Yellow Sapphire (Pukhraj)');
     }
 }

@@ -8,6 +8,7 @@ import '../util/validators.dart';
 import '../widgets/common.dart';
 import 'activity_screens.dart';
 import 'astro_screens.dart';
+import 'blog_screens.dart';
 import 'content_screens.dart';
 import 'review_screens.dart';
 import 'showcase_screens.dart';
@@ -91,6 +92,9 @@ class _MoreScreenState extends State<MoreScreen> {
         _tile(context, Icons.celebration_outlined, 'Festivals', page: () => FestivalsScreen(state: state)),
         _tile(context, Icons.brightness_3_outlined, 'Rashi guide', page: () => RashiListScreen(state: state)),
         _tile(context, Icons.public_outlined, 'Navagraha', page: () => NavagrahaScreen(state: state)),
+        const SectionTitle('Learn'),
+        _tile(context, Icons.menu_book_outlined, 'Articles', subtitle: 'Jyotish, Vastu, puja and remedies', page: () => BlogScreen(state: state)),
+        _tile(context, Icons.school_outlined, 'Courses', subtitle: 'Coming soon', page: () => CoursesScreen(state: state)),
         const SectionTitle('Acharya Ji'),
         _tile(context, Icons.info_outline, 'About Acharya Ji', page: () => AboutScreen(state: state)),
         _tile(context, Icons.emoji_events_outlined, 'Awards and honours', page: () => AwardsScreen(state: state)),

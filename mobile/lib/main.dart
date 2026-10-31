@@ -7,6 +7,7 @@ import 'push/push_service.dart';
 import 'screens/account_screens.dart';
 import 'screens/assistant_screen.dart';
 import 'screens/astro_screens.dart';
+import 'screens/blog_screens.dart';
 import 'screens/content_screens.dart';
 import 'screens/info_screens.dart';
 import 'screens/purchase_screens.dart';
@@ -18,6 +19,7 @@ import 'screens/store_screens.dart';
 import 'screens/tool_screens.dart';
 import 'state/app_state.dart';
 import 'theme/app_theme.dart';
+import 'util/validators.dart';
 import 'widgets/common.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -110,6 +112,9 @@ class _HomeTabState extends State<HomeTab> {
   Map<String, dynamic>? _profile;
   String? _locale;
 
+  /// Latest 3 from GET /blog; the strip stays hidden while empty or when the request fails.
+  List<Map<String, dynamic>> _articles = const [];
+
   AppState get state => widget.state;
 
   @override
@@ -124,8 +129,61 @@ class _HomeTabState extends State<HomeTab> {
     if (state.locale != _locale) _loadProfile(); // the profile text is translated
   }
 
+  Future<void> _loadArticles() async {
+    try {
+      final list = unwrapList(await state.api.get('/blog')).take(3).toList();
+      if (mounted) setState(() => _articles = list);
+    } catch (_) {/* the strip stays hidden */}
+  }
+
+  void _push(Widget Function() page) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => page()));
+
+  /// Services filtered to one family (puja, chadhava), with its own app bar.
+  Widget _family(String title, String family) => Scaffold(appBar: AppBar(title: Text(title)), body: SafeArea(child: ServicesScreen(state: state, initialFamily: family)));
+
+  /// The "Everything in one place" tiles: icon, label, screen.
+  List<(IconData, String, Widget Function())> get _ecosystem => [
+        (Icons.auto_awesome_outlined, 'Free Kundli', () => KundliScreen(state: state)),
+        (Icons.favorite_border, 'Kundli matching', () => KundliScreen(state: state, matching: true)),
+        (Icons.local_fire_department_outlined, 'Online puja', () => _family('Online puja', 'puja')),
+        (Icons.volunteer_activism_outlined, 'Chadhava', () => _family('Chadhava', 'chadhava')),
+        (Icons.diamond_outlined, 'Gemstones & samagri', () => StoreScreen(state: state)),
+        (Icons.wb_sunny_outlined, 'Panchang', () => PanchangScreen(state: state)),
+        (Icons.event_available_outlined, 'Muhurat', () => MuhuratScreen(state: state)),
+        (Icons.public_outlined, 'Grah gochar', () => GocharScreen(state: state)),
+        (Icons.celebration_outlined, 'Festivals', () => FestivalsScreen(state: state)),
+        (Icons.calculate_outlined, 'Calculators', () => Scaffold(appBar: AppBar(title: const Text('Calculators')), body: SafeArea(child: ToolsTab(state: state)))),
+        (Icons.menu_book_outlined, 'Articles', () => BlogScreen(state: state)),
+        (Icons.school_outlined, 'Courses', () => CoursesScreen(state: state)),
+      ];
+
+  Widget _tile(IconData icon, String label, Widget Function() page) => Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _push(page),
+          child: Ink(
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: ArjColors.gold200)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [ArjColors.gold50, ArjColors.gold200])),
+                  child: Icon(icon, color: ArjColors.gold700, size: 24),
+                ),
+                const SizedBox(height: 8),
+                Text(label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: ArjColors.ink900, height: 1.2)),
+              ]),
+            ),
+          ),
+        ),
+      );
+
   Future<void> _loadProfile() async {
     _locale = state.locale;
+    _loadArticles(); // titles are translated too
     try {
       final p = await loadProfile(state);
       if (mounted) setState(() => _profile = p);
@@ -153,17 +211,50 @@ class _HomeTabState extends State<HomeTab> {
       const SizedBox(height: 16),
       FilledButton(onPressed: widget.onOpenServices, child: const Text('Book a consultation')),
       const SizedBox(height: 8),
-      OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => KundliScreen(state: state))), child: const Text('Free Kundli')),
-      const SizedBox(height: 8),
-      OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PanchangScreen(state: state))), child: const Text("Today's Panchang")),
-      const SizedBox(height: 8),
-      OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => HoroscopeScreen(state: state))), child: const Text('Rashifal')),
-      const SizedBox(height: 8),
-      OutlinedButton.icon(
-        onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => StoreScreen(state: state))),
-        icon: const Icon(Icons.diamond_outlined),
-        label: const Text('Gemstone store'),
+      const SectionTitle('Everything in one place'),
+      LayoutBuilder(
+        builder: (context, c) => GridView.count(
+          crossAxisCount: c.maxWidth >= 600 ? 6 : (c.maxWidth >= 340 ? 3 : 2),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 0.95,
+          children: [for (final (icon, label, page) in _ecosystem) _tile(icon, label, page)],
+        ),
       ),
+      const SectionTitle('Your sign today'),
+      SizedBox(
+        height: 44,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: 12,
+          separatorBuilder: (_, _) => const SizedBox(width: 8),
+          itemBuilder: (context, i) => ActionChip(
+            avatar: const Icon(Icons.brightness_3_outlined, size: 16, color: ArjColors.gold700),
+            label: Text(signNames[i].split(' ').first),
+            tooltip: signNames[i],
+            onPressed: () => _push(() => RashiDetailScreen(state: state, slug: rashiSlugs[i], title: signNames[i])),
+          ),
+        ),
+      ),
+      if (_articles.isNotEmpty) ...[
+        Row(children: [
+          const Expanded(child: SectionTitle('Latest articles')),
+          TextButton(onPressed: () => _push(() => BlogScreen(state: state)), child: const Text('See all')),
+        ]),
+        SizedBox(
+          height: 290,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _articles.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, i) => SizedBox(width: 250, child: ArticleCard(state: state, article: _articles[i], compact: true)),
+          ),
+        ),
+      ],
+      const SectionTitle('More for you'),
+      OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => HoroscopeScreen(state: state))), child: const Text('Rashifal')),
       const SizedBox(height: 8),
       OutlinedButton.icon(
         onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GalleryScreen(state: state))),

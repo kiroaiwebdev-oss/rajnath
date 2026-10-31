@@ -169,9 +169,10 @@ class SectionsView extends StatelessWidget {
 /// Network image with a quiet placeholder while loading and when it fails (or [fallback] instead,
 /// e.g. a bundled asset). Failed loads always go through errorBuilder, so they never throw.
 class NetImage extends StatelessWidget {
-  const NetImage(this.url, {super.key, this.fit = BoxFit.cover, this.fallback, this.semanticLabel, this.dark = false});
+  const NetImage(this.url, {super.key, this.fit = BoxFit.cover, this.alignment = Alignment.center, this.fallback, this.semanticLabel, this.dark = false});
   final String? url;
   final BoxFit fit;
+  final Alignment alignment;
   final Widget? fallback;
   final String? semanticLabel;
 
@@ -193,6 +194,7 @@ class NetImage extends StatelessWidget {
     return Image.network(
       u,
       fit: fit,
+      alignment: alignment,
       semanticLabel: semanticLabel,
       frameBuilder: (_, child, frame, sync) => sync || frame != null ? child : _placeholder(Icons.image_outlined),
       errorBuilder: (_, _, _) => _placeholder(Icons.broken_image_outlined),

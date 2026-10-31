@@ -10,15 +10,19 @@ import 'purchase_screens.dart';
 import 'store_screens.dart';
 
 class ServicesScreen extends StatefulWidget {
-  const ServicesScreen({super.key, required this.state});
+  const ServicesScreen({super.key, required this.state, this.initialFamily});
   final AppState state;
+
+  /// Family slug to pre-select (e.g. 'puja', 'chadhava' from the home tiles).
+  final String? initialFamily;
   @override
   State<ServicesScreen> createState() => _ServicesScreenState();
 }
 
 class _ServicesScreenState extends State<ServicesScreen> {
   String _q = '';
-  String? _family, _mode;
+  late String? _family = widget.initialFamily;
+  String? _mode;
   final _key = GlobalKey();
 
   Future<Map<String, dynamic>> _load() async {
@@ -73,8 +77,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ServiceDetailScreen(state: widget.state, slug: '${o['slug']}'))),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   if (o['image_url'] != null)
-                    AspectRatio(aspectRatio: 16 / 9, child: Image.network('${o['image_url']}', fit: BoxFit.cover, alignment: Alignment.topCenter, semanticLabel: '',
-                        errorBuilder: (_, _, _) => Container(color: ArjColors.ivory100))),
+                    AspectRatio(aspectRatio: 16 / 9, child: NetImage('${o['image_url']}', alignment: Alignment.topCenter, fallback: Container(color: ArjColors.ivory100))),
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -107,6 +110,14 @@ class ServiceDetailScreen extends StatelessWidget {
         child: AsyncView<Map<String, dynamic>>(
           load: () async => (await state.api.get('/catalogue/offerings/$slug'))['data'] as Map<String, dynamic>,
           builder: (context, o, _) => ListView(padding: const EdgeInsets.all(16), children: [
+            if (o['image_url'] != null) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: AspectRatio(aspectRatio: 16 / 9, child: NetImage('${o['image_url']}', alignment: Alignment.topCenter, semanticLabel: '${o['title']}', fallback: Container(color: ArjColors.ivory100))),
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (o['family_name'] != null) Padding(padding: const EdgeInsets.only(bottom: 6), child: Text('${o['family_name']}'.toUpperCase(), style: Theme.of(context).textTheme.labelMedium?.copyWith(color: ArjColors.gold700, letterSpacing: 1.2))),
             Text('${o['title']}', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Text('${o['summary']}', style: const TextStyle(color: ArjColors.ink600)),
