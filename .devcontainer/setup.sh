@@ -25,11 +25,18 @@ for ext in pdo_mysql bcmath intl zip gd pcntl exif; do
   grep -qx "$ext" <<< "$loaded" || missing+=("$ext")
 done
 if [ ${#missing[@]} -gt 0 ]; then
-  if [[ " ${missing[*]} " == *" gd "* ]]; then
-    sudo docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype
-  fi
-  sudo docker-php-ext-install -j"$(nproc)" "${missing[@]}"
+  echo "Installing PHP extensions: ${missing[*]}"
+  # install-php-extensions (mlocati) brings the build tools and libraries each extension needs;
+  # the base image removed phpize's build tools, which made docker-php-ext-install fail.
+  sudo curl -fsSL -o /usr/local/bin/install-php-extensions \
+    https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions
+  sudo chmod +x /usr/local/bin/install-php-extensions
+  sudo -E env "PATH=$PATH" IPE_GD_WITHOUTAVIF=1 install-php-extensions "${missing[@]}"
 fi
+loaded=$(php -m | tr '[:upper:]' '[:lower:]')
+for ext in pdo_mysql bcmath intl zip gd pcntl exif; do
+  grep -qx "$ext" <<< "$loaded" || { echo "PHP extension $ext is still missing"; false; }
+done
 printf 'memory_limit = 512M\nupload_max_filesize = 10M\npost_max_size = 96M\nmax_file_uploads = 20\nmax_execution_time = 60\n' \
   | sudo tee /usr/local/etc/php/conf.d/zz-arj-dev.ini >/dev/null
 
