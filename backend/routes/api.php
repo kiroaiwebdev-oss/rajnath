@@ -44,6 +44,8 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
     Route::get('gallery', [V1\ShowcaseApiController::class, 'albums']);
     Route::get('gallery/{slug}', [V1\ShowcaseApiController::class, 'album']);
     Route::get('reviews', [V1\ReviewApiController::class, 'index']);
+    Route::get('blog', [V1\BlogApiController::class, 'index']);
+    Route::get('blog/{slug}', [V1\BlogApiController::class, 'show']);
     Route::get('horoscopes/types', [V1\ContentApiController::class, 'horoscopeTypes']);
     Route::get('horoscopes', [V1\ContentApiController::class, 'horoscopes']);
     Route::middleware('throttle:tools')->group(function () {

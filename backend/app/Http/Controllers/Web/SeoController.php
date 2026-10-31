@@ -31,7 +31,7 @@ class SeoController extends Controller
             ['/faq', null, 'monthly', '0.6'], ['/rashifal', $today, 'daily', '0.8'], ['/panchang', $today, 'daily', '0.8'], ['/calendar', $today, 'weekly', '0.6'],
             ['/festivals', null, 'monthly', '0.7'], ['/muhurat', null, 'monthly', '0.7'], ['/gochar', $today, 'daily', '0.7'], ['/navagraha', null, 'monthly', '0.5'],
             ['/tools', null, 'monthly', '0.8'], ['/gems', $today, 'weekly', '0.6'],
-            ['/awards', null, 'monthly', '0.7'], ['/gallery', $today, 'weekly', '0.7'], ['/reviews', $today, 'weekly', '0.7'], ['/courses', null, 'monthly', '0.4'], ['/privacy', null, 'yearly', '0.2'], ['/terms', null, 'yearly', '0.2']];
+            ['/awards', null, 'monthly', '0.7'], ['/gallery', $today, 'weekly', '0.7'], ['/reviews', $today, 'weekly', '0.7'], ['/courses', null, 'monthly', '0.4'], ['/blog', $today, 'daily', '0.8'], ['/privacy', null, 'yearly', '0.2'], ['/terms', null, 'yearly', '0.2']];
         foreach (['nakshatra', 'chinese', 'numerology', 'tarot'] as $k) {
             $u[] = ["/rashifal/$k", $today, 'weekly', '0.5'];
         }
@@ -45,6 +45,9 @@ class SeoController extends Controller
             if (app(LegalDocuments::class)->isPublished($kind)) {
                 $u[] = [$path, null, 'yearly', '0.2'];
             }
+        }
+        foreach (DB::table('posts')->where('status', 'published')->where('published_at', '<=', now())->get(['slug', 'updated_at']) as $p) {
+            $u[] = ['/blog/'.$p->slug, substr((string) $p->updated_at, 0, 10) ?: null, 'monthly', '0.7'];
         }
         foreach (DB::table('gallery_albums')->where('published', true)->get(['slug', 'updated_at']) as $a) {
             $u[] = ['/gallery/'.$a->slug, substr((string) $a->updated_at, 0, 10) ?: null, 'monthly', '0.6'];
@@ -151,6 +154,10 @@ class SeoController extends Controller
             $albums = app(Gallery::class)->publicAlbums();
             if ($albums->isNotEmpty()) {
                 $out .= "\n## Gallery\n- ".$albums->map(fn ($a) => $a->title.($a->event_date ? ' ('.$a->event_date.')' : '').': '.route('gallery.show', $a->slug))->implode("\n- ")."\n";
+            }
+            $posts = DB::table('posts')->where('status', 'published')->where('published_at', '<=', now())->orderByDesc('published_at')->limit(100)->get(['slug', 'title', 'excerpt']);
+            if ($posts->isNotEmpty()) {
+                $out .= "\n## Articles\n- ".$posts->map(fn ($p) => $p->title.': '.route('blog.show', $p->slug).' — '.$p->excerpt)->implode("\n- ")."\n";
             }
             $out .= "\n## Services and prices (INR)\n";
             foreach (Offering::public()->with(['translations', 'variants', 'family'])->orderBy('family_id')->orderBy('sort')->get() as $o) {

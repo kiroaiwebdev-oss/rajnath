@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Support\Art\ServiceArt;
+use Database\Seeders\BlogSeeder;
 use Database\Seeders\ServiceContentSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +44,11 @@ class GenerateArt extends Command
             $jobs[$slug] = [$motif, $families[$slug] ?? 'other'];
         }
         $jobs += self::EXTRA;
+        $palette = ['kundli' => 'consultation', 'grah-gochar' => 'report', 'vivah' => 'chadhava', 'vastu' => 'vastu', 'numerology' => 'written_question',
+            'vrat-tyohar' => 'puja', 'upay' => 'remedy', 'hastrekha' => 'bundle'];
+        foreach (BlogSeeder::posts() as $post) {
+            $jobs['blog-'.$post['slug']] = [$post['motif'], $palette[$post['category']] ?? 'other'];
+        }
         if ($only = $this->option('only')) {
             $jobs = array_intersect_key($jobs, [$only => 1]);
         }

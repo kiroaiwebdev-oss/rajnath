@@ -51,6 +51,8 @@ Route::get('/shipping-policy', [Web\LegalController::class, 'show'])->defaults('
 Route::get('/legal/{kind}/history', [Web\LegalController::class, 'history'])->name('legal.history');
 Route::get('/reviews', [Web\ReviewController::class, 'index'])->name('reviews');
 Route::view('/courses', 'public.courses')->name('courses');
+Route::get('/blog', [Web\BlogController::class, 'index'])->name('blog');
+Route::get('/blog/{slug}', [Web\BlogController::class, 'show'])->name('blog.show');
 Route::view('/offline', 'public.offline')->name('offline');
 Route::view('/design-system', 'public.design-system')->name('design-system');
 Route::get('/sitemap.xml', [Web\SeoController::class, 'sitemap'])->name('sitemap');
@@ -263,6 +265,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'staff'])->group(fun
     Route::get('faqs', [Admin\FaqController::class, 'index'])->name('faqs.index');
     Route::post('faqs', [Admin\FaqController::class, 'save'])->name('faqs.save');
     Route::delete('faqs/{id}', [Admin\FaqController::class, 'destroy'])->whereNumber('id')->name('faqs.destroy');
+    Route::get('blog', [Admin\BlogController::class, 'index'])->name('blog.index');
+    Route::get('blog/new', [Admin\BlogController::class, 'edit'])->name('blog.create');
+    Route::post('blog/new', [Admin\BlogController::class, 'save'])->name('blog.store');
+    Route::post('blog/actions', [Admin\BlogController::class, 'action'])->name('blog.action');
+    Route::get('blog/{ref}', [Admin\BlogController::class, 'edit'])->name('blog.edit');
+    Route::post('blog/{ref}', [Admin\BlogController::class, 'save'])->name('blog.update');
     Route::get('reviews', [Admin\ReviewController::class, 'index'])->name('reviews.index');
     Route::post('reviews', [Admin\ReviewController::class, 'store'])->name('reviews.store');
     Route::post('reviews/{ref}', [Admin\ReviewController::class, 'moderate'])->name('reviews.moderate');

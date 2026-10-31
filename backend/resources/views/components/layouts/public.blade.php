@@ -12,6 +12,7 @@
         [__('Gochar'), route('gochar'), 'gochar*', false],
         [__('Muhurat'), route('muhurat.index'), 'muhurat.*', false],
         [__('Festivals'), route('festivals'), 'festivals', false],
+        [__('Articles'), route('blog'), 'blog*', false],
         [__('About'), route('about'), 'about', false],
         [__('Awards'), route('awards'), 'awards', false],
         [__('Gallery'), route('gallery'), 'gallery*', false],
@@ -78,6 +79,7 @@
                     <li><a href="{{ route('awards') }}">{{ __('Awards and honours') }}</a></li>
                     <li><a href="{{ route('gallery') }}">{{ __('Gallery: pujas and events') }}</a></li>
                     <li><a href="{{ route('reviews') }}">{{ __('Client reviews') }}</a></li>
+                    <li><a href="{{ route('blog') }}">{{ __('Articles and guides') }}</a></li>
                     <li><a href="{{ route('courses') }}">{{ __('Astrology courses (coming soon)') }}</a></li>
                     <li><a href="{{ route('store.index') }}">{{ __('Gemstone store') }}</a></li>
                     <li><a href="{{ route('services.show', 'palmistry-photo-report') }}">{{ __('Palmistry report from photos') }}</a></li>
