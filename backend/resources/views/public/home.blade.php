@@ -1,27 +1,13 @@
-<x-layouts.public :description="__('Vedic astrology consultations, Kundli, Vastu and remedies with Acharya Dr. Rajnath Jha, Ph.D. in Astrology, Director of Jyotirveda Vigyan Sansthan, Patna.')" :jsonld="[['@type' => 'ItemList', 'name' => __('How Acharya Ji can help'), 'itemListElement' => $featured->values()->map(fn ($o, $i) => ['@type' => 'ListItem', 'position' => $i + 1, 'url' => route('services.show', $o->slug), 'name' => $o->t()?->title])->all()]]">
-    {{-- Hero --}}
-    <section class="container-page grid items-center gap-10 pt-10 pb-16 md:grid-cols-[1.1fr_0.9fr] md:pt-16">
-        <div>
-            <p class="eyebrow">{{ $profile->text('home.eyebrow') }}</p>
-            <h1 class="mt-3 text-4xl leading-tight sm:text-5xl">{{ __('Clear, practical guidance from :name', ['name' => $site('brand.practitioner_name')]) }}</h1>
-            <p class="mt-5 max-w-xl text-lg text-ink-600">{{ $profile->text('home.subtitle') }}</p>
-            <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a href="{{ route('services.index', ['family' => 'consultations']) }}" class="btn-primary">{{ __('Book a consultation') }}</a>
-                <a href="{{ route('services.index') }}" class="btn-outline">{{ __('Browse all services') }}</a>
-            </div>
-            @php $st = $profile->stats(); @endphp
-            <dl class="mt-10 grid max-w-lg grid-cols-3 gap-3 sm:gap-4">
-                @foreach ([[__('Years of practice'), $st['years']], [__('Clients guided'), $st['clients']], [__('Awards'), $st['awards']]] as [$l, $n])
-                    @if ($n !== '' && $n !== '0')<div class="card p-4"><dt class="text-xs text-ink-600">{{ $l }}</dt><dd class="mt-1 text-xl font-semibold sm:text-2xl">{{ $n }}</dd></div>@endif
-                @endforeach
-            </dl>
-        </div>
-        <figure class="relative mx-auto w-full max-w-sm">
-            <div aria-hidden="true" class="absolute -inset-3 rounded-[2rem] bg-gold-50 ring-1 ring-gold-200"></div>
-            <x-photo :src="$profile->photo('profile.photo_home')" :alt="$site('brand.practitioner_name').' at his office in Patna'" eager
-                     class="relative aspect-[480/699] w-full rounded-[1.75rem] object-cover shadow-[var(--shadow-card)]" />
-        </figure>
-    </section>
+@php
+    $homeFaqs = [
+        [__('How do I book a consultation with Acharya Ji?'), __('Open Consultations, choose audio, video or in person, pick a time and pay online. You can also call or WhatsApp the office.')],
+        [__('What do I need for a kundli reading?'), __('Your date, exact time and place of birth. If the time is not known, palmistry and Prashna kundli can still help.')],
+        [__('How soon do reports and written answers arrive?'), __('Written answers in about 48 working hours, reports in 3–5 working days, in your account and by email.')],
+        [__('Can I consult from outside India?'), __('Yes. Consultations are held by video or audio call, and payment is online.')],
+    ];
+@endphp
+<x-layouts.public :description="__('Vedic astrology consultations, Kundli, Vastu and remedies with Acharya Dr. Rajnath Jha, Ph.D. in Astrology, Director of Jyotirveda Vigyan Sansthan, Patna.')" :jsonld="[\App\Support\Seo\JsonLd::faq($homeFaqs), ['@type' => 'ItemList', 'name' => __('How Acharya Ji can help'), 'itemListElement' => $featured->values()->map(fn ($o, $i) => ['@type' => 'ListItem', 'position' => $i + 1, 'url' => route('services.show', $o->slug), 'name' => $o->t()?->title])->all()]]">
+    @include('public.partials.home-top')
 
     {{-- Featured services from the live catalogue --}}
     @if ($featured->isNotEmpty())
@@ -99,6 +85,38 @@
     </section>
     @endif
 
+    {{-- In the spotlight: videos from published gallery albums --}}
+    @php $videos = \Illuminate\Support\Facades\DB::table('gallery_items as i')->join('gallery_albums as a', 'a.id', '=', 'i.album_id')->where('a.published', true)->where('i.kind', 'video')->orderByDesc('i.id')->limit(3)->get(['i.video_id', 'i.caption', 'a.title', 'a.slug']); @endphp
+    @if ($videos->isNotEmpty())
+    <section class="container-page pt-16" aria-labelledby="vid-h">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div><p class="eyebrow">{{ __('In the spotlight') }}</p><h2 id="vid-h" class="mt-2 text-2xl">{{ __('Watch Acharya Ji') }}</h2></div>
+            <a href="{{ route('gallery') }}" class="btn-outline">{{ __('All videos and photos') }}</a>
+        </div>
+        <ul class="mt-8 grid gap-5 md:grid-cols-3">
+            @foreach ($videos as $v)
+                <li class="card relative overflow-hidden">
+                    <img src="{{ \App\Domain\Showcase\Gallery::videoThumb($v->video_id) }}" alt="" width="480" height="360" loading="lazy" decoding="async" class="aspect-video w-full object-cover">
+                    <span aria-hidden="true" class="absolute inset-x-0 top-0 grid aspect-video place-items-center"><span class="grid size-14 place-items-center rounded-full bg-ink-900/75 text-white"><svg class="ml-1 size-6" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></span>
+                    <p class="p-4 text-sm font-semibold"><a href="{{ route('gallery.show', $v->slug) }}" class="no-underline after:absolute after:inset-0">{{ $v->caption ?: $v->title }}</a></p>
+                </li>
+            @endforeach
+        </ul>
+    </section>
+    @endif
+
+    {{-- Latest articles --}}
+    @php $latestPosts = app(\App\Domain\Blog\Blog::class)->latest(3); @endphp
+    @if ($latestPosts->isNotEmpty())
+    <section class="container-page pt-16" aria-labelledby="art-h">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div><p class="eyebrow">{{ __('Articles') }}</p><h2 id="art-h" class="mt-2 text-2xl">{{ __('Learn from the blog') }}</h2></div>
+            <a href="{{ route('blog') }}" class="btn-outline">{{ __('All articles') }}</a>
+        </div>
+        <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">@foreach ($latestPosts as $lp)@include('public.blog.card', ['p' => $lp])@endforeach</div>
+    </section>
+    @endif
+
     {{-- Families --}}
     <section class="container-page py-16" aria-labelledby="fam-h">
         <p class="eyebrow">{{ __('Find what you need') }}</p>
@@ -112,6 +130,34 @@
                 </li>
             @endforeach
         </ul>
+    </section>
+
+    {{-- Why online, and common questions (also FAQPage data) --}}
+    <section class="bg-ivory-100 py-16" aria-labelledby="why-h">
+        <div class="container-page grid gap-10 lg:grid-cols-2">
+            <div>
+                <p class="eyebrow">{{ __('Why Astro Rajnath Jha') }}</p>
+                <h2 id="why-h" class="mt-2 text-2xl sm:text-3xl">{{ __('Traditional Jyotish, explained plainly') }}</h2>
+                <div class="mt-5 space-y-4 leading-7 text-ink-800">
+                    <p>{{ __('Every reading starts from your exact birth details and the classical Parashari method. Acharya Ji explains what the chart shows, what is likely to help, and what is simply a matter of time — without fear and without expensive remedies.') }}</p>
+                    <p>{{ __('You can meet him in Patna, speak by audio or video from anywhere in the world, or send a question and receive a written answer. Pujas are performed with full vidhi on a shubh muhurat, with photos in your account.') }}</p>
+                </div>
+                <ul class="mt-6 grid gap-3 sm:grid-cols-2">
+                    @foreach ([__('Ph.D. in Astrology, 30+ years of practice'), __('Personal attention to every chart'), __('Simple, affordable remedies'), __('Hindi, Maithili, Sanskrit and English'), __('Private and confidential'), __('Secure payments, GST invoices')] as $pt)
+                        <li class="flex items-start gap-2 text-sm"><svg aria-hidden="true" class="mt-0.5 size-5 shrink-0 text-gold-700" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" clip-rule="evenodd"/></svg>{{ $pt }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            <div>
+                <h2 class="text-xl">{{ __('Questions people ask') }}</h2>
+                <div class="mt-4 space-y-3">
+                    @foreach ($homeFaqs as [$q, $a])
+                        <details class="card p-4"><summary class="cursor-pointer font-semibold">{{ $q }}</summary><p class="mt-2 text-sm leading-6 text-ink-700">{{ $a }}</p></details>
+                    @endforeach
+                </div>
+                <a href="{{ route('faq') }}" class="btn-outline mt-5">{{ __('All questions') }}</a>
+            </div>
+        </div>
     </section>
 
     {{-- Visit --}}
