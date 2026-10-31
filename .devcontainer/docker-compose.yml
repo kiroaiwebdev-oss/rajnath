@@ -1,22 +1,13 @@
 # Development / test stack for Codespaces. Not used in production (see deploy/).
+# The app container uses the stock devcontainers PHP image; PHP extensions, Chromium and the
+# ephemeris engine are installed by setup.sh, so a failing package never blocks the codespace.
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: mcr.microsoft.com/devcontainers/php:1-8.4-bookworm
     volumes:
       - ../..:/workspaces:cached
     command: sleep infinity
     environment:
-      DB_HOST: db
-      DB_PORT: "3306"
-      DB_DATABASE: arj
-      DB_USERNAME: arj
-      DB_PASSWORD: arj-dev-password
-      MAIL_MAILER: smtp
-      MAIL_HOST: mailpit
-      MAIL_PORT: "1025"
-      PDF_CHROME_BINARY: /usr/bin/chromium
       XDEBUG_MODE: "off"
     depends_on:
       - db

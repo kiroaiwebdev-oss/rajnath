@@ -1,29 +1,27 @@
 {
     // GitHub Codespaces / VS Code Dev Containers: the full platform for testing.
     // Laravel (PHP 8.4) + MariaDB + Mailpit (catches sign-in codes) + Node + Chromium (PDFs)
-    // + Swiss Ephemeris engine. Docker-in-Docker lets you also build the production image.
+    // + Swiss Ephemeris engine. Setup runs in .devcontainer/setup.sh (log: /tmp/arj-setup.log).
     "name": "Astro Rajnath Jha platform",
     "dockerComposeFile": "docker-compose.yml",
     "service": "app",
+    "runServices": ["app", "db", "mailpit"],
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
     "shutdownAction": "stopCompose",
-    "hostRequirements": { "cpus": 4, "memory": "8gb", "storage": "32gb" },
+    "remoteUser": "vscode",
+    "hostRequirements": { "cpus": 2, "memory": "4gb" },
     "features": {
-        "ghcr.io/devcontainers/features/node:1": { "version": "22" },
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-        "ghcr.io/devcontainers/features/github-cli:1": {}
+        "ghcr.io/devcontainers/features/node:1": { "version": "22" }
     },
-    "forwardPorts": [8000, 8025],
+    "forwardPorts": [8000, "mailpit:8025"],
     "portsAttributes": {
-        "8000": { "label": "Website + admin", "onAutoForward": "openBrowser" },
-        "8025": { "label": "Mailpit (sign-in codes, emails)", "onAutoForward": "silent" },
-        "3306": { "label": "MariaDB", "onAutoForward": "ignore" }
+        "8000": { "label": "Website + admin", "onAutoForward": "openBrowser" }
     },
-    "postCreateCommand": "bash .devcontainer/setup.sh",
+    "postCreateCommand": "bash .devcontainer/setup.sh 2>&1 | tee /tmp/arj-setup.log",
     "postStartCommand": "bash .devcontainer/start.sh",
     "customizations": {
         "vscode": {
-            "extensions": ["bmewburn.vscode-intelephense-client", "laravel.vscode-laravel", "Dart-Code.flutter", "bradlc.vscode-tailwindcss"]
+            "extensions": ["bmewburn.vscode-intelephense-client", "bradlc.vscode-tailwindcss"]
         },
         "codespaces": {
             "openFiles": ["docs/ops/codespaces.md"]

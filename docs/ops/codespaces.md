@@ -4,9 +4,13 @@ A codespace runs the whole platform in the browser: website, admin, database, em
 and the ephemeris engine. Nothing here touches the live site or real payments.
 
 ## 1. Open it
-On GitHub: **Code › Codespaces › Create codespace on main**. Choose a 4-core machine.
+On GitHub: **Code › Codespaces › Create codespace on main**. A 2-core machine is enough; 4-core is faster.
 The first start takes 10–15 minutes (it builds the engine, installs packages, fills the
 database and builds the CSS/JS). Later starts take under a minute.
+
+The setup log is in `/tmp/arj-setup.log`; it ends with `SETUP FINISHED`. If it stopped
+with an error, run `bash .devcontainer/setup.sh` again (it continues where it can) and send me
+the last lines.
 
 When it is ready, the **Ports** tab shows:
 - **8000 — Website + admin.** Open it in the browser.
