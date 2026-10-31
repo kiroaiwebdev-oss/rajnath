@@ -17,5 +17,15 @@ mkdir -p storage/logs
 # setsid keeps both running after this script (and the terminal) ends
 setsid nohup php artisan serve --host=0.0.0.0 --port=8000 > storage/logs/serve.log 2>&1 < /dev/null &
 setsid nohup php artisan queue:work --sleep=2 --tries=3 > storage/logs/queue.log 2>&1 < /dev/null &
-sleep 2
-echo "Website running on port 8000 (Ports tab). Emails and sign-in codes: port 8025."
+for _ in $(seq 1 15); do
+  code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/ready || true)
+  [ "$code" = "200" ] && break
+  sleep 1
+done
+if [ "$code" = "200" ]; then
+  echo "Website is running on port 8000 (answered $code)."
+  echo "If the browser shows 404: Ports tab › Forward a Port › 8000, then open the globe icon."
+else
+  echo "The website did not answer (code $code). Last lines of storage/logs/serve.log:"
+  tail -n 20 storage/logs/serve.log
+fi
